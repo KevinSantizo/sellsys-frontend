@@ -21,7 +21,9 @@ import {
   List,
   ListItemButton,
   ListItemIcon,
+  MenuItem,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 
@@ -36,320 +38,412 @@ import {
 
 import { useAuthStore } from "../modules/auth/store/authStore";
 import { useCompanyStore } from "../modules/companies/store/companyStore";
+ 
 
-const SIDEBAR_WIDTH = 280;
+import { useBranchStore } from "../modules/branches/store/branchStore";
 
-type NavigationItem = {
-  label: string;
-  path: string;
-  icon: ReactNode;
-};
+import { useQuery } from "@tanstack/react-query";
 
-const navigationItems: NavigationItem[] = [
-  {
-    label: "Dashboard",
-    path: "/dashboard",
-    icon: <DashboardRounded />,
-  },
-  {
-    label: "Productos",
-    path: "/catalog/products",
-    icon: <Inventory2Rounded />,
-  },
-  {
-    label: "Categorías",
-    path: "/catalog/categories",
-    icon: <CategoryRounded />,
-  },
-  {
-    label: "Marcas",
-    path: "/catalog/brands",
-    icon: <ShoppingBagRounded />,
-  },
-  {
-    label: "Unidades de medida",
-    path: "/catalog/units",
-    icon: <ScaleRounded />,
-  },
-  {
-    label: "Sucursales",
-    path: "/branches",
-    icon: <StoreRounded />,
-  },
-];
+import {
+  getCompanies,
+} from "../modules/companies/services/companyService";
 
-export function AppLayout() {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const SIDEBAR_WIDTH = 280;
 
-  const [mobileOpen, setMobileOpen] = useState(false);
+  type NavigationItem = {
+    label: string;
+    path: string;
+    icon: ReactNode;
+  };
 
-  const user = useAuthStore(
-    (state) => state.user,
-  );
 
-  const logout = useAuthStore(
-    (state) => state.logout,
-  );
+  const navigationItems: NavigationItem[] = [
+    {
+      label: "Dashboard",
+      path: "/dashboard",
+      icon: <DashboardRounded />,
+    },
+    {
+      label: "Productos",
+      path: "/catalog/products",
+      icon: <Inventory2Rounded />,
+    },
+    {
+      label: "Categorías",
+      path: "/catalog/categories",
+      icon: <CategoryRounded />,
+    },
+    {
+      label: "Marcas",
+      path: "/catalog/brands",
+      icon: <ShoppingBagRounded />,
+    },
+    {
+      label: "Unidades de medida",
+      path: "/catalog/units",
+      icon: <ScaleRounded />,
+    },
+    {
+      label: "Sucursales",
+      path: "/branches",
+      icon: <StoreRounded />,
+    },
+  ];
 
-  const selectedCompany = useCompanyStore(
-    (state) => state.selectedCompany,
-  );
+  export function AppLayout() {
 
-  const clearSelectedCompany = useCompanyStore(
-    (state) => state.clearSelectedCompany,
-  );
+    
+    const {
+      data: availableCompanies = [],
+    } = useQuery({
+      queryKey: ["companies"],
+      queryFn: getCompanies,
+    });
 
-  if (!selectedCompany) {
-    return (
-      <Navigate
-        to="/companies"
-        replace
-      />
+    const canChangeCompany =
+    availableCompanies.length > 1;
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    const user = useAuthStore(
+      (state) => state.user,
     );
-  }
 
-  const handleNavigate = (path: string) => {
-    navigate(path);
-    setMobileOpen(false);
-  };
+    const logout = useAuthStore(
+      (state) => state.logout,
+    );
 
-  const handleChangeCompany = () => {
-    clearSelectedCompany();
+    const selectedCompany = useCompanyStore(
+      (state) => state.selectedCompany,
+    );
 
-    navigate("/companies", {
-      replace: true,
-    });
-  };
+    const clearSelectedCompany = useCompanyStore(
+      (state) => state.clearSelectedCompany,
+    );
 
-  const handleLogout = () => {
-    logout();
-    clearSelectedCompany();
+    const availableBranches = useBranchStore(
+      (state) => state.availableBranches,
+    );
 
-    navigate("/login", {
-      replace: true,
-    });
-  };
+    const selectedBranch = useBranchStore(
+      (state) => state.selectedBranch,
+    );
 
-  const drawerContent = (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100%",
-        minHeight: 0,
-        overflow: "hidden",
-        bgcolor: "#F5F6F3",
-        borderRadius: "15px",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Logo */}
+    const setSelectedBranch = useBranchStore(
+      (state) => state.setSelectedBranch,
+    );
+
+    const clearBranchContext = useBranchStore(
+      (state) => state.clearBranchContext,
+    );
+
+    const membershipRole = useBranchStore(
+      (state) => state.membershipRole,
+    );
+
+    const canChangeBranch =
+    membershipRole === "OWNER" &&
+    availableBranches.length > 1;
+
+
+    if (!selectedCompany || !selectedBranch) {
+      return <Navigate to="/companies" replace />;
+    }
+
+    const handleNavigate = (path: string) => {
+      navigate(path);
+      setMobileOpen(false);
+    };
+
+    const handleChangeCompany = () => {
+      clearSelectedCompany();
+      clearBranchContext();
+      navigate("/companies", {
+        replace: true,
+      });
+    };
+
+    const handleLogout = () => {
+      logout();
+      clearSelectedCompany();
+      clearBranchContext();
+      navigate("/login", {
+        replace: true,
+      });
+    };
+
+    const drawerContent = (
       <Box
         sx={{
-          flexShrink: 0,
-          px: 2.25,
-          py: 1.75,
-        }}
-      >
-        <Stack
-          direction="row"
-          spacing={1.25}
-          sx={{
-            alignItems: "center",
-          }}
-        >
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              flexShrink: 0,
-              borderRadius: "15px",
-              bgcolor: "primary.light",
-              color: "primary.main",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <Inventory2Rounded />
-          </Box>
-
-          <Typography
-            variant="h6"
-            sx={{
-              flex: 1,
-              fontWeight: 800,
-            }}
-          >
-            SellSys
-          </Typography>
-
-          <IconButton
-            type="button"
-            onClick={() => {
-              setMobileOpen(false);
-            }}
-            sx={{
-              display: {
-                xs: "inline-flex",
-                md: "none",
-              },
-            }}
-          >
-            <ChevronLeftRounded />
-          </IconButton>
-        </Stack>
-      </Box>
-
-      {/* Empresa */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          px: 2.25,
-          pt: 1,
-          pb: 2,
-        }}
-      >
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.secondary",
-            textTransform: "uppercase",
-            letterSpacing: "0.07em",
-          }}
-        >
-          Empresa activa
-        </Typography>
-
-        <Stack
-          direction="row"
-          spacing={1.25}
-          sx={{
-            alignItems: "center",
-            mt: 1.25,
-          }}
-        >
-          <Box
-            sx={{
-              width: 38,
-              height: 38,
-              flexShrink: 0,
-              borderRadius: "15px",
-              bgcolor: "primary.light",
-              color: "primary.main",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <BusinessRounded fontSize="small" />
-          </Box>
-
-          <Box
-            sx={{
-              minWidth: 0,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "0.92rem",
-                fontWeight: 700,
-                lineHeight: 1.2,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {selectedCompany.name}
-            </Typography>
-
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                fontSize: "0.8rem",
-                lineHeight: 1.3,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {selectedCompany.business_type_display}
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Divider />
-
-      {/* Menú */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          px: 2.25,
-          pt: 1.75,
-          pb: 0.5,
-        }}
-      >
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.secondary",
-            textTransform: "uppercase",
-            letterSpacing: "0.07em",
-          }}
-        >
-          Menú
-        </Typography>
-      </Box>
-
-      <List
-        sx={{
-          flex: 1,
+          width: "100%",
+          height: "100%",
           minHeight: 0,
           overflow: "hidden",
-          px: 1.5,
-          py: 0.5,
+          bgcolor: "#F5F6F3",
+          borderRadius: "15px",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        {navigationItems.map((item) => {
-          const isSelected =
-            location.pathname === item.path;
+        {/* Logo */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: 2.25,
+            py: 1.75,
+          }}
+        >
+          <Stack
+            direction="row"
+            spacing={1.25}
+            sx={{
+              alignItems: "center",
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                flexShrink: 0,
+                borderRadius: "15px",
+                bgcolor: "primary.light",
+                color: "primary.main",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <Inventory2Rounded />
+            </Box>
 
-          return (
-            <ListItemButton
-              key={item.path}
-              selected={isSelected}
+            <Typography
+              variant="h6"
+              sx={{
+                flex: 1,
+                fontWeight: 800,
+              }}
+            >
+              SellSys
+            </Typography>
+
+            <IconButton
+              type="button"
               onClick={() => {
-                handleNavigate(item.path);
+                setMobileOpen(false);
               }}
               sx={{
-                minHeight: 42,
-                mb: 0.35,
-                px: 1.25,
+                display: {
+                  xs: "inline-flex",
+                  md: "none",
+                },
+              }}
+            >
+              <ChevronLeftRounded />
+            </IconButton>
+          </Stack>
+        </Box>
+
+        {/* Empresa */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: 2.25,
+            pt: 1,
+            pb: 2,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+            }}
+          >
+            Empresa activa
+          </Typography>
+
+          <Stack
+            direction="row"
+            spacing={1.25}
+            sx={{
+              alignItems: "center",
+              mt: 1.25,
+            }}
+          >
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                flexShrink: 0,
                 borderRadius: "15px",
-                color: isSelected
-                  ? "primary.main"
-                  : "text.secondary",
+                bgcolor: "primary.light",
+                color: "primary.main",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <BusinessRounded fontSize="small" />
+            </Box>
 
-                "& .MuiListItemIcon-root": {
-                  minWidth: 38,
-                  color: "inherit",
-                },
+            <Box
+              sx={{
+                minWidth: 0,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "0.92rem",
+                  fontWeight: 700,
+                  lineHeight: 1.2,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {selectedCompany.name}
+              </Typography>
 
-                "& .MuiSvgIcon-root": {
-                  fontSize: 21,
-                },
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.8rem",
+                  lineHeight: 1.3,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                }}
+              >
+                {selectedCompany.business_type_display}
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
 
-                "&.Mui-selected": {
-                  bgcolor: "primary.light",
-                  color: "primary.main",
-                },
+        <Divider />
 
-                "&.Mui-selected:hover": {
-                  bgcolor: "primary.light",
-                },
+        {/* Menú */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: 2.25,
+            pt: 1.75,
+            pb: 0.5,
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+            }}
+          >
+            Menú
+          </Typography>
+        </Box>
+
+        <List
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+            px: 1.5,
+            py: 0.5,
+          }}
+        >
+          {navigationItems.map((item) => {
+            const isSelected =
+              location.pathname === item.path;
+
+            return (
+              <ListItemButton
+                key={item.path}
+                selected={isSelected}
+                onClick={() => {
+                  handleNavigate(item.path);
+                }}
+                sx={{
+                  minHeight: 42,
+                  mb: 0.35,
+                  px: 1.25,
+                  borderRadius: "15px",
+                  color: isSelected
+                    ? "primary.main"
+                    : "text.secondary",
+
+                  "& .MuiListItemIcon-root": {
+                    minWidth: 38,
+                    color: "inherit",
+                  },
+
+                  "& .MuiSvgIcon-root": {
+                    fontSize: 21,
+                  },
+
+                  "&.Mui-selected": {
+                    bgcolor: "primary.light",
+                    color: "primary.main",
+                  },
+
+                  "&.Mui-selected:hover": {
+                    bgcolor: "primary.light",
+                  },
+
+                  "&:hover": {
+                    bgcolor: "#EAEDE9",
+                    color: "text.primary",
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  {item.icon}
+                </ListItemIcon>
+
+                <Typography
+                  sx={{
+                    fontSize: "0.9rem",
+                    fontWeight: isSelected ? 700 : 500,
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              </ListItemButton>
+            );
+          })}
+        </List>
+
+        {/* Acciones inferiores */}
+        <Box
+          sx={{
+            flexShrink: 0,
+          }}
+        >
+          <Divider />
+
+          <Stack
+            spacing={0.25}
+            sx={{
+              p: 1.5,
+            }}
+          >
+          {canChangeCompany && (
+            <Button
+              type="button"
+              variant="text"
+              fullWidth
+              startIcon={<SwapHorizRounded />}
+              onClick={handleChangeCompany}
+              sx={{
+                minHeight: 40,
+                borderRadius: "15px",
+                justifyContent: "flex-start",
+                color: "text.secondary",
+                fontSize: "0.86rem",
 
                 "&:hover": {
                   bgcolor: "#EAEDE9",
@@ -357,252 +451,293 @@ export function AppLayout() {
                 },
               }}
             >
-              <ListItemIcon>
-                {item.icon}
-              </ListItemIcon>
+              Cambiar empresa
+            </Button>
+          )}
 
-              <Typography
-                sx={{
-                  fontSize: "0.9rem",
-                  fontWeight: isSelected ? 700 : 500,
-                }}
-              >
-                {item.label}
-              </Typography>
-            </ListItemButton>
-          );
-        })}
-      </List>
+            <Button
+              type="button"
+              variant="text"
+              fullWidth
+              startIcon={<LogoutRounded />}
+              onClick={handleLogout}
+              sx={{
+                minHeight: 40,
+                borderRadius: "15px",
+                justifyContent: "flex-start",
+                color: "text.secondary",
+                fontSize: "0.86rem",
 
-      {/* Acciones inferiores */}
-      <Box
-        sx={{
-          flexShrink: 0,
-        }}
-      >
-        <Divider />
-
-        <Stack
-          spacing={0.25}
-          sx={{
-            p: 1.5,
-          }}
-        >
-          <Button
-            type="button"
-            variant="text"
-            fullWidth
-            startIcon={<SwapHorizRounded />}
-            onClick={handleChangeCompany}
-            sx={{
-              minHeight: 40,
-              borderRadius: "15px",
-              justifyContent: "flex-start",
-              color: "text.secondary",
-              fontSize: "0.86rem",
-
-              "&:hover": {
-                bgcolor: "#EAEDE9",
-                color: "text.primary",
-              },
-            }}
-          >
-            Cambiar empresa
-          </Button>
-
-          <Button
-            type="button"
-            variant="text"
-            fullWidth
-            startIcon={<LogoutRounded />}
-            onClick={handleLogout}
-            sx={{
-              minHeight: 40,
-              borderRadius: "15px",
-              justifyContent: "flex-start",
-              color: "text.secondary",
-              fontSize: "0.86rem",
-
-              "&:hover": {
-                bgcolor: "#EAEDE9",
-                color: "text.primary",
-              },
-            }}
-          >
-            Cerrar sesión
-          </Button>
-        </Stack>
+                "&:hover": {
+                  bgcolor: "#EAEDE9",
+                  color: "text.primary",
+                },
+              }}
+            >
+              Cerrar sesión
+            </Button>
+          </Stack>
+        </Box>
       </Box>
-    </Box>
-  );
+    );
 
-  return (
-    <Box
-      sx={{
-        width: "100%",
-        minHeight: "100dvh",
-        bgcolor: "#FFFFFF",
-        display: "flex",
-      }}
-    >
-      {/* Sidebar */}
-      <Box
-        component="nav"
-        sx={{
-          width: {
-            md: SIDEBAR_WIDTH,
-          },
-          flexShrink: {
-            md: 0,
-          },
-        }}
-      >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={() => {
-            setMobileOpen(false);
-          }}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: {
-              xs: "block",
-              md: "none",
-            },
-
-            "& .MuiDrawer-paper": {
-              width: SIDEBAR_WIDTH,
-              height: "100dvh",
-              p: "12px",
-              border: 0,
-              bgcolor: "#FFFFFF",
-              boxSizing: "border-box",
-              overflow: "hidden",
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-
-        <Drawer
-          variant="permanent"
-          open
-          sx={{
-            display: {
-              xs: "none",
-              md: "block",
-            },
-
-            "& .MuiDrawer-paper": {
-              width: SIDEBAR_WIDTH,
-              height: "100dvh",
-              p: "12px",
-              border: 0,
-              bgcolor: "#FFFFFF",
-              boxSizing: "border-box",
-              overflow: "hidden",
-            },
-          }}
-        >
-          {drawerContent}
-        </Drawer>
-      </Box>
-
-      {/* Área derecha */}
+    return (
       <Box
         sx={{
-          flex: 1,
-          minWidth: 0,
-          height: "100dvh",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          gap: "12px",
-          p: {
-            xs: "12px",
-            md: "12px 12px 12px 0",
-          },
+          width: "100%",
+          minHeight: "100dvh",
           bgcolor: "#FFFFFF",
+          display: "flex",
         }}
       >
-        {/* Header */}
+        {/* Sidebar */}
         <Box
+          component="nav"
           sx={{
-            minHeight: 72,
-            flexShrink: 0,
-            px: 2.5,
-            py: 1.5,
-            borderRadius: "15px",
-            bgcolor: "#F5F6F3",
-            display: "flex",
-            alignItems: "center",
+            width: {
+              md: SIDEBAR_WIDTH,
+            },
+            flexShrink: {
+              md: 0,
+            },
           }}
         >
-          <IconButton
-            type="button"
-            onClick={() => {
-              setMobileOpen(true);
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={() => {
+              setMobileOpen(false);
+            }}
+            ModalProps={{
+              keepMounted: true,
             }}
             sx={{
               display: {
-                xs: "inline-flex",
+                xs: "block",
                 md: "none",
               },
-              mr: 1.5,
+
+              "& .MuiDrawer-paper": {
+                width: SIDEBAR_WIDTH,
+                height: "100dvh",
+                p: "12px",
+                border: 0,
+                bgcolor: "#FFFFFF",
+                boxSizing: "border-box",
+                overflow: "hidden",
+              },
             }}
           >
-            <MenuRounded />
-          </IconButton>
+            {drawerContent}
+          </Drawer>
 
-          <Box
+          <Drawer
+            variant="permanent"
+            open
             sx={{
-              minWidth: 0,
-              flex: 1,
+              display: {
+                xs: "none",
+                md: "block",
+              },
+
+              "& .MuiDrawer-paper": {
+                width: SIDEBAR_WIDTH,
+                height: "100dvh",
+                p: "12px",
+                border: 0,
+                bgcolor: "#FFFFFF",
+                boxSizing: "border-box",
+                overflow: "hidden",
+              },
             }}
           >
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                fontSize: "0.82rem",
-              }}
-            >
-              {selectedCompany.name}
-            </Typography>
-
-            <Typography
-              sx={{
-                fontSize: "0.95rem",
-                fontWeight: 700,
-              }}
-            >
-              Hola, {user?.first_name || user?.email}
-            </Typography>
-          </Box>
+            {drawerContent}
+          </Drawer>
         </Box>
 
-        {/* Contenido */}
+        {/* Área derecha */}
         <Box
-          component="main"
           sx={{
             flex: 1,
-            minHeight: 0,
             minWidth: 0,
-            overflowY: "auto",
-            bgcolor: "#F5F6F3",
-            borderRadius: "15px",
+            height: "100dvh",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
             p: {
-              xs: 2,
-              sm: 2.5,
-              lg: 3,
+              xs: "12px",
+              md: "12px 12px 12px 0",
             },
+            bgcolor: "#FFFFFF",
           }}
         >
-          <Outlet />
+          {/* Header */} 
+          <Box
+            sx={{
+              minHeight: 72,
+              flexShrink: 0,
+              px: 2.5,
+              py: 1.5,
+              borderRadius: "15px",
+              bgcolor: "#F5F6F3",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <IconButton
+              type="button"
+              onClick={() => {
+                setMobileOpen(true);
+              }}
+              sx={{
+                display: {
+                  xs: "inline-flex",
+                  md: "none",
+                },
+                mr: 1.5,
+              }}
+            >
+              <MenuRounded />
+            </IconButton>
+
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              spacing={2}
+              sx={{
+                width: "100%",
+                minWidth: 0,
+                alignItems: {
+                  xs: "stretch",
+                  sm: "center",
+                },
+                justifyContent: "space-between",
+              }}
+            >
+              {/* Información del usuario */}
+              <Box
+                sx={{
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.82rem",
+                  }}
+                >
+                  {selectedCompany.name}
+                </Typography>
+
+                <Typography
+                  component="div"
+                  sx={{
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  Hola, {user?.first_name || user?.email}
+                </Typography>
+              </Box>
+
+              {/* Sucursal activa */}
+              {canChangeBranch ? (
+                <TextField
+                  select
+                  size="small"
+                  label="Sucursal activa"
+                  value={selectedBranch.id}
+                  onChange={(event) => {
+                    const branch = availableBranches.find(
+                      (item) => item.id === event.target.value,
+                    );
+
+                    if (branch) {
+                      setSelectedBranch(branch);
+                    }
+                  }}
+                  sx={{
+                    width: {
+                      xs: "100%",
+                      sm: 230,
+                    },
+
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "#FFFFFF",
+                      borderRadius: "15px",
+                    },
+                  }}
+                >
+                  {availableBranches.map((branch) => (
+                    <MenuItem
+                      key={branch.id}
+                      value={branch.id}
+                    >
+                      {branch.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <Box
+                  sx={{
+                    minWidth: {
+                      sm: 180,
+                    },
+                    textAlign: {
+                      xs: "left",
+                      sm: "right",
+                    },
+                  }}
+                >
+                  <Typography
+                    component="div"
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
+                    Sucursal activa
+                  </Typography>
+
+                  <Typography
+                    component="div"
+                    sx={{
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {selectedBranch.name}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Contenido */}
+          <Box
+            component="main"
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              minWidth: 0,
+              overflowY: "auto",
+              bgcolor: "#F5F6F3",
+              borderRadius: "15px",
+              p: {
+                xs: 2,
+                sm: 2.5,
+                lg: 3,
+              },
+            }}
+          >
+            <Outlet />
+          </Box>
         </Box>
       </Box>
-    </Box>
-  );
-}
+    );
+  }

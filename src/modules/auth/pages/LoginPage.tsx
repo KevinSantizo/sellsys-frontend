@@ -32,6 +32,13 @@ import {
 
 import { useAuthStore } from "../store/authStore";
 
+import { getCompanies } from "../../companies/services/companyService";
+import { useCompanyStore } from "../../companies/store/companyStore";
+
+import { getSessionContext } from "../services/sessionContextService";
+import { useBranchStore } from "../../branches/store/branchStore";
+
+
 export function LoginPage() {
   const navigate = useNavigate();
 
@@ -55,6 +62,15 @@ export function LoginPage() {
   const logout = useAuthStore(
     (state) => state.logout,
   );
+
+  const clearSelectedCompany = useCompanyStore(
+    (state) => state.clearSelectedCompany,
+  );
+
+  const clearBranchContext = useBranchStore(
+    (state) => state.clearBranchContext,
+  );
+
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
@@ -81,6 +97,61 @@ export function LoginPage() {
       );
 
       const currentUser = await getCurrentUser();
+      const companies = await getCompanies();
+
+      /*
+      * El usuario no tiene ninguna empresa asignada.
+      */
+      if (companies.length === 0) {
+        logout();
+        clearSelectedCompany();
+        clearBranchContext();
+
+        setLoginError(
+          "Tu usuario no tiene ninguna empresa activa asignada.",
+        );
+
+        return;
+      }
+
+      /*
+      * Si solamente tiene una empresa, resolvemos primero
+      * toda la información de empresa y sucursal.
+      */
+      if (companies.length === 1) {
+        const company = companies[0];
+
+        const context = await getSessionContext(
+          company.id,
+        );
+
+        setSelectedCompany(company);
+
+        setBranchContext(
+          context.branches,
+          context.default_branch,
+          context.membership.role,
+        );
+
+        /*
+        * Marcamos al usuario como autenticado hasta que
+        * empresa y sucursal ya estén listas.
+        */
+        setUser(currentUser);
+
+        navigate("/dashboard", {
+          replace: true,
+        });
+
+        return;
+      }
+
+      /*
+      * Si tiene varias empresas, limpiamos cualquier
+      * selección anterior y mostramos la selección.
+      */
+      clearSelectedCompany();
+      clearBranchContext();
 
       setUser(currentUser);
 
@@ -88,11 +159,9 @@ export function LoginPage() {
         replace: true,
       });
     } catch (error: unknown) {
-      /*
-       * Evita conservar tokens si ocurrió un error
-       * después de intentar iniciar sesión.
-       */
       logout();
+      clearSelectedCompany();
+      clearBranchContext();
 
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
@@ -102,6 +171,10 @@ export function LoginPage() {
         } else if (!error.response) {
           setLoginError(
             "No fue posible conectarse con el servidor. Verifica que Django esté funcionando.",
+          );
+        } else if (error.response?.status === 400) {
+          setLoginError(
+            "No fue posible determinar la empresa o sucursal asignada.",
           );
         } else {
           setLoginError(
@@ -117,6 +190,15 @@ export function LoginPage() {
       setIsSubmitting(false);
     }
   };
+
+  const setSelectedCompany = useCompanyStore(
+    (state) => state.setSelectedCompany,
+  );
+
+  const setBranchContext = useBranchStore(
+    (state) => state.setBranchContext,
+  );
+
 
   return (
     <Box

@@ -16,29 +16,16 @@ import {
   Typography,
 } from "@mui/material";
 
-import {
-  useQuery,
-} from "@tanstack/react-query";
+import { useState } from "react";
+import {useQuery,} from "@tanstack/react-query";
+import {useNavigate,} from "react-router-dom";
+import {useAuthStore,} from "../../auth/store/authStore";
+import {getCompanies,} from "../services/companyService";
+import {useCompanyStore,} from "../store/companyStore";
+import type { Company,} from "../types/company";
 
-import {
-  useNavigate,
-} from "react-router-dom";
-
-import {
-  useAuthStore,
-} from "../../auth/store/authStore";
-
-import {
-  getCompanies,
-} from "../services/companyService";
-
-import {
-  useCompanyStore,
-} from "../store/companyStore";
-
-import type {
-  Company,
-} from "../types/company";
+import { getSessionContext } from "../../auth/services/sessionContextService";
+import { useBranchStore } from "../../branches/store/branchStore";
 
 export function CompanySelectionPage() {
   const navigate = useNavigate();
@@ -68,17 +55,38 @@ export function CompanySelectionPage() {
     queryFn: getCompanies,
   });
 
-  const handleSelectCompany = (
+  const handleSelectCompany = async (
     company: Company,
   ) => {
-    setSelectedCompany(company);
+    setSelectionError(null);
+    setSelectingCompanyId(company.id);
 
-    navigate(
-      "/dashboard",
-      {
+    try {
+      const context = await getSessionContext(
+        company.id,
+      );
+
+      setSelectedCompany(company);
+
+      setBranchContext(
+        context.branches,
+        context.default_branch,
+        context.membership.role,
+      );
+
+      navigate("/dashboard", {
         replace: true,
-      },
-    );
+      });
+    } catch {
+      clearSelectedCompany();
+      clearBranchContext();
+
+      setSelectionError(
+        "No fue posible determinar la sucursal asignada.",
+      );
+    } finally {
+      setSelectingCompanyId(null);
+    }
   };
 
   const handleLogout = () => {
@@ -93,7 +101,14 @@ export function CompanySelectionPage() {
     );
   };
 
+  const setBranchContext = useBranchStore( (state) => state.setBranchContext,);
+  const clearBranchContext = useBranchStore( (state) => state.clearBranchContext, );
+  const [selectionError, setSelectionError] =  useState<string | null>(null);
+  const [selectingCompanyId, setSelectingCompanyId] = useState<string | null>(null);
+  
   return (
+
+    
     <Box
       sx={{
         width: "100%",
@@ -193,6 +208,13 @@ export function CompanySelectionPage() {
                   gap: 3,
                 }}
               >
+
+                {selectionError && (
+                  <Alert severity="error">
+                    {selectionError}
+                  </Alert>
+                )}
+
                 {companies.map((company) => (
                   <Card
                     key={company.id}
@@ -203,6 +225,7 @@ export function CompanySelectionPage() {
                     }}
                   >
                     <CardActionArea
+                      disabled={Boolean(selectingCompanyId)}
                       onClick={() => {
                         handleSelectCompany(
                           company,

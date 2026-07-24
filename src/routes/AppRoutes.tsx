@@ -15,6 +15,8 @@ import {
   PublicOnlyRoute,
 } from "./AuthRoutes";
 
+import { ProductsPage } from "../modules/catalog/products/pages/ProductsPage";
+
 function PendingPage({
   title,
 }: {
@@ -74,9 +76,7 @@ export function AppRoutes() {
 
           <Route
             path="/catalog/products"
-            element={
-              <PendingPage title="Productos" />
-            }
+            element={<ProductsPage />}
           />
 
           <Route
