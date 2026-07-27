@@ -54,7 +54,7 @@ export function PublicOnlyRoute() {
   if (selectedCompany && selectedBranch) {
     return (
       <Navigate
-        to="/dashboard"
+        to="/sales/pos"
         replace
       />
     );

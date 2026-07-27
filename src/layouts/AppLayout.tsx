@@ -10,6 +10,7 @@ import {
   ShoppingBagRounded,
   StoreRounded,
   SwapHorizRounded,
+  PointOfSaleRounded, 
 } from "@mui/icons-material";
 
 import {
@@ -64,6 +65,11 @@ import {
       icon: <DashboardRounded />,
     },
     {
+      label: "Punto de venta",
+      path: "/sales/pos",
+      icon: <PointOfSaleRounded />,
+    },
+    {
       label: "Productos",
       path: "/catalog/products",
       icon: <Inventory2Rounded />,
@@ -88,6 +94,7 @@ import {
       path: "/branches",
       icon: <StoreRounded />,
     },
+
   ];
 
   export function AppLayout() {

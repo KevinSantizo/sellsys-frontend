@@ -5,7 +5,7 @@ import {
 } from "react-router-dom";
 
 import { AppLayout } from "../layouts/AppLayout";
-
+import { SalesPosPage } from "../modules/sales/pages/SalesPosPage";
 import { LoginPage } from "../modules/auth/pages/LoginPage";
 import { CompanySelectionPage } from "../modules/companies/pages/CompanySelectionPage";
 import { DashboardPage } from "../modules/dashboard/pages/DashboardPage";
@@ -72,6 +72,11 @@ export function AppRoutes() {
           <Route
             path="/dashboard"
             element={<DashboardPage />}
+          />
+
+          <Route
+            path="/sales/pos"
+            element={<SalesPosPage />}
           />
 
           <Route

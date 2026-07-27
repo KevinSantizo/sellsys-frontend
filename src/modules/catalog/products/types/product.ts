@@ -21,6 +21,12 @@ export type Product = {
 export type GetProductsParams = {
   companyId: string;
   search?: string;
+  page: number;
+  pageSize: number;
+  isActive?: boolean;
+  categoryId?: string;
+  brandId?: string;
+  productType?: ProductType;
 };
 
 export type ProductFormValues = {
@@ -37,6 +43,17 @@ export type ProductFormValues = {
   track_inventory: boolean;
   is_active: boolean;
 };
+
+export type PaginatedProductsResponse = {
+  count: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  next: string | null;
+  previous: string | null;
+  results: Product[];
+};
+
 
 export type CreateProductPayload = {
   company_id: string;
@@ -72,3 +89,45 @@ export type UnitOption = {
   symbol: string;
   is_active: boolean;
 };
+
+export type CatalogReference = {
+  id: string;
+  name: string;
+};
+
+export type UnitReference = {
+  id: string;
+  name: string;
+  symbol: string;
+};
+
+export type ProductDetail = Product & {
+  description: string;
+
+  category: CatalogReference | null;
+  brand: CatalogReference | null;
+  base_unit: UnitReference | null;
+
+  /*
+   * Se dejan opcionales por si el backend también
+   * devuelve directamente los IDs.
+   */
+  category_id?: string | null;
+  brand_id?: string | null;
+  base_unit_id?: string | null;
+};
+
+export type UpdateProductPayload = Omit<
+  CreateProductPayload,
+  "company_id"
+>;
+
+export type ProductStatusFilter =
+  | "ALL"
+  | "ACTIVE"
+  | "INACTIVE";
+
+
+export type ProductTypeFilter =
+  | "ALL"
+  | ProductType;

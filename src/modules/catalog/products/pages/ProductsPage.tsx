@@ -1,39 +1,36 @@
 import {
   AddRounded,
-  Inventory2Rounded,
-  RefreshRounded,
-  SearchRounded,
-  ClearRounded,
+  FileDownloadOutlined,
+  FileUploadOutlined,
 } from "@mui/icons-material";
 
 import {
   Alert,
   Box,
   Button,
-  Chip,
-  CircularProgress,
-  IconButton,
-  InputAdornment,
   Paper,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 
 import {
+ 
+  type GridPaginationModel,
+} from "@mui/x-data-grid";
+
+ 
+
+import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 
+import axios from "axios";
+
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -41,10 +38,9 @@ import {
 
 import { Navigate } from "react-router-dom";
 
+import { showSuccessAlert, showDeleteProductConfirmation, showErrorAlert,} from "../../../../shared/alerts/appAlerts";
+
 import { useCompanyStore } from "../../../companies/store/companyStore";
-
-
-import axios from "axios";
 
 import { ProductFormDialog } from "../components/ProductFormDialog";
 
@@ -56,36 +52,86 @@ import {
 
 import {
   createProduct,
+  getProductDetail,
   getProducts,
+  updateProduct,
+  deleteProduct,
 } from "../services/productService";
 
 import type {
   Product,
+  ProductDetail,
   ProductFormValues,
+  ProductStatusFilter,
+  ProductTypeFilter,
 } from "../types/product";
 
+import { ProductsGridCard } from "../components/ProductsGridCard";
+
+type SaveProductVariables = {
+  productId: string | null;
+  values: ProductFormValues;
+};
 
 export function ProductsPage() {
+  const queryClient = useQueryClient();
+  const selectedCompany = useCompanyStore( (state) => state.selectedCompany, );
+  const [search, setSearch] = useState("");
+  const [ statusFilter,  setStatusFilter, ] = useState<ProductStatusFilter>("ALL"); 
+  const [ categoryFilter,  setCategoryFilter, ] = useState("ALL");
+  const [ brandFilter, setBrandFilter, ] = useState("ALL");
+  const [ productTypeFilter, setProductTypeFilter,] = useState<ProductTypeFilter>( "ALL",);
 
-    const queryClient = useQueryClient();
+  useEffect(() => {
+    setPaginationModel((current) => ({
+      ...current,
+      page: 0,
+    }));
+  }, [
+    selectedCompany?.id,
+    statusFilter,
+    categoryFilter,
+    brandFilter,
+    productTypeFilter,
+  ]);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    const [isProductDialogOpen, setIsProductDialogOpen] =
-    useState(false);
+  const [
+    paginationModel,
+    setPaginationModel,
+  ] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10,
+  });
 
-    const [createError, setCreateError] =
+  const [
+    isProductDialogOpen,
+    setIsProductDialogOpen,
+  ] = useState(false);
+
+  const [
+    editingProductId,
+    setEditingProductId,
+  ] = useState<string | null>(null);
+
+  const [formError, setFormError] =
     useState<string | null>(null);
 
-  const selectedCompany = useCompanyStore(
-    (state) => state.selectedCompany,
-  );
+  const isEditing = editingProductId !== null;
 
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] =
-    useState("");
 
+  /*
+   * Aplica la búsqueda después de 400 ms.
+   * Al cambiar la búsqueda, regresa a la primera página.
+   */
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       setDebouncedSearch(search.trim());
+
+      setPaginationModel((current) => ({
+        ...current,
+        page: 0,
+      }));
     }, 400);
 
     return () => {
@@ -93,8 +139,21 @@ export function ProductsPage() {
     };
   }, [search]);
 
+  /*
+   * Al cambiar de empresa, regresa a la primera página.
+   */
+  useEffect(() => {
+    setPaginationModel((current) => ({
+      ...current,
+      page: 0,
+    }));
+  }, [selectedCompany?.id]);
+
+  /*
+   * Listado paginado de productos.
+   */
   const {
-    data: products = [],
+    data: productsResponse,
     isLoading,
     isFetching,
     isError,
@@ -104,147 +163,444 @@ export function ProductsPage() {
       "products",
       selectedCompany?.id,
       debouncedSearch,
+      statusFilter,
+      categoryFilter,
+      brandFilter,
+      productTypeFilter,
+      paginationModel.page,
+      paginationModel.pageSize,
     ],
 
     queryFn: () => {
       if (!selectedCompany) {
-        return Promise.resolve([]);
+        throw new Error(
+          "No existe una empresa seleccionada.",
+        );
       }
 
       return getProducts({
         companyId: selectedCompany.id,
         search: debouncedSearch,
+        page: paginationModel.page + 1,
+        pageSize: paginationModel.pageSize,
+        isActive: statusFilter === "ALL"
+          ? undefined
+          : statusFilter === "ACTIVE",
+        categoryId: categoryFilter === "ALL"
+          ? undefined
+          : categoryFilter,
+
+        brandId: brandFilter === "ALL"
+          ? undefined
+          : brandFilter,
+
+          productType: productTypeFilter === "ALL"
+            ? undefined
+            : productTypeFilter,
       });
     },
 
     enabled: Boolean(selectedCompany?.id),
+
+    /*
+     * Mantiene los registros anteriores mientras
+     * se solicita una nueva página.
+     */
+    placeholderData: keepPreviousData,
   });
 
+  const products =
+    productsResponse?.results ?? [];
+
+  const totalProducts =
+    productsResponse?.count ?? 0;
+
+  /*
+   * Opciones del formulario.
+   */
   const categoriesQuery = useQuery({
     queryKey: [
-        "catalog-categories",
-        selectedCompany?.id,
+      "catalog-categories",
+      selectedCompany?.id,
     ],
 
     queryFn: () =>
-        getCategoryOptions(selectedCompany!.id),
+      getCategoryOptions(
+        selectedCompany!.id,
+      ),
 
-    enabled:
-        Boolean(selectedCompany?.id) &&
-        isProductDialogOpen,
-    });
+    enabled: Boolean( selectedCompany?.id, ),
+  });
 
-    const brandsQuery = useQuery({
+  const brandsQuery = useQuery({
     queryKey: [
-        "catalog-brands",
-        selectedCompany?.id,
-    ],
+      "catalog-brands",
+      selectedCompany?.id,
+    ], 
+    queryFn: () => getBrandOptions( selectedCompany!.id, ), 
+    enabled: Boolean(selectedCompany?.id),
+  });
 
-    queryFn: () =>
-        getBrandOptions(selectedCompany!.id),
-
-    enabled:
-        Boolean(selectedCompany?.id) &&
-        isProductDialogOpen,
-    });
-
-    const unitsQuery = useQuery({
+  const unitsQuery = useQuery({
     queryKey: [
-        "catalog-units",
-        selectedCompany?.id,
+      "catalog-units",
+      selectedCompany?.id,
     ],
 
     queryFn: () =>
-        getUnitOptions(selectedCompany!.id),
+      getUnitOptions(
+        selectedCompany!.id,
+      ),
 
     enabled:
-        Boolean(selectedCompany?.id) &&
-        isProductDialogOpen,
-    });
+      Boolean(selectedCompany?.id) &&
+      isProductDialogOpen,
+  });
 
-    const createProductMutation = useMutation({
-        mutationFn: (
-            values: ProductFormValues,
-        ) => {
-            if (!selectedCompany) {
-            throw new Error(
-                "No existe una empresa seleccionada.",
-            );
-            }
+  /*
+   * Detalle del producto que se está editando.
+   */
+  const productDetailQuery = useQuery({
+    queryKey: [
+      "product-detail",
+      editingProductId,
+    ],
 
-            return createProduct({
-            company_id: selectedCompany.id,
-            name: values.name.trim(),
-            description: values.description.trim(),
-            sku: values.sku.trim(),
-            barcode: values.barcode.trim() || null,
-            product_type: values.product_type,
-            category_id: values.category_id || null,
-            brand_id: values.brand_id || null,
-            base_unit_id: values.base_unit_id,
-            cost_price: values.cost_price || "0.00",
-            sale_price: values.sale_price,
-            track_inventory:
-                values.product_type === "SERVICE"
-                ? false
-                : values.track_inventory,
-            is_active: values.is_active,
-            });
-        },
+    queryFn: () =>
+      getProductDetail(
+        editingProductId!,
+      ),
 
-        onSuccess: async () => {
-            setCreateError(null);
-            setIsProductDialogOpen(false);
+    enabled:
+      isProductDialogOpen &&
+      Boolean(editingProductId),
+  });
 
-            await queryClient.invalidateQueries({
-            queryKey: [
-                "products",
-                selectedCompany?.id,
-            ],
-            });
-        },
+  /*
+   * Convierte el detalle del backend en los valores
+   * que necesita ProductFormDialog.
+   */
+  const productInitialValues =
+    useMemo<ProductFormValues | undefined>(
+      () => {
+        const product =
+          productDetailQuery.data;
 
-        onError: (error: unknown) => {
-            if (axios.isAxiosError(error)) {
-            const responseData = error.response?.data;
+        if (!product) {
+          return undefined;
+        }
 
-            if (
-                responseData &&
-                typeof responseData === "object"
-            ) {
-                setCreateError(
-                Object.values(responseData)
-                    .flat()
-                    .join(" "),
-                );
+        return {
+          name: product.name ?? "",
+          description:
+            product.description ?? "",
+          sku: product.sku ?? "",
+          barcode: product.barcode ?? "",
+          product_type:
+            product.product_type,
 
-                return;
-            }
-            }
+          category_id:
+            product.category?.id ??
+            product.category_id ??
+            "",
 
-            setCreateError(
-            "No fue posible crear el producto.",
-            );
-        },
+          brand_id:
+            product.brand?.id ??
+            product.brand_id ??
+            "",
+
+          base_unit_id:
+            product.base_unit?.id ??
+            product.base_unit_id ??
+            "",
+
+          cost_price:
+            product.cost_price ?? "",
+
+          sale_price:
+            product.sale_price ?? "",
+
+          track_inventory:
+            product.track_inventory,
+
+          is_active:
+            product.is_active,
+        };
+      },
+      [productDetailQuery.data],
+    );
+
+  /*
+   * Una sola mutación crea o actualiza productos.
+   */
+  const saveProductMutation = useMutation<
+    ProductDetail,
+    Error,
+    SaveProductVariables
+  >({
+    mutationFn: ({
+      productId,
+      values,
+    }) => {
+      if (!selectedCompany) {
+        throw new Error(
+          "No existe una empresa seleccionada.",
+        );
+      }
+
+      const payload = {
+        name: values.name.trim(),
+        description:
+          values.description.trim(),
+        sku: values.sku.trim(),
+        barcode:
+          values.barcode.trim() || null,
+        product_type:
+          values.product_type,
+        category_id:
+          values.category_id || null,
+        brand_id:
+          values.brand_id || null,
+        base_unit_id:
+          values.base_unit_id,
+        cost_price:
+          values.cost_price || "0.00",
+        sale_price:
+          values.sale_price,
+
+        track_inventory:
+          values.product_type === "SERVICE"
+            ? false
+            : values.track_inventory,
+
+        is_active:
+          values.is_active,
+      };
+
+      if (productId) {
+        return updateProduct(
+          productId,
+          payload,
+        );
+      }
+
+      return createProduct({
+        company_id:
+          selectedCompany.id,
+
+        ...payload,
+      });
+    },
+
+    onSuccess: async (
+      savedProduct,
+      variables,
+    ) => {
+      const wasEditing =
+        variables.productId !== null;
+
+        
+      setFormError(null);
+      setIsProductDialogOpen(false);
+      setEditingProductId(null);
+      
+      if (!wasEditing) {
+        setPaginationModel(
+          (current) => ({
+            ...current,
+            page: 0,
+          }),
+        );
+      }
+
+
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "products",
+          selectedCompany?.id,
+        ],
+      });
+
+      if (variables.productId) {
+        queryClient.removeQueries({
+          queryKey: [
+            "product-detail",
+            variables.productId,
+          ],
         });
+      }
 
-  const currencyFormatter = useMemo(() => {
-    return new Intl.NumberFormat("es-GT", {
-      style: "currency",
-      currency: selectedCompany?.currency ?? "GTQ",
-      minimumFractionDigits: 2,
-    });
-  }, [selectedCompany?.currency]);
+      void showSuccessAlert({
+        title: wasEditing
+          ? "Producto actualizado correctamente"
+          : "Producto guardado correctamente",
 
-  const formatCurrency = (value: string) => {
-    const numberValue = Number(value);
+        text: wasEditing
+          ? `Los cambios de "${savedProduct.name}" se guardaron correctamente.`
+          : `"${savedProduct.name}" ya está disponible en el catálogo.`,
+      });
+    },
 
-    if (Number.isNaN(numberValue)) {
-      return value;
+    onError: (
+      error,
+      variables,
+    ) => {
+      const fallbackMessage =
+        variables.productId
+          ? "No fue posible actualizar el producto."
+          : "No fue posible crear el producto.";
+
+      setFormError(
+        getApiErrorMessage(
+          error,
+          fallbackMessage,
+        ),
+      );
+    },
+  });
+
+  const deleteProductMutation = useMutation<
+  void,
+  Error,
+  Product
+>({
+  mutationFn: (product) =>
+    deleteProduct(product.id),
+
+  onSuccess: async (
+    _data,
+    deletedProduct,
+  ) => {
+    const shouldGoToPreviousPage =
+      products.length === 1 &&
+      paginationModel.page > 0;
+
+    if (shouldGoToPreviousPage) {
+      setPaginationModel(
+        (current) => ({
+          ...current,
+          page: current.page - 1,
+        }),
+      );
     }
 
-    return currencyFormatter.format(numberValue);
+    await queryClient.invalidateQueries({
+      queryKey: [
+        "products",
+        selectedCompany?.id,
+      ],
+    });
+
+    void showSuccessAlert({
+      title: "Producto eliminado",
+      text: `"${deletedProduct.name}" fue eliminado correctamente.`,
+    });
+  },
+
+  onError: (error) => {
+    void showErrorAlert({
+      title: "No fue posible eliminar",
+      text: getApiErrorMessage(
+        error,
+        "El producto podría tener ventas, inventario o movimientos relacionados. Puedes desactivarlo para conservar su historial.",
+      ),
+    });
+  },
+});
+
+
+  const currencyFormatter =
+    useMemo(() => {
+      return new Intl.NumberFormat(
+        "es-GT",
+        {
+          style: "currency",
+          currency:
+            selectedCompany?.currency ??
+            "GTQ",
+          minimumFractionDigits: 2,
+        },
+      );
+    }, [selectedCompany?.currency]);
+
+  const formatCurrency = useCallback(
+    (value: string) => {
+      const numberValue = Number(value);
+
+      if (Number.isNaN(numberValue)) {
+        return value;
+      }
+
+      return currencyFormatter.format(
+        numberValue,
+      );
+    },
+    [currencyFormatter],
+  );
+
+  const handleOpenCreate = () => {
+    setEditingProductId(null);
+    setFormError(null);
+    setIsProductDialogOpen(true);
   };
+
+
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    statusFilter !== "ALL" ||
+    categoryFilter !== "ALL" ||
+    brandFilter !== "ALL" ||
+    productTypeFilter !== "ALL";
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setDebouncedSearch("");
+
+    setStatusFilter("ALL");
+    setCategoryFilter("ALL");
+    setBrandFilter("ALL");
+    setProductTypeFilter("ALL");
+
+    setPaginationModel((current) => ({
+      ...current,
+      page: 0,
+    }));
+  };
+
+  const handleEditProduct = useCallback(
+    (product: Product) => {
+      setFormError(null);
+      setEditingProductId(product.id);
+      setIsProductDialogOpen(true);
+    },
+    [],
+  );
+
+  const handleDeleteProduct = async (
+    product: Product,
+  ) => {
+    const confirmed =
+      await showDeleteProductConfirmation({
+        productName: product.name,
+      });
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteProductMutation.mutate(product);
+  };
+
+  const handleCloseDialog = () => {
+    if (saveProductMutation.isPending) {
+      return;
+    }
+
+    setIsProductDialogOpen(false);
+    setEditingProductId(null);
+    setFormError(null);
+  };
+ 
 
   if (!selectedCompany) {
     return (
@@ -255,21 +611,34 @@ export function ProductsPage() {
     );
   }
 
+  const productDetailError =
+    isEditing &&
+    productDetailQuery.isError
+      ? "No fue posible cargar la información del producto."
+      : null;
+
+  const isLoadingFormOptions =
+    categoriesQuery.isLoading ||
+    brandsQuery.isLoading ||
+    unitsQuery.isLoading;
+
+ 
+
   return (
     <Stack spacing={2.5}>
-      {/* Encabezado */}
       <Stack
         direction={{
           xs: "column",
-          sm: "row",
+          md: "row",
         }}
-        spacing={2}
+        spacing={1.5}
         sx={{
           alignItems: {
             xs: "stretch",
-            sm: "center",
+            md: "center",
           },
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
         }}
       >
         <Box>
@@ -282,9 +651,9 @@ export function ProductsPage() {
               },
               fontWeight: 800,
               mb: 0.4,
-            }}
+          }}
           >
-            Productos
+            Lista de productos
           </Typography>
 
           <Typography
@@ -293,652 +662,217 @@ export function ProductsPage() {
               fontSize: "0.9rem",
             }}
           >
-            Administra los productos y servicios de{" "}
+            Administra el catálogo de{" "}
             {selectedCompany.name}.
           </Typography>
         </Box>
 
-        <Button
-          type="button"
-          variant="contained"
-          startIcon={<AddRounded />}
-          onClick={() => {
-                setCreateError(null);
-                setIsProductDialogOpen(true);
-            }}
-          sx={{
-            borderRadius: "15px",
-            alignSelf: {
-              xs: "stretch",
-              sm: "center",
-            },
-          }}
-        >
-          Nuevo producto
-        </Button>
-      </Stack>
-
-      {/* Buscador */}
-      <Paper
-        variant="outlined"
-        sx={{
-          bgcolor: "#FFFFFF",
-          borderRadius: "15px",
-          borderColor: "divider",
-          p: 1.5,
-        }}
-      >
         <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            alignItems: "center",
+          direction={{
+            xs: "column",
+            sm: "row",
           }}
+          spacing={1}
         >
-          <TextField
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-            }}
-            placeholder="Buscar por nombre, SKU o código de barras"
-            fullWidth
-            size="medium"
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRounded
-                      sx={{
-                        color: "text.secondary",
-                      }}
-                    />
-                  </InputAdornment>
-                ),
-                endAdornment: search && (
-                    <InputAdornment position="end">
-                    <IconButton
-                        onClick={() => setSearch("")}
-                        edge="end"
-                        aria-label="Limpiar búsqueda"
-                    >
-                        <ClearRounded />
-                    </IconButton>
-                    </InputAdornment>
-                ),
-              },
-            }}
+          <Button
+            type="button"
+            variant="outlined"
+            disabled
+            startIcon={
+              <FileUploadOutlined />
+            }
             sx={{
-              "& .MuiOutlinedInput-root": {
-                minHeight: 46,
-                borderRadius: "15px",
-                bgcolor: "#FFFFFF",
-              },
+              borderRadius: "5px",
+              bgcolor: "#FFFFFF",
             }}
-          />
+          >
+            Importar
+          </Button>
 
-          <Tooltip title="Actualizar productos">
-            <span>
-              <IconButton
-                type="button"
-                disabled={isFetching}
-                onClick={() => {
-                  void refetch();
-                }}
-                sx={{
-                  width: 46,
-                  height: 50,
-                  border: "1px solid",
-                  borderColor: "divider",
-                  borderRadius: "15px",
-                  bgcolor: "#FFFFFF",
-                }}
-              >
-                {isFetching ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <RefreshRounded />
-                )}
-              </IconButton>
-            </span>
-          </Tooltip>
+          <Button
+            type="button"
+            variant="outlined"
+            disabled
+            startIcon={
+              <FileDownloadOutlined />
+            }
+            sx={{
+              borderRadius: "5px",
+              bgcolor: "#FFFFFF",
+            }}
+          >
+            Exportar
+          </Button>
+
+          <Button
+            type="button"
+            variant="contained"
+            startIcon={<AddRounded />}
+            onClick={handleOpenCreate}
+            sx={{
+              borderRadius: "5px",
+            }}
+          >
+            Nuevo producto
+          </Button>
         </Stack>
-      </Paper>
-
-      {/* Error */}
+      </Stack>
+ 
       {isError && (
         <Alert severity="error">
-          No fue posible cargar los productos.
+          No fue posible cargar los
+          productos.
         </Alert>
       )}
 
-      {/* Cargando */}
-      {isLoading && (
+      {!isError && (
         <Paper
           variant="outlined"
           sx={{
-            minHeight: 260,
+            width: "100%",
             bgcolor: "#FFFFFF",
             borderRadius: "15px",
             borderColor: "divider",
-            display: "grid",
-            placeItems: "center",
+            overflow: "hidden",
           }}
         >
-          <Stack
-            spacing={1.5}
-            sx={{
-              alignItems: "center",
+          <ProductsGridCard
+            products={products}
+            totalProducts={totalProducts}
+            loading={ isLoading || isFetching || deleteProductMutation.isPending}
+            search={search}
+            statusFilter={statusFilter}
+            categoryFilter={categoryFilter}
+            brandFilter={brandFilter}
+            productTypeFilter={ productTypeFilter }
+            categories={ categoriesQuery.data ?? [] }
+            brands={ brandsQuery.data ?? [] }
+            paginationModel={ paginationModel }
+            hasActiveFilters={ hasActiveFilters }
+            onSearchChange={setSearch}
+            onStatusFilterChange={ setStatusFilter }
+            onCategoryFilterChange={ setCategoryFilter }
+            onBrandFilterChange={ setBrandFilter }
+            onProductTypeFilterChange={ setProductTypeFilter }
+            onPaginationModelChange={ setPaginationModel }
+            onClearFilters={ handleClearFilters }
+            onRefresh={() => {
+              void refetch();
             }}
-          >
-            <CircularProgress />
-
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
-              Cargando productos...
-            </Typography>
-          </Stack>
+            onEdit={handleEditProduct}
+            onDelete={handleDeleteProduct}
+            formatCurrency={formatCurrency}
+          />
         </Paper>
-      )}
-
-      {!isLoading && !isError && products.length === 0 && (
-        <EmptyProductsState
-          hasSearch={Boolean(debouncedSearch)}
-        />
-      )}
-
-      {!isLoading && !isError && products.length > 0 && (
-        <>
-          {/* Tabla para escritorio */}
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{
-              display: {
-                xs: "none",
-                md: "block",
-              },
-              bgcolor: "#FFFFFF",
-              borderRadius: "15px",
-              borderColor: "divider",
-              overflow: "hidden",
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow
-                  sx={{
-                    bgcolor: "#F7F8F6",
-                  }}
-                >
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      Producto
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      Categoría
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      Marca
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      Tipo
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell
-                    sx={{
-                      textAlign: "right",
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      Precio
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      Estado
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {products.map((product) => (
-                  <ProductTableRow
-                    key={product.id}
-                    product={product}
-                    formatCurrency={formatCurrency}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {/* Cards para móviles */}
-          <Stack
-            spacing={1.5}
-            sx={{
-              display: {
-                xs: "flex",
-                md: "none",
-              },
-            }}
-          >
-            {products.map((product) => (
-              <ProductMobileCard
-                key={product.id}
-                product={product}
-                formatCurrency={formatCurrency}
-              />
-            ))}
-          </Stack>
-
-          <Typography
-            variant="body2"
-            sx={{
-              color: "text.secondary",
-            }}
-          >
-            {products.length}{" "}
-            {products.length === 1
-              ? "producto encontrado"
-              : "productos encontrados"}
-          </Typography>
-        </>
       )}
 
       <ProductFormDialog
         open={isProductDialogOpen}
-        isSubmitting={createProductMutation.isPending}
-        isLoadingOptions={
-            categoriesQuery.isLoading ||
-            brandsQuery.isLoading ||
-            unitsQuery.isLoading
+        title={
+          isEditing
+            ? "Editar producto"
+            : "Nuevo producto"
         }
-        submitError={createError}
-        categories={categoriesQuery.data ?? []}
-        brands={brandsQuery.data ?? []}
-        units={unitsQuery.data ?? []}
-        onClose={() => {
-            if (!createProductMutation.isPending) {
-            setIsProductDialogOpen(false);
-            setCreateError(null);
-            }
-        }}
+        submitLabel={
+          isEditing
+            ? "Guardar cambios"
+            : "Guardar producto"
+        }
+        initialValues={
+          isEditing
+            ? productInitialValues
+            : undefined
+        }
+        isLoadingProduct={
+          isEditing &&
+          productDetailQuery.isLoading
+        }
+        isSubmitting={
+          saveProductMutation.isPending
+        }
+        isLoadingOptions={
+          isLoadingFormOptions ||
+          Boolean(productDetailError)
+        }
+        submitError={
+          formError ??
+          productDetailError
+        }
+        categories={
+          categoriesQuery.data ?? []
+        }
+        brands={
+          brandsQuery.data ?? []
+        }
+        units={
+          unitsQuery.data ?? []
+        }
+        onClose={handleCloseDialog}
         onSubmit={(values) => {
-            setCreateError(null);
-            createProductMutation.mutate(values);
+          setFormError(null);
+
+          if (
+            isEditing &&
+            !productDetailQuery.data
+          ) {
+            setFormError(
+              "No fue posible cargar la información del producto.",
+            );
+
+            return;
+          }
+
+          saveProductMutation.mutate({
+            productId:
+              editingProductId,
+            values,
+          });
         }}
-        />
-    </Stack> 
-  );
-
-  
-}
-
-type ProductRowProps = {
-  product: Product;
-  formatCurrency: (value: string) => string;
-};
-
-function ProductTableRow({
-  product,
-  formatCurrency,
-}: ProductRowProps) {
-  return (
-    <TableRow
-      hover
-      sx={{
-        "&:last-child td": {
-          borderBottom: 0,
-        },
-      }}
-    >
-      <TableCell>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            alignItems: "center",
-          }}
-        >
-          <Box
-            sx={{
-              width: 38,
-              height: 38,
-              flexShrink: 0,
-              borderRadius: "15px",
-              bgcolor: "primary.light",
-              color: "primary.main",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <Inventory2Rounded fontSize="small" />
-          </Box>
-
-          <Box
-            sx={{
-              minWidth: 0,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "0.9rem",
-                fontWeight: 700,
-              }}
-            >
-              {product.name}
-            </Typography>
-
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-                fontSize: "0.78rem",
-              }}
-            >
-              SKU: {product.sku}
-            </Typography>
-
-            {product.barcode && (
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.75rem",
-                }}
-              >
-                Código: {product.barcode}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
-      </TableCell>
-
-      <TableCell>
-        {product.category_name ?? "Sin categoría"}
-      </TableCell>
-
-      <TableCell>
-        {product.brand_name ?? "Sin marca"}
-      </TableCell>
-
-      <TableCell>
-        <Chip
-          label={product.product_type_display}
-          size="small"
-          variant="outlined"
-          sx={{
-            borderRadius: "5px",
-          }}
-        />
-      </TableCell>
-
-      <TableCell
-        sx={{
-          textAlign: "right",
-          whiteSpace: "nowrap",
-          fontWeight: 700,
-        }}
-      >
-        {formatCurrency(product.sale_price)}
-      </TableCell>
-
-      <TableCell>
-        <Chip
-          label={product.is_active ? "Activo" : "Inactivo"}
-          size="small"
-          color={product.is_active ? "primary" : "default"}
-          sx={{
-            borderRadius: "5px",
-          }}
-        />
-      </TableCell>
-    </TableRow>
+      />
+    </Stack>
   );
 }
+ 
+function getApiErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+): string {
+  if (!axios.isAxiosError(error)) {
+    return fallbackMessage;
+  }
 
-function ProductMobileCard({
-  product,
-  formatCurrency,
-}: ProductRowProps) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        bgcolor: "#FFFFFF",
-        borderRadius: "5px",
-        borderColor: "divider",
-        p: 2,
-      }}
-    >
-      <Stack spacing={1.5}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            alignItems: "flex-start",
-          }}
-        >
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              flexShrink: 0,
-              borderRadius: "5px",
-              bgcolor: "primary.light",
-              color: "primary.main",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <Inventory2Rounded fontSize="small" />
-          </Box>
-
-          <Box
-            sx={{
-              minWidth: 0,
-              flex: 1,
-            }}
-          >
-            <Typography
-              sx={{
-                fontWeight: 700,
-              }}
-            >
-              {product.name}
-            </Typography>
-
-            <Typography
-              variant="body2"
-              sx={{
-                color: "text.secondary",
-              }}
-            >
-              {product.sku}
-            </Typography>
-          </Box>
-
-          <Chip
-            label={product.is_active ? "Activo" : "Inactivo"}
-            size="small"
-            color={product.is_active ? "primary" : "default"}
-            sx={{
-              borderRadius: "5px",
-            }}
-          />
-        </Stack>
-
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 1.5,
-          }}
-        >
-          <ProductData
-            label="Categoría"
-            value={product.category_name ?? "Sin categoría"}
-          />
-
-          <ProductData
-            label="Marca"
-            value={product.brand_name ?? "Sin marca"}
-          />
-
-          <ProductData
-            label="Tipo"
-            value={product.product_type_display}
-          />
-
-          <ProductData
-            label="Precio"
-            value={formatCurrency(product.sale_price)}
-          />
-        </Box>
-      </Stack>
-    </Paper>
+  const messages = flattenErrorMessages(
+    error.response?.data,
   );
+
+  if (messages.length === 0) {
+    return fallbackMessage;
+  }
+
+  return messages.join(" ");
 }
 
-type ProductDataProps = {
-  label: string;
-  value: string;
-};
+function flattenErrorMessages(
+  value: unknown,
+): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
 
-function ProductData({
-  label,
-  value,
-}: ProductDataProps) {
-  return (
-    <Box>
-      <Typography
-        variant="caption"
-        sx={{
-          color: "text.secondary",
-        }}
-      >
-        {label}
-      </Typography>
+  if (Array.isArray(value)) {
+    return value.flatMap(
+      flattenErrorMessages,
+    );
+  }
 
-      <Typography
-        variant="body2"
-        sx={{
-          fontWeight: 600,
-        }}
-      >
-        {value}
-      </Typography>
-    </Box>
-  );
-}
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+    return Object.values(value).flatMap(
+      flattenErrorMessages,
+    );
+  }
 
-function EmptyProductsState({
-  hasSearch,
-}: {
-  hasSearch: boolean;
-}) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        minHeight: 260,
-        bgcolor: "#FFFFFF",
-        borderRadius: "15px",
-        borderColor: "divider",
-        display: "grid",
-        placeItems: "center",
-        p: 3,
-      }}
-    >
-      <Stack
-        spacing={1.5}
-        sx={{
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        <Box
-          sx={{
-            width: 54,
-            height: 54,
-            borderRadius: "15px",
-            bgcolor: "primary.light",
-            color: "primary.main",
-            display: "grid",
-            placeItems: "center",
-          }}
-        >
-          <Inventory2Rounded />
-        </Box>
-
-        <Typography
-          sx={{
-            fontWeight: 700,
-          }}
-        >
-          {hasSearch
-            ? "No se encontraron productos"
-            : "Todavía no hay productos"}
-        </Typography>
-
-        <Typography
-          variant="body2"
-          sx={{
-            maxWidth: 360,
-            color: "text.secondary",
-          }}
-        >
-          {hasSearch
-            ? "Prueba con otro nombre, SKU o código de barras."
-            : "Los productos creados para esta empresa aparecerán aquí."}
-        </Typography>
-      </Stack>
-    </Paper>
-  );
+  return [];
 }
