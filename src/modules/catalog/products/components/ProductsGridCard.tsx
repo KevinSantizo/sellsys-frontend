@@ -239,6 +239,71 @@ export function ProductsGridCard({
           ),
         },
         {
+          field: "current_stock",
+          headerName: "Stock",
+          description:
+            "Existencia disponible en la sucursal activa",
+          width: 125,
+          align: "center",
+          headerAlign: "center",
+          sortable: false,
+
+          renderCell: ({ row }) => {
+            if (!row.track_inventory) {
+              return (
+                <Chip
+                  label="No aplica"
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    height: 26,
+                    borderRadius: "5px",
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                  }}
+                />
+              );
+            }
+
+            const stock = Number(
+              row.current_stock ?? 0,
+            );
+
+            const hasStock = stock > 0;
+
+            return (
+              <Chip
+                label={`${stock.toLocaleString(
+                  "es-GT",
+                  {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 3,
+                  },
+                )}${
+                  row.base_unit_symbol
+                    ? ` ${row.base_unit_symbol}`
+                    : ""
+                }`}
+                size="small"
+                sx={{
+                  height: 26,
+                  borderRadius: "5px",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+
+                  color: hasStock
+                    ? "#166534"
+                    : "#991B1B",
+
+                  bgcolor: hasStock
+                    ? "#DCFCE7"
+                    : "#FEE2E2",
+                }}
+              />
+            );
+          },
+        },
+        {
           field: "sale_price",
           headerName: "Precio",
           width: 140,

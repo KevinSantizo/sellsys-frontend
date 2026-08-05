@@ -16,10 +16,12 @@ export type Product = {
   sale_price: string;
   track_inventory: boolean;
   is_active: boolean;
+  current_stock: string;
 };
 
 export type GetProductsParams = {
   companyId: string;
+  branchId?: string;
   search?: string;
   page: number;
   pageSize: number;

@@ -68,6 +68,10 @@ import type {
 
 import { ProductsGridCard } from "../components/ProductsGridCard";
 
+import {
+  useBranchStore,
+} from "../../../branches/store/branchStore";
+
 type SaveProductVariables = {
   productId: string | null;
   values: ProductFormValues;
@@ -81,6 +85,8 @@ export function ProductsPage() {
   const [ categoryFilter,  setCategoryFilter, ] = useState("ALL");
   const [ brandFilter, setBrandFilter, ] = useState("ALL");
   const [ productTypeFilter, setProductTypeFilter,] = useState<ProductTypeFilter>( "ALL",);
+
+  const selectedBranch =  useBranchStore( (state) => state.selectedBranch,);
 
   useEffect(() => {
     setPaginationModel((current) => ({
@@ -149,6 +155,15 @@ export function ProductsPage() {
     }));
   }, [selectedCompany?.id]);
 
+  useEffect(() => {
+    setPaginationModel(
+      (current) => ({
+        ...current,
+        page: 0,
+      }),
+    );
+  }, [selectedBranch?.id]);
+
   /*
    * Listado paginado de productos.
    */
@@ -162,6 +177,7 @@ export function ProductsPage() {
     queryKey: [
       "products",
       selectedCompany?.id,
+      selectedBranch?.id,
       debouncedSearch,
       statusFilter,
       categoryFilter,
@@ -180,6 +196,7 @@ export function ProductsPage() {
 
       return getProducts({
         companyId: selectedCompany.id,
+        branchId: selectedBranch!.id,
         search: debouncedSearch,
         page: paginationModel.page + 1,
         pageSize: paginationModel.pageSize,
@@ -200,7 +217,9 @@ export function ProductsPage() {
       });
     },
 
-    enabled: Boolean(selectedCompany?.id),
+    enabled:
+      Boolean(selectedCompany?.id) &&
+      Boolean(selectedBranch?.id),
 
     /*
      * Mantiene los registros anteriores mientras

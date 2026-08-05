@@ -10,6 +10,7 @@ import type {
 
 export async function getProducts({
   companyId,
+  branchId,
   search,
   page,
   pageSize,
