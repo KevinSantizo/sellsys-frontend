@@ -279,11 +279,7 @@ export function ProductsGridCard({
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 3,
                   },
-                )}${
-                  row.base_unit_symbol
-                    ? ` ${row.base_unit_symbol}`
-                    : ""
-                }`}
+                )} `}
                 size="small"
                 sx={{
                   height: 26,
