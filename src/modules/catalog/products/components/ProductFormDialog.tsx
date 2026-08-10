@@ -36,7 +36,9 @@ type ProductFormDialogProps = {
   open: boolean;
   title: string;
   submitLabel: string;
-  initialValues?: ProductFormValues;
+  initialValues?: ProductFormValues; 
+  isEditing: boolean;
+  branchName: string;
   isSubmitting: boolean;
   isLoadingOptions: boolean;
   isLoadingProduct: boolean;
@@ -61,6 +63,7 @@ const emptyProductValues: ProductFormValues = {
   sale_price: "",
   track_inventory: true,
   is_active: true,
+  initial_stock: "0",
 };
 
 export function ProductFormDialog({
@@ -68,6 +71,8 @@ export function ProductFormDialog({
   title,
   submitLabel,
   initialValues,
+  isEditing,
+  branchName,
   isSubmitting,
   isLoadingOptions,
   isLoadingProduct,
@@ -118,6 +123,11 @@ export function ProductFormDialog({
       product_type: productType,
       track_inventory:
         productType === "PRODUCT",
+
+      initial_stock:
+      productType === "PRODUCT"
+        ? current.initial_stock
+        : "0",
     }));
   };
 
@@ -176,6 +186,28 @@ export function ProductFormDialog({
       );
 
       return;
+    }
+
+    if (
+      !isEditing &&
+      values.product_type === "PRODUCT" &&
+      values.track_inventory
+    ) {
+      const initialStock = Number(
+        values.initial_stock,
+      );
+
+      if (
+        values.initial_stock === "" ||
+        !Number.isFinite(initialStock) ||
+        initialStock < 0
+      ) {
+        setValidationError(
+          "Debes ingresar un stock inicial válido.",
+        );
+
+        return;
+      }
     }
 
     onSubmit(values);
@@ -423,6 +455,38 @@ export function ProductFormDialog({
                     </MenuItem>
                   ))}
                 </TextField>
+
+                {!isEditing &&
+                values.product_type === "PRODUCT" &&
+                values.track_inventory && (
+                  <TextField
+                    label="Stock inicial"
+                    type="number"
+                    value={values.initial_stock}
+                    onChange={(event) => {
+                      updateValue(
+                        "initial_stock",
+                        event.target.value,
+                      );
+                    }}
+                    helperText={
+                      `Existencia inicial en ${branchName}`
+                    }
+                    fullWidth
+                    disabled={isSubmitting}
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                        step: "0.001",
+                      },
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "5px",
+                      },
+                    }}
+                  />
+                )}
 
                 <TextField
                   label="Costo"

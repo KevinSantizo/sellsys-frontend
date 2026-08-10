@@ -25,6 +25,7 @@ export async function getProducts({
       {
         params: {
           company_id: companyId,
+          branch_id: branchId,
           search: search || undefined,
           page,
           page_size: pageSize,

@@ -72,6 +72,7 @@ import {
   useBranchStore,
 } from "../../../branches/store/branchStore";
 
+ 
 type SaveProductVariables = {
   productId: string | null;
   values: ProductFormValues;
@@ -87,7 +88,7 @@ export function ProductsPage() {
   const [ productTypeFilter, setProductTypeFilter,] = useState<ProductTypeFilter>( "ALL",);
 
   const selectedBranch =  useBranchStore( (state) => state.selectedBranch,);
-
+ 
   useEffect(() => {
     setPaginationModel((current) => ({
       ...current,
@@ -194,9 +195,15 @@ export function ProductsPage() {
         );
       }
 
+      if (!selectedBranch) {
+        throw new Error(
+          "No existe una sucursal seleccionada.",
+        );
+      }
+
       return getProducts({
         companyId: selectedCompany.id,
-        branchId: selectedBranch!.id,
+        branchId: selectedBranch.id,
         search: debouncedSearch,
         page: paginationModel.page + 1,
         pageSize: paginationModel.pageSize,
@@ -344,6 +351,7 @@ export function ProductsPage() {
 
           is_active:
             product.is_active,
+            initial_stock: "0",
         };
       },
       [productDetailQuery.data],
@@ -400,12 +408,29 @@ export function ProductsPage() {
         return updateProduct(
           productId,
           payload,
+          
         );
       }
+
+        const branch = selectedBranch;
+
+        if (!branch) {
+          throw new Error(
+            "No existe una sucursal seleccionada.",
+          );
+        }
 
       return createProduct({
         company_id:
           selectedCompany.id,
+
+          branch_id:
+            selectedBranch.id || null,
+
+          initial_stock:
+            values.track_inventory
+              ? values.initial_stock
+              : "0",
 
         ...payload,
       });
@@ -787,46 +812,65 @@ export function ProductsPage() {
 
       <ProductFormDialog
         open={isProductDialogOpen}
+
         title={
           isEditing
             ? "Editar producto"
             : "Nuevo producto"
         }
+
         submitLabel={
           isEditing
             ? "Guardar cambios"
             : "Guardar producto"
         }
+
+        isEditing={isEditing}
+
+        branchName={
+          selectedBranch?.name ??
+          "Sucursal activa"
+        }
+
         initialValues={
           isEditing
             ? productInitialValues
             : undefined
         }
+
         isLoadingProduct={
           isEditing &&
           productDetailQuery.isLoading
         }
+
         isSubmitting={
           saveProductMutation.isPending
         }
+
         isLoadingOptions={
           isLoadingFormOptions ||
           Boolean(productDetailError)
         }
+
         submitError={
           formError ??
           productDetailError
         }
+
         categories={
           categoriesQuery.data ?? []
         }
+
         brands={
           brandsQuery.data ?? []
         }
+
         units={
           unitsQuery.data ?? []
         }
+
         onClose={handleCloseDialog}
+
         onSubmit={(values) => {
           setFormError(null);
 

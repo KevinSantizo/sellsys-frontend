@@ -44,6 +44,7 @@ export type ProductFormValues = {
   sale_price: string;
   track_inventory: boolean;
   is_active: boolean;
+  initial_stock: string;
 };
 
 export type PaginatedProductsResponse = {
@@ -71,7 +72,11 @@ export type CreateProductPayload = {
   sale_price: string;
   track_inventory: boolean;
   is_active: boolean;
+  initial_stock: string;
+  branch_id: string | null;
 };
+
+
 
 export type CategoryOption = {
   id: string;
@@ -121,7 +126,7 @@ export type ProductDetail = Product & {
 
 export type UpdateProductPayload = Omit<
   CreateProductPayload,
-  "company_id"
+  "company_id" | "initial_stock" | "branch_id"
 >;
 
 export type ProductStatusFilter =
