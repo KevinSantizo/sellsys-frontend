@@ -21,6 +21,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Paper,
+  Stack,
 } from "@mui/material";
 
 import {
@@ -50,22 +52,14 @@ import {
 
 import axios from "axios";
 
-import {
-  CheckoutSaleDialog,
-  type CheckoutFormValues,
-} from "../components/CheckoutSaleDialog";
+import { CheckoutSaleDialog, type CheckoutFormValues, } from "../components/CheckoutSaleDialog";
 
 import { checkoutSale } from "../services/salesService";
 
-import type {
-  SaleDetail,
-} from "../types/sales.types";
+import type { SaleDetail, } from "../types/sales.types";
 
 
-import {
-  showErrorAlert,
-  showSuccessAlert,
-} from "../../../shared/alerts/appAlerts";
+import { showErrorAlert, showSuccessAlert, } from "../../../shared/alerts/appAlerts";
 
 
 function formatCurrency(
@@ -141,64 +135,48 @@ function getCheckoutErrorMessage(
 
 export function SalesPosPage() {
 
+  const formatQuantity = (value: string | number) => {
+    const quantity = Number(value);
+
+    if (Number.isInteger(quantity)) {
+      return quantity.toString();
+    }
+
+    return quantity.toLocaleString("es-GT", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 3,
+    });
+  };
+
   const [ checkoutOpen, setCheckoutOpen, ] = useState(false);
   const selectedCompany =
-    useCompanyStore(
-      (state) => state.selectedCompany,
-    );
+    useCompanyStore( (state) => state.selectedCompany, );
 
-  const selectedBranch =
-    useBranchStore(
-      (state) => state.selectedBranch,
-    );
+  const selectedBranch = useBranchStore( (state) => state.selectedBranch, );
 
-  const items =
-    useSalesCartStore(
-      (state) => state.items,
-    );
+  const items = useSalesCartStore( (state) => state.items, );
 
-  const addProduct =
-    useSalesCartStore(
-      (state) => state.addProduct,
-    );
+  const addProduct = useSalesCartStore( (state) => state.addProduct, );
 
-  const increaseQuantity =
-    useSalesCartStore(
-      (state) => state.increaseQuantity,
-    );
+  const increaseQuantity = useSalesCartStore( (state) => state.increaseQuantity, );
 
-  const decreaseQuantity =
-    useSalesCartStore(
-      (state) => state.decreaseQuantity,
-    );
+  const decreaseQuantity = useSalesCartStore( (state) => state.decreaseQuantity, );
 
-  const updateQuantity =
-    useSalesCartStore(
-      (state) => state.updateQuantity,
-    );
+  const updateQuantity = useSalesCartStore( (state) => state.updateQuantity, );
 
-  const updateDiscount =
-    useSalesCartStore(
-      (state) => state.updateDiscount,
-    );
+  const updateDiscount = useSalesCartStore( (state) => state.updateDiscount, );
 
-  const removeProduct =
-    useSalesCartStore(
-      (state) => state.removeProduct,
-    );
+  const removeProduct = useSalesCartStore( (state) => state.removeProduct, );
 
-  const clearCart =
-    useSalesCartStore(
-      (state) => state.clearCart,
-    );
+  const clearCart =  useSalesCartStore( (state) => state.clearCart, );
 
-  const [search, setSearch] =
-    useState("");
+  const [search, setSearch] = useState("");
 
-  const [
-    debouncedSearch,
-    setDebouncedSearch,
-  ] = useState("");
+  const [ debouncedSearch, setDebouncedSearch, ] = useState("");
+
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const [isBarcodeSearching, setIsBarcodeSearching] = useState(false);
 
   useEffect(() => {
     const timeout = window.setTimeout(
@@ -219,25 +197,51 @@ export function SalesPosPage() {
     Boolean(selectedCompany?.id) &&
     debouncedSearch.length >= 2;
 
-  const productsQuery = useQuery({
-    queryKey: [
-      "sales-product-search",
-      selectedCompany?.id,
-      debouncedSearch,
-    ],
+const productsQuery = useQuery({
+  queryKey: [
+    "sales-product-search",
+    selectedCompany?.id,
+    selectedBranch?.id,
+    debouncedSearch,
+  ],
 
-    queryFn: () =>
-      getProducts({
-        companyId:
-          selectedCompany!.id,
-        search: debouncedSearch,
-        page: 1,
-        pageSize: 12,
-        isActive: true,
-      }),
+  queryFn: () => {
+    if (
+      !selectedCompany ||
+      !selectedBranch
+    ) {
+      throw new Error(
+        "Empresa o sucursal no seleccionada.",
+      );
+    }
 
-    enabled: canSearch,
-  });
+    return getProducts({
+      companyId:
+        selectedCompany.id,
+
+      branchId:
+        selectedBranch.id,
+
+      search:
+        debouncedSearch,
+
+      page: 1,
+      pageSize: 12,
+      isActive: true,
+    });
+  },
+
+  enabled:
+    Boolean(selectedCompany?.id) &&
+    Boolean(selectedBranch?.id) &&
+    canSearch,
+});
+
+const suggestedProducts =
+  productsQuery.data?.results ?? [];
+
+const isSearchingProducts =
+  productsQuery.isFetching;
 
   const products =
     productsQuery.data?.results ?? [];
@@ -396,10 +400,86 @@ export function SalesPosPage() {
     [items],
   );
 
+  const addProductByBarcode = async (
+    barcode: string,
+  ) => {
+    const normalizedBarcode =
+      barcode.trim();
+
+    if (
+      !normalizedBarcode ||
+      !selectedCompany ||
+      !selectedBranch
+    ) {
+      return false;
+    }
+
+    setSearchError(null);
+    setIsBarcodeSearching(true);
+
+    try {
+      const response =
+        await getProducts({
+          companyId:
+            selectedCompany.id,
+
+          branchId:
+            selectedBranch.id,
+
+          search:
+            normalizedBarcode,
+
+          page: 1,
+          pageSize: 10,
+
+          isActive: true,
+        });
+
+      const product =
+        response.results.find(
+          (item) =>
+            item.barcode?.trim() ===
+            normalizedBarcode,
+        );
+
+      if (!product) {
+        return false;
+      }
+
+      handleAddProduct(product);
+
+      return true;
+    } catch {
+      setSearchError(
+        "No fue posible buscar el producto.",
+      );
+
+      return false;
+    } finally {
+      setIsBarcodeSearching(false);
+    }
+  };
+
   const handleAddProduct = (
     product: Product,
   ) => {
+    setSearchError(null);
+
+    if (
+      product.track_inventory &&
+      Number(product.current_stock) <= 0
+    ) {
+      setSearchError(
+        `"${product.name}" no tiene existencias disponibles.`,
+      );
+
+      return;
+    }
+
     addProduct(product);
+
+    setSearch("");
+    setDebouncedSearch("");
   };
 
   return (
@@ -485,6 +565,8 @@ export function SalesPosPage() {
               borderRadius: "5px",
             }}
           >
+          {false &&  ( 
+             <>
             <CardContent>
               <Typography
                 variant="h6"
@@ -503,6 +585,51 @@ export function SalesPosPage() {
                   setSearch(
                     event.target.value,
                   );
+                }}
+                onKeyDown={async (event) => {
+                  if (event.key !== "Enter") {
+                    return;
+                  }
+
+                  event.preventDefault();
+
+                  const value =
+                    search.trim();
+
+                  if (!value) {
+                    return;
+                  }
+
+                  const added =
+                    await addProductByBarcode(
+                      value,
+                    );
+
+                  if (added) {
+                    return;
+                  } 
+                }}
+                onPaste={(event) => {
+                  const pastedValue =
+                    event.clipboardData
+                      .getData("text")
+                      .trim();
+
+                  if (!pastedValue) {
+                    return;
+                  }
+
+                  event.preventDefault();
+
+                  setSearch(pastedValue);
+
+                  void addProductByBarcode(
+                    pastedValue,
+                  ).then((added) => {
+                    if (!added) {
+                      setSearch(pastedValue);
+                    }
+                  });
                 }}
                 placeholder="Buscar por nombre, SKU o código de barras"
                 slotProps={{
@@ -803,6 +930,7 @@ export function SalesPosPage() {
                 </Box>
               )}
             </CardContent>
+            </>)}
           </Card>
 
           {/* Carrito */}
@@ -864,6 +992,257 @@ export function SalesPosPage() {
 
               <Divider />
 
+              <Box
+                sx={{
+                  position: "relative",
+                  mb: 2,
+                }}
+              >
+                <TextField
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(
+                      event.target.value,
+                    );
+
+                    setSearchError(null);
+                  }}
+                  onKeyDown={async (event) => {
+                    if (event.key !== "Enter") {
+                      return;
+                    }
+
+                    event.preventDefault();
+
+                    const value =
+                      search.trim();
+
+                    if (!value) {
+                      return;
+                    }
+
+                    await addProductByBarcode(
+                      value,
+                    );
+                  }}
+                  onPaste={(event) => {
+                    const pastedValue =
+                      event.clipboardData
+                        .getData("text")
+                        .trim();
+
+                    if (!pastedValue) {
+                      return;
+                    }
+
+                    event.preventDefault();
+
+                    setSearch(pastedValue);
+
+                    void addProductByBarcode(
+                      pastedValue,
+                    ).then((added) => {
+                      if (!added) {
+                        setSearch(
+                          pastedValue,
+                        );
+                      }
+                    });
+                  }}
+                  placeholder={
+                    "Escanea un código o busca por nombre, SKU o código de barras"
+                  }
+                  fullWidth
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchRounded />
+                        </InputAdornment>
+                      ),
+
+                      endAdornment:
+                        isSearchingProducts ||
+                        isBarcodeSearching ? (
+                          <InputAdornment position="end">
+                            <CircularProgress
+                              size={18}
+                            />
+                          </InputAdornment>
+                        ) : null,
+                    },
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "5px",
+                    },
+                  }}
+                />
+
+                {search.trim().length >= 2 &&
+                  suggestedProducts.length > 0 && (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        position: "absolute",
+                        top: "calc(100% + 4px)",
+                        left: 0,
+                        right: 0,
+                        zIndex: 20,
+
+                        maxHeight: 320,
+                        overflowY: "auto",
+
+                        borderRadius: "5px",
+
+                        boxShadow:
+                          "0 8px 24px rgba(0,0,0,0.10)",
+                      }}
+                    >
+                      {suggestedProducts.map(
+                        (product) => {
+                          const stock =
+                            Number(
+                              product.current_stock ??
+                                0,
+                            );
+
+                          const noStock =
+                            product.track_inventory &&
+                            stock <= 0;
+
+                          return (
+                            <Button
+                              key={product.id}
+                              type="button"
+                              disabled={noStock}
+                              onClick={() => {
+                                handleAddProduct(
+                                  product,
+                                );
+                              }}
+                              sx={{
+                                width: "100%",
+
+                                px: 2,
+                                py: 1.25,
+
+                                borderRadius: 0,
+
+                                justifyContent:
+                                  "space-between",
+
+                                textAlign: "left",
+
+                                color: "text.primary",
+
+                                textTransform: "none",
+
+                                borderBottom:
+                                  "1px solid",
+
+                                borderColor:
+                                  "divider",
+
+                                "&:last-child": {
+                                  borderBottom: 0,
+                                },
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  minWidth: 0,
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontWeight: 700,
+                                    fontSize:
+                                      "0.9rem",
+
+                                    overflow:
+                                      "hidden",
+
+                                    textOverflow:
+                                      "ellipsis",
+
+                                    whiteSpace:
+                                      "nowrap",
+                                  }}
+                                >
+                                  {product.name}
+                                </Typography>
+
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color:
+                                      "text.secondary",
+
+                                    fontSize:
+                                      "0.76rem",
+                                  }}
+                                >
+                                  SKU:{" "}
+                                  {product.sku}
+                                  {product.barcode
+                                    ? ` · ${product.barcode}`
+                                    : ""}
+                                </Typography>
+                              </Box>
+
+                              <Stack
+                                spacing={0.25}
+                                sx={{
+                                  flexShrink: 0,
+                                  ml: 2,
+                                  alignItems:
+                                    "flex-end",
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  {formatCurrency(
+                                    Number(product.sale_price),
+                                  )}
+                                </Typography>
+
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: noStock
+                                      ? "error.main"
+                                      : "text.secondary",
+                                  }}
+                                >
+                                  {product.track_inventory
+                                    ? `Stock: ${stock}`
+                                    : "Servicio"}
+                                </Typography>
+                              </Stack>
+                            </Button>
+                          );
+                        },
+                      )}
+                    </Paper>
+                  )}
+
+                {searchError && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "block",
+                      mt: 0.75,
+                      color: "error.main",
+                    }}
+                  >
+                    {searchError}
+                  </Typography>
+                )}
+              </Box>
               {items.length === 0 ? (
                 <Box
                   sx={{
@@ -1017,7 +1396,7 @@ export function SalesPosPage() {
                               <TextField
                                 type="number"
                                 size="small"
-                                value={item.quantity}
+                                value={formatQuantity(item.quantity)}
                                 onChange={(event) => {
                                   updateQuantity(
                                     item.product.id,

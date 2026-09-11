@@ -6,7 +6,6 @@ import {
   Inventory2Rounded,
   RefreshRounded,
   SearchRounded,
-  FilterAltOffRounded,
   CleaningServicesOutlined,
   DeleteOutlineRounded,
 } from "@mui/icons-material";
@@ -756,12 +755,8 @@ export function ProductsGridCard({
         loading={loading}
         pagination
         paginationMode="server"
-        paginationModel={
-          paginationModel
-        }
-        onPaginationModelChange={
-          onPaginationModelChange
-        }
+        paginationModel={paginationModel}
+        onPaginationModelChange={onPaginationModelChange}
         pageSizeOptions={[
           5,
           10,

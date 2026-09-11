@@ -811,8 +811,7 @@ export function ProductsPage() {
       )}
 
       <ProductFormDialog
-        open={isProductDialogOpen}
-
+        open={isProductDialogOpen} 
         title={
           isEditing
             ? "Editar producto"
@@ -827,69 +826,30 @@ export function ProductsPage() {
 
         isEditing={isEditing}
 
-        branchName={
-          selectedBranch?.name ??
-          "Sucursal activa"
-        }
+        branchName={ selectedBranch?.name ?? "Sucursal activa"}
 
-        initialValues={
+        initialValues={ 
           isEditing
             ? productInitialValues
             : undefined
         }
 
-        isLoadingProduct={
-          isEditing &&
-          productDetailQuery.isLoading
-        }
-
-        isSubmitting={
-          saveProductMutation.isPending
-        }
-
-        isLoadingOptions={
-          isLoadingFormOptions ||
-          Boolean(productDetailError)
-        }
-
-        submitError={
-          formError ??
-          productDetailError
-        }
-
-        categories={
-          categoriesQuery.data ?? []
-        }
-
-        brands={
-          brandsQuery.data ?? []
-        }
-
-        units={
-          unitsQuery.data ?? []
-        }
-
+        isLoadingProduct={ isEditing && productDetailQuery.isLoading }
+        isSubmitting={ saveProductMutation.isPending }
+        isLoadingOptions={ isLoadingFormOptions || Boolean(productDetailError) }
+        submitError={ formError ?? productDetailError }
+        categories={ categoriesQuery.data ?? [] }
+        brands={ brandsQuery.data ?? [] }
+        units={ unitsQuery.data ?? [] }
         onClose={handleCloseDialog}
-
         onSubmit={(values) => {
           setFormError(null);
-
-          if (
-            isEditing &&
-            !productDetailQuery.data
-          ) {
-            setFormError(
-              "No fue posible cargar la información del producto.",
-            );
-
+          if (isEditing && !productDetailQuery.data) {
+            setFormError("No fue posible cargar la información del producto.",);
             return;
           }
 
-          saveProductMutation.mutate({
-            productId:
-              editingProductId,
-            values,
-          });
+          saveProductMutation.mutate({productId: editingProductId, values,});
         }}
       />
     </Stack>

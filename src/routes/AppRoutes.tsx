@@ -10,12 +10,13 @@ import { LoginPage } from "../modules/auth/pages/LoginPage";
 import { CompanySelectionPage } from "../modules/companies/pages/CompanySelectionPage";
 import { DashboardPage } from "../modules/dashboard/pages/DashboardPage";
 import { Box, Typography } from "@mui/material";
-import {
-  ProtectedRoute,
-  PublicOnlyRoute,
-} from "./AuthRoutes";
+import { ProtectedRoute, PublicOnlyRoute,} from "./AuthRoutes";
 
 import { ProductsPage } from "../modules/catalog/products/pages/ProductsPage";
+import { SuppliersPage } from "../modules/purchases/suppliers/pages/SuppliersPage";
+import { ExpensesPage, } from "../modules/expenses/pages/ExpensesPage";
+import { PurchasesPage } from "../modules/purchases/pages/PurchasesPage";
+import { CashPage } from "../modules/cash/pages/CashPage";
 
 function PendingPage({
   title,
@@ -85,6 +86,11 @@ export function AppRoutes() {
           />
 
           <Route
+            path="/purchases/suppliers"
+            element={<SuppliersPage />}
+          />
+
+          <Route
             path="/catalog/categories"
             element={
               <PendingPage title="Categorías" />
@@ -110,6 +116,21 @@ export function AppRoutes() {
             element={
               <PendingPage title="Sucursales" />
             }
+          />
+
+          <Route
+            path="/expenses"
+            element={<ExpensesPage />}
+          />
+
+          <Route
+            path="/purchases"
+            element={<PurchasesPage  />}
+          />
+
+          <Route
+            path="/cash"
+            element={<CashPage  />}
           />
         </Route>
       </Route>

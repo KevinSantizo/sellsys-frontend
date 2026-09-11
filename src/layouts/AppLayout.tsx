@@ -10,8 +10,11 @@ import {
   ShoppingBagRounded,
   StoreRounded,
   SwapHorizRounded,
-  PointOfSaleRounded, 
-} from "@mui/icons-material";
+  PointOfSaleRounded,
+  LocalShippingRounded, 
+  ReceiptLongRounded,
+  
+  } from "@mui/icons-material";
 
 import {
   Box,
@@ -39,15 +42,9 @@ import {
 
 import { useAuthStore } from "../modules/auth/store/authStore";
 import { useCompanyStore } from "../modules/companies/store/companyStore";
- 
-
 import { useBranchStore } from "../modules/branches/store/branchStore";
-
 import { useQuery } from "@tanstack/react-query";
-
-import {
-  getCompanies,
-} from "../modules/companies/services/companyService";
+import { getCompanies, } from "../modules/companies/services/companyService";
 
   const SIDEBAR_WIDTH = 280;
 
@@ -75,6 +72,21 @@ import {
       icon: <Inventory2Rounded />,
     },
     {
+      label: "Caja",
+      path: "/cash",
+      icon: <PointOfSaleRounded />,
+    },
+    {
+    label: "Proveedores",
+      path: "/purchases/suppliers",
+      icon: <LocalShippingRounded />,
+    },
+    {
+      label: "Compras",
+      path: "/purchases",
+      icon: <ReceiptLongRounded />,
+    },
+    {
       label: "Categorías",
       path: "/catalog/categories",
       icon: <CategoryRounded />,
@@ -93,6 +105,11 @@ import {
       label: "Sucursales",
       path: "/branches",
       icon: <StoreRounded />,
+    },
+    {
+      label: "Gastos",
+      path: "/expenses",
+      icon: <ReceiptLongRounded />,
     },
 
   ];
