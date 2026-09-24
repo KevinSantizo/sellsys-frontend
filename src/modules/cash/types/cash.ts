@@ -181,3 +181,5 @@ export type CashSessionSummary = {
   total_out: string;
   expected_amount: string;
 };
+
+

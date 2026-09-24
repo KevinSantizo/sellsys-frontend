@@ -102,7 +102,7 @@ export function OpenCashSessionCard({
             <Typography
               sx={{
                 fontSize: "1rem",
-                fontWeight: 800,
+                fontWeight: 700,
                 lineHeight: 1.2,
               }}
             >
@@ -337,7 +337,7 @@ function SummaryItem({
         sx={{
           mt: 0.5,
           fontSize: "1.05rem",
-          fontWeight: 800,
+          fontWeight: 700,
         }}
       >
         { value }

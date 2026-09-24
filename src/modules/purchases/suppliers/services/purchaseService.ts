@@ -81,9 +81,17 @@ export async function updatePurchase(
   return response.data;
 }
 
-export async function completePurchase(purchaseId: string): Promise<Purchase> {
+export async function completePurchase(
+  purchaseId: string,
+  cashSessionId?: string,
+): Promise<Purchase> {
   const response = await httpClient.post<Purchase>(
     `/purchases/${purchaseId}/complete/`,
+    cashSessionId
+      ? {
+          cash_session_id: cashSessionId,
+        }
+      : {},
   );
 
   return response.data;

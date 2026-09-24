@@ -28,6 +28,7 @@ import {
 import {
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 import {
@@ -51,14 +52,9 @@ import {
 } from "../store/salesCartStore";
 
 import axios from "axios";
-
 import { CheckoutSaleDialog, type CheckoutFormValues, } from "../components/CheckoutSaleDialog";
-
 import { checkoutSale } from "../services/salesService";
-
 import type { SaleDetail, } from "../types/sales.types";
-
-
 import { showErrorAlert, showSuccessAlert, } from "../../../shared/alerts/appAlerts";
 
 
@@ -135,6 +131,8 @@ function getCheckoutErrorMessage(
 
 export function SalesPosPage() {
 
+  const queryClient = useQueryClient();
+
   const formatQuantity = (value: string | number) => {
     const quantity = Number(value);
 
@@ -149,34 +147,40 @@ export function SalesPosPage() {
   };
 
   const [ checkoutOpen, setCheckoutOpen, ] = useState(false);
-  const selectedCompany =
-    useCompanyStore( (state) => state.selectedCompany, );
 
+  const selectedCompany = useCompanyStore( (state) => state.selectedCompany, );
   const selectedBranch = useBranchStore( (state) => state.selectedBranch, );
 
   const items = useSalesCartStore( (state) => state.items, );
-
   const addProduct = useSalesCartStore( (state) => state.addProduct, );
-
   const increaseQuantity = useSalesCartStore( (state) => state.increaseQuantity, );
-
   const decreaseQuantity = useSalesCartStore( (state) => state.decreaseQuantity, );
-
   const updateQuantity = useSalesCartStore( (state) => state.updateQuantity, );
-
   const updateDiscount = useSalesCartStore( (state) => state.updateDiscount, );
-
   const removeProduct = useSalesCartStore( (state) => state.removeProduct, );
-
   const clearCart =  useSalesCartStore( (state) => state.clearCart, );
+  const setCartContext = useSalesCartStore((state) => state.setCartContext);
 
   const [search, setSearch] = useState("");
-
   const [ debouncedSearch, setDebouncedSearch, ] = useState("");
-
   const [searchError, setSearchError] = useState<string | null>(null);
-
   const [isBarcodeSearching, setIsBarcodeSearching] = useState(false);
+
+
+  useEffect(() => {
+    if (!selectedCompany?.id || !selectedBranch?.id) {
+      return;
+    }
+
+    setCartContext(
+      selectedCompany.id,
+      selectedBranch.id,
+    );
+  }, [
+    selectedCompany?.id,
+    selectedBranch?.id,
+    setCartContext,
+  ]);
 
   useEffect(() => {
     const timeout = window.setTimeout(
@@ -193,17 +197,15 @@ export function SalesPosPage() {
     };
   }, [search]);
 
-  const canSearch =
-    Boolean(selectedCompany?.id) &&
-    debouncedSearch.length >= 2;
+  const canSearch =  Boolean(selectedCompany?.id) && debouncedSearch.length >= 2;
 
-const productsQuery = useQuery({
-  queryKey: [
-    "sales-product-search",
-    selectedCompany?.id,
-    selectedBranch?.id,
-    debouncedSearch,
-  ],
+  const productsQuery = useQuery({
+    queryKey: [
+      "sales-product-search",
+      selectedCompany?.id,
+      selectedBranch?.id,
+      debouncedSearch,
+    ],
 
   queryFn: () => {
     if (
@@ -216,15 +218,9 @@ const productsQuery = useQuery({
     }
 
     return getProducts({
-      companyId:
-        selectedCompany.id,
-
-      branchId:
-        selectedBranch.id,
-
-      search:
-        debouncedSearch,
-
+      companyId: selectedCompany.id,
+      branchId: selectedBranch.id,
+      search: debouncedSearch,
       page: 1,
       pageSize: 12,
       isActive: true,
@@ -235,17 +231,11 @@ const productsQuery = useQuery({
     Boolean(selectedCompany?.id) &&
     Boolean(selectedBranch?.id) &&
     canSearch,
-});
+  });
 
-const suggestedProducts =
-  productsQuery.data?.results ?? [];
-
-const isSearchingProducts =
-  productsQuery.isFetching;
-
-  const products =
-    productsQuery.data?.results ?? [];
-
+  const suggestedProducts = productsQuery.data?.results ?? [];
+  const isSearchingProducts = productsQuery.isFetching;
+  const products = productsQuery.data?.results ?? [];
   const subtotal = useMemo(
     () =>
       calculateCartSubtotal(items),
@@ -264,12 +254,7 @@ const isSearchingProducts =
     [items],
   );
 
-  const checkoutMutation =
-  useMutation<
-    SaleDetail,
-    unknown,
-    CheckoutFormValues
-  >({
+  const checkoutMutation = useMutation< SaleDetail, unknown, CheckoutFormValues >({
     mutationFn: async (values) => {
       if (!selectedCompany) {
         throw new Error(
@@ -308,32 +293,22 @@ const isSearchingProducts =
       }
 
       return checkoutSale({
-        company_id:
-          selectedCompany.id,
+        company_id: selectedCompany.id,
+        branch_id: selectedBranch.id,
 
-        branch_id:
-          selectedBranch.id,
-
-        customer_name:
-          values.customerName.trim(),
-
-        customer_tax_id:
-          values.customerTaxId.trim(),
-
-        notes:
-          values.notes.trim(),
+        cash_session_id:
+          values.paymentMethod === "CASH"
+            ? values.cashSessionId
+            : null,
+        
+        customer_name: values.customerName.trim(),
+        customer_tax_id: values.customerTaxId.trim(),
+        notes: values.notes.trim(),
 
         items: items.map((item) => ({
-          product_id:
-            item.product.id,
-
-          quantity:
-            item.quantity.toFixed(3),
-
-          discount_percent:
-            item.discountPercent.toFixed(
-              2,
-            ),
+          product_id:item.product.id,
+          quantity: item.quantity.toFixed(3),
+          discount_percent: item.discountPercent.toFixed(2,),
         })),
 
         payments: [
@@ -356,15 +331,14 @@ const isSearchingProducts =
 
     onSuccess: async (sale) => {
       setCheckoutOpen(false);
-
       clearCart();
-
       setSearch("");
       setDebouncedSearch("");
-
-      const changeAmount = Number(
-        sale.change_amount,
-      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["cash-movements"] }),
+        queryClient.invalidateQueries({ queryKey: ["cash-session-summary"] }),
+      ]);
+      const changeAmount = Number( sale.change_amount, );
 
       await showSuccessAlert({
         title: "Venta registrada",
@@ -503,10 +477,14 @@ const isSearchingProducts =
         }}
       >
         <Box>
-          <Typography
-            variant="h4"
+          <Typography 
             sx={{
-              fontWeight: 800,
+              fontSize: {
+                xs: "1.65rem",
+                sm: "1.85rem",
+              },
+              fontWeight: 700,
+              mb: 0.4,
             }}
           >
             Punto de venta
@@ -1718,7 +1696,7 @@ const isSearchingProducts =
                   sx={{
                     color:
                       "primary.main",
-                    fontWeight: 800,
+                    fontWeight: 700,
                   }}
                 >
                   {formatCurrency(total)}
@@ -1757,22 +1735,19 @@ const isSearchingProducts =
       </Box>
 
       <CheckoutSaleDialog
-        open={checkoutOpen}
-        total={total}
-        loading={
-          checkoutMutation.isPending
-        }
-        onClose={() => {
-          if (
-            !checkoutMutation.isPending
-          ) {
+        open={ checkoutOpen }
+        total={ total }
+        loading={ checkoutMutation.isPending }
+        companyId={ selectedCompany?.id ?? "" }
+        branchId={ selectedBranch?.id ?? "" }
+        branchName={ selectedBranch?.name ?? "" }
+        onClose={ () => {
+          if (!checkoutMutation.isPending) {
             setCheckoutOpen(false);
           }
         }}
-        onConfirm={async (values) => {
-          await checkoutMutation.mutateAsync(
-            values,
-          );
+        onConfirm={ async (values) => {
+          await checkoutMutation.mutateAsync(values);
         }}
       />
 

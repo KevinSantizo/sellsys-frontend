@@ -140,7 +140,7 @@ export function CompanySelectionPage() {
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 800,
+                  fontWeight: 700,
                   mb: 1,
                 }}
               >
@@ -261,7 +261,7 @@ export function CompanySelectionPage() {
                           <Typography
                             variant="h6"
                             sx={{
-                              fontWeight: 800,
+                              fontWeight: 700,
                               mb: 0.75,
                             }}
                           >

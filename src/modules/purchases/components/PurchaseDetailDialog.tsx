@@ -105,7 +105,7 @@ export function PurchaseDetailDialog({
                     <Typography
                         sx={{
                         fontSize: "1.05rem",
-                        fontWeight: 800,
+                        fontWeight: 700,
                         whiteSpace: "nowrap",
                         }}
                     >
@@ -173,157 +173,155 @@ export function PurchaseDetailDialog({
 
             <Divider />
 
-                <Box>
-                <Typography sx={{ mb: 1.5, fontSize: "0.9rem", fontWeight: 800 }}>
-                    Productos
-                </Typography>
+              <Box>
+              <Typography sx={{ mb: 1.5, fontSize: "0.9rem", fontWeight: 800 }}>
+                  Productos
+              </Typography>
 
-                <Stack spacing={1}>
-                    {purchase.items.map((item) => (
-                    <Box
-                        key={ item.id }
-                        sx={{
-                        p: 1.5,
-                        border: "1px solid",
-                        borderColor: "divider",
-                        borderRadius: "5px",
-                        }}
-                    >
-                        <Box
-                        sx={{
-                            display: "grid",
-                            gridTemplateColumns: {
-                            xs: "1fr",
-                            sm: "minmax(0, 2fr) repeat(3, minmax(100px, 0.7fr))",
-                            },
-                            gap: 2,
-                            alignItems: "center",
-                        }}
-                        >
-                        <Box sx={{ minWidth: 0 }}>
-                            <Typography
-                            sx={{
-                                fontSize: "0.84rem",
-                                fontWeight: 700,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                            }}
-                            >
-                            { item.product_name }
-                            </Typography>
+              <Stack spacing={1}>
+                  {purchase.items.map((item) => (
+                  <Box
+                      key={ item.id }
+                      sx={{
+                      p: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: "5px",
+                      }}
+                  >
+                      <Box
+                      sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                          xs: "1fr",
+                          sm: "minmax(0, 2fr) repeat(3, minmax(100px, 0.7fr))",
+                          },
+                          gap: 2,
+                          alignItems: "center",
+                      }}
+                      >
+                      <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                          sx={{
+                              fontSize: "0.84rem",
+                              fontWeight: 700,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                          }}
+                          >
+                          { item.product_name }
+                          </Typography>
 
-                            <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }}>
-                            SKU: { item.product_sku }
-                            </Typography>
-                        </Box>
+                          <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }}>
+                          SKU: { item.product_sku }
+                          </Typography>
+                      </Box>
 
-                        <DetailValue
-                            label="Cantidad"
-                            value={ formatQuantity(item.quantity) }
-                        />
+                      <DetailValue
+                          label="Cantidad"
+                          value={ formatQuantity(item.quantity) }
+                      />
 
-                        <DetailValue
-                            label="Costo unitario"
-                            value={ formatCurrency(item.unit_cost) }
-                        />
+                      <DetailValue
+                          label="Costo unitario"
+                          value={ formatCurrency(item.unit_cost) }
+                      />
 
-                        <DetailValue
-                            label="Subtotal"
-                            value={ formatCurrency(item.subtotal) }
-                            bold
-                        />
-                        </Box>
-                    </Box>
-                    ))}
-                </Stack>
-                </Box>
+                      <DetailValue
+                          label="Subtotal"
+                          value={ formatCurrency(item.subtotal) }
+                          bold
+                      />
+                      </Box>
+                  </Box>
+                  ))}
+              </Stack>
+              </Box>
 
+              <Box
+                      sx={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "flex-end",
+                      }}
+                  >
+                  <Box
+                      sx={{
+                      width: {
+                          xs: "100%",
+                          sm: 330,
+                      },
+                      }}
+                  >
+                      <Typography
+                      sx={{
+                          mb: 1.5,
+                          fontSize: "0.9rem",
+                          fontWeight: 700,
+                      }}
+                      >
+                      Totales
+                      </Typography>
 
-               <Box
-                    sx={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "flex-end",
-                    }}
-                >
-                <Box
-                    sx={{
-                    width: {
-                        xs: "100%",
-                        sm: 330,
-                    },
-                    }}
-                >
-                    <Typography
-                    sx={{
-                        mb: 1.5,
-                        fontSize: "0.9rem",
-                        fontWeight: 800,
-                    }}
-                    >
-                    Totales
-                    </Typography>
+                      <Box
+                      sx={{
+                          p: 2,
+                          bgcolor: "#FAFAFA",
+                          border: "1px solid",
+                          borderColor: "divider",
+                          borderRadius: "5px",
+                      }}
+                      >
+                      <SummaryRow
+                          label="Subtotal"
+                          value={ formatCurrency(purchase.subtotal) }
+                      />
 
-                    <Box
-                    sx={{
-                        p: 2,
-                        bgcolor: "#FAFAFA",
-                        border: "1px solid",
-                        borderColor: "divider",
-                        borderRadius: "5px",
-                    }}
-                    >
-                    <SummaryRow
-                        label="Subtotal"
-                        value={ formatCurrency(purchase.subtotal) }
-                    />
+                      <SummaryRow
+                          label="Descuento"
+                          value={ `- ${formatCurrency(purchase.discount_total)}` }
+                      />
 
-                    <SummaryRow
-                        label="Descuento"
-                        value={ `- ${formatCurrency(purchase.discount_total)}` }
-                    />
+                      <SummaryRow
+                          label="Impuesto"
+                          value={ formatCurrency(purchase.tax_total) }
+                      />
 
-                    <SummaryRow
-                        label="Impuesto"
-                        value={ formatCurrency(purchase.tax_total) }
-                    />
+                      <Box
+                          sx={{
+                          mt: 1.25,
+                          pt: 1.25,
+                          borderTop: "1px solid",
+                          borderColor: "divider",
+                          }}
+                      >
+                          <Stack
+                          
+                          sx={{
+                              direction: "row",
+                              justifyContent: "space-between",
+                              spacing: 2 
+                          }}
+                          >
+                          <Typography sx={{ fontSize: "0.9rem", fontWeight: 800 }}>
+                              Total
+                          </Typography>
 
-                    <Box
-                        sx={{
-                        mt: 1.25,
-                        pt: 1.25,
-                        borderTop: "1px solid",
-                        borderColor: "divider",
-                        }}
-                    >
-                        <Stack
-                        
-                        sx={{
-                            direction: "row",
-                            justifyContent: "space-between",
-                            spacing: 2 
-                        }}
-                        >
-                        <Typography sx={{ fontSize: "0.9rem", fontWeight: 800 }}>
-                            Total
-                        </Typography>
-
-                        <Typography
-                            color="primary.main"
-                            sx={{
-                            fontSize: "1rem",
-                            fontWeight: 800,
-                            }}
-                        >
-                            { formatCurrency(purchase.total) }
-                        </Typography>
-                        </Stack>
-                    </Box>
-                    </Box>
-                </Box>
-            </Box>
-
+                          <Typography
+                              color="primary.main"
+                              sx={{
+                              fontSize: "1rem",
+                              fontWeight: 700,
+                              }}
+                          >
+                              { formatCurrency(purchase.total) }
+                          </Typography>
+                          </Stack>
+                      </Box>
+                      </Box>
+                  </Box>
+              </Box>
 
               {purchase.notes && (
                 <Box>

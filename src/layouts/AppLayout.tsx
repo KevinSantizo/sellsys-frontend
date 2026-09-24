@@ -245,7 +245,7 @@ import { getCompanies, } from "../modules/companies/services/companyService";
               variant="h6"
               sx={{
                 flex: 1,
-                fontWeight: 800,
+                fontWeight: 700,
               }}
             >
               SellSys

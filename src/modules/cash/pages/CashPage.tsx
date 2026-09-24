@@ -37,18 +37,17 @@ import { OpenCashSessionCard } from "../components/OpenCashSessionCard";
 import { CloseCashSessionDialog } from "../components/CloseCashSessionDialog";
 import { ManualCashMovementDialog } from "../components/ManualCashMovementDialog";
 import { CashMovementsGridCard } from "../components/CashMovementsGridCard";
+import { CashSessionsHistoryGridCard } from "../components/CashSessionsHistoryGridCard";
+import { CashSessionDetailDialog } from "../components/CashSessionDetailDialog";
 
 export function CashPage() {
 
-    
     const queryClient = useQueryClient();
-
     const [movementSearch, setMovementSearch] = useState("");
     const [debouncedMovementSearch, setDebouncedMovementSearch] = useState("");
     const [movementType, setMovementType] = useState<CashMovementType | "">("");
     const [movementDirection, setMovementDirection] = useState<CashMovementDirection | "">("");
     const [movementCashRegisterId, setMovementCashRegisterId] = useState("");
-
     const [movementPaginationModel, setMovementPaginationModel] = useState({ page: 0, pageSize: 10, });
     const [manualMovementSession, setManualMovementSession] = useState<CashSession | null>(null);
     const [manualMovementDirection, setManualMovementDirection] = useState<CashMovementDirection>("IN");
@@ -58,15 +57,88 @@ export function CashPage() {
     const [isCashRegisterDialogOpen, setIsCashRegisterDialogOpen] = useState(false);
     const [editingCashRegister, setEditingCashRegister] = useState<CashRegister | null>(null);
     const [formError, setFormError] = useState<string | null>(null);
-
     const selectedCompany = useCompanyStore((state) => state.selectedCompany);
     const selectedBranch = useBranchStore((state) => state.selectedBranch);
-
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [openingCashRegister, setOpeningCashRegister] = useState<CashRegister | null>(null);
     const [openSessionError, setOpenSessionError] = useState<string | null>(null);
     const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10, });
+    const [sessionHistoryCashRegisterId, setSessionHistoryCashRegisterId] = useState("");
+    const [sessionHistoryPaginationModel, setSessionHistoryPaginationModel] = useState({ page: 0, pageSize: 10, });
+    const [detailCashSession, setDetailCashSession] = useState<CashSession | null>(null);
+
+
+    const handleViewCashSessionDetail = (cashSession: CashSession) => {
+        setDetailCashSession(cashSession);
+    };
+
+    const handleCloseCashSessionDetail = () => {
+        setDetailCashSession(null);
+    };
+
+
+    const cashSessionHistoryQuery = useQuery({
+        queryKey: [
+            "cash-sessions",
+            "history",
+            selectedCompany?.id,
+            selectedBranch?.id,
+            sessionHistoryCashRegisterId,
+            sessionHistoryPaginationModel.page,
+            sessionHistoryPaginationModel.pageSize,
+        ],
+        queryFn: () => getCashSessions({
+            companyId: selectedCompany!.id,
+            branchId: selectedBranch!.id,
+            cashRegisterId: sessionHistoryCashRegisterId || undefined,
+            status: "CLOSED",
+            ordering: "-opened_at",
+            page: sessionHistoryPaginationModel.page + 1,
+            pageSize: sessionHistoryPaginationModel.pageSize,
+        }),
+        enabled: Boolean(selectedCompany?.id && selectedBranch?.id),
+        placeholderData: keepPreviousData,
+    }); 
+
+    const cashSessionHistory = cashSessionHistoryQuery.data?.results ?? [];
+    const totalCashSessionHistory = cashSessionHistoryQuery.data?.count ?? 0;
+
+    const handleSessionHistoryCashRegisterChange = (value: string) => {
+        setSessionHistoryCashRegisterId(value);
+        setSessionHistoryPaginationModel((current) => ({
+            ...current,
+            page: 0,
+        }));
+    };
+
+    const handleClearSessionHistoryFilters = () => {
+        setSessionHistoryCashRegisterId("");
+        setSessionHistoryPaginationModel((current) => ({
+            ...current,
+            page: 0,
+        }));
+    };
+
+
+    const cashRegistersFilterQuery = useQuery({
+        queryKey: [
+            "cash-registers",
+            "filter",
+            selectedCompany?.id,
+            selectedBranch?.id,
+        ],
+        queryFn: () => getCashRegisters({
+            companyId: selectedCompany!.id,
+            branchId: selectedBranch!.id,
+            page: 1,
+            pageSize: 100,
+        }),
+        enabled: Boolean(selectedCompany?.id && selectedBranch?.id),
+        placeholderData: keepPreviousData,
+    });
+
+    const cashRegistersForFilters = cashRegistersFilterQuery.data?.results ?? [];
 
     useEffect(() => {
         const timeout = window.setTimeout(() => {
@@ -578,12 +650,16 @@ export function CashPage() {
             >
                 <Box>
                     <Typography
-                        variant="h5"
                         sx={{
-                        fontWeight: 800,
+                            fontSize: {
+                            xs: "1.65rem",
+                            sm: "1.85rem",
+                            },
+                            fontWeight: 700,
+                            mb: 0.4,
                         }}
                     >
-                        Lista de cajas
+                        Cajas
                     </Typography>
 
                     <Typography
@@ -684,7 +760,7 @@ export function CashPage() {
                     sx={{
                         mb: 1.5,
                         fontSize: "1rem",
-                        fontWeight: 800,
+                        fontWeight: 700,
                     }}
                     >
                     Cajas abiertas
@@ -737,24 +813,26 @@ export function CashPage() {
                     onPaginationModelChange={ setMovementPaginationModel }
                 />
             </Box>
-
-            <CashRegistersGridCard
-                cashRegisters={ cashRegisters }
-                openCashSessions={ openCashSessions }
-                totalCashRegisters={ totalCashRegisters }
-                loading={
-                    cashRegistersQuery.isLoading ||
-                    cashRegistersQuery.isFetching ||
-                    openCashSessionsQuery.isLoading
-                }
-                search={ search }
-                paginationModel={ paginationModel }
-                onSearchChange={ setSearch }
-                onPaginationModelChange={ setPaginationModel }
-                onRefresh={ handleRefresh }
-                onEdit={ handleEditCashRegister }
-                onOpenSession={ handleOpenCashSession }
-            />
+            <Box sx={{ mt: 3 }} >
+                <CashRegistersGridCard
+                    cashRegisters={ cashRegisters }
+                    openCashSessions={ openCashSessions }
+                    totalCashRegisters={ totalCashRegisters }
+                    loading={
+                        cashRegistersQuery.isLoading ||
+                        cashRegistersQuery.isFetching ||
+                        openCashSessionsQuery.isLoading
+                    }
+                    search={ search }
+                    paginationModel={ paginationModel }
+                    onSearchChange={ setSearch }
+                    onPaginationModelChange={ setPaginationModel }
+                    onRefresh={ handleRefresh }
+                    onEdit={ handleEditCashRegister }
+                    onOpenSession={ handleOpenCashSession }
+                />
+            </Box>
+            
 
             <CashRegisterFormDialog
                 open={ isCashRegisterDialogOpen }
@@ -798,6 +876,30 @@ export function CashPage() {
                     error={ manualMovementError }
                     onClose={ handleCloseManualMovementDialog }
                     onSubmit={ handleSubmitManualMovement }
+                />
+            )}
+
+            <Box sx={{ mt: 3 }}>
+                <CashSessionsHistoryGridCard
+                    cashSessions={ cashSessionHistory }
+                    cashRegisters={ cashRegistersForFilters }
+                    totalCashSessions={ totalCashSessionHistory }
+                    loading={ cashSessionHistoryQuery.isFetching }
+                    cashRegisterId={ sessionHistoryCashRegisterId }
+                    paginationModel={ sessionHistoryPaginationModel }
+                    formatCurrency={ formatCurrency }
+                    onCashRegisterChange={ handleSessionHistoryCashRegisterChange }
+                    onClearFilters={ handleClearSessionHistoryFilters }
+                    onPaginationModelChange={ setSessionHistoryPaginationModel }
+                    onViewDetail={ handleViewCashSessionDetail }
+                />
+            </Box>
+            {detailCashSession && (
+                <CashSessionDetailDialog
+                    open={ true }
+                    cashSession={ detailCashSession }
+                    formatCurrency={ formatCurrency }
+                    onClose={ handleCloseCashSessionDetail }
                 />
             )}
         </Box>

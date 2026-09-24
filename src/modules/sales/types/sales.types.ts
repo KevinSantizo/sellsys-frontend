@@ -23,6 +23,7 @@ export type PaymentInput = {
 export type CheckoutSalePayload = {
   company_id: string;
   branch_id: string;
+  cash_session_id?: string | null;
   customer_name: string;
   customer_tax_id: string;
   notes: string;

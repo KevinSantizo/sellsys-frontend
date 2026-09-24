@@ -291,7 +291,7 @@ export function CashRegistersGridCard({
               },
               "& .MuiOutlinedInput-root": {
                 minHeight: 40,
-                borderRadius: "15px",
+                borderRadius: "5px",
                 bgcolor: "#FFFFFF",
               },
             }}
@@ -369,6 +369,10 @@ export function CashRegistersGridCard({
                 noResultsOverlayLabel:
                     noRowsMessage,
                 }}
+
+            slots={{
+              noRowsOverlay: EmptyPurchases,
+            }}
             sx={{
                 border: 0,
 
@@ -702,5 +706,29 @@ export function CashRegistersGridCard({
         </MenuItem>
       </Menu>
     </>
+  );
+}
+
+function EmptyPurchases() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <PointOfSaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay cajas
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron cajas para mostrar.
+      </Typography>
+    </Stack>
   );
 }

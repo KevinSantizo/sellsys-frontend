@@ -1,6 +1,8 @@
 import { create } from "zustand";
-
+import { persist } from "zustand/middleware";
 import type { Product } from "../../catalog/products/types/product";
+
+
 
 export type SaleCartItem = {
   product: Product;
@@ -10,195 +12,167 @@ export type SaleCartItem = {
 
 type SalesCartState = {
   items: SaleCartItem[];
+  companyId: string | null;
+  branchId: string | null;
+
+  setCartContext: (companyId: string, branchId: string) => void;
 
   addProduct: (product: Product) => void;
-
-  increaseQuantity: (
-    productId: string,
-  ) => void;
-
-  decreaseQuantity: (
-    productId: string,
-  ) => void;
-
-  updateQuantity: (
-    productId: string,
-    quantity: number,
-  ) => void;
-
-  updateDiscount: (
-    productId: string,
-    discountPercent: number,
-  ) => void;
-
-  removeProduct: (
-    productId: string,
-  ) => void;
-
+  increaseQuantity: (productId: string) => void;
+  decreaseQuantity: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  updateDiscount: (productId: string, discountPercent: number) => void;
+  removeProduct: (productId: string) => void;
   clearCart: () => void;
 };
 
-export const useSalesCartStore =
-  create<SalesCartState>((set) => ({
-    items: [],
+export const useSalesCartStore = create<SalesCartState>()(
+  persist(
+    (set) => ({
+      items: [],
+      companyId: null,
+      branchId: null,
 
-    addProduct: (product) => {
-      set((state) => {
-        const existingItem =
-          state.items.find(
-            (item) =>
-              item.product.id ===
-              product.id,
+      setCartContext: (companyId, branchId) => {
+        set((state) => {
+          if (
+            state.companyId === companyId &&
+            state.branchId === branchId
+          ) {
+            return state;
+          }
+
+          return {
+            items: [],
+            companyId,
+            branchId,
+          };
+        });
+      },
+
+      addProduct: (product) => {
+        set((state) => {
+          const existingItem = state.items.find(
+            (item) => item.product.id === product.id,
           );
 
-        if (existingItem) {
-          return {
-            items: state.items.map(
-              (item) =>
-                item.product.id ===
-                product.id
+          if (existingItem) {
+            return {
+              items: state.items.map((item) =>
+                item.product.id === product.id
                   ? {
                       ...item,
-                      quantity:
-                        item.quantity + 1,
+                      quantity: item.quantity + 1,
                     }
                   : item,
-            ),
+              ),
+            };
+          }
+
+          return {
+            items: [
+              ...state.items,
+              {
+                product,
+                quantity: 1,
+                discountPercent: 0,
+              },
+            ],
           };
+        });
+      },
+
+      increaseQuantity: (productId) => {
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.product.id === productId
+              ? {
+                  ...item,
+                  quantity: item.quantity + 1,
+                }
+              : item,
+          ),
+        }));
+      },
+
+      decreaseQuantity: (productId) => {
+        set((state) => ({
+          items: state.items
+            .map((item) =>
+              item.product.id === productId
+                ? {
+                    ...item,
+                    quantity: item.quantity - 1,
+                  }
+                : item,
+            )
+            .filter((item) => item.quantity > 0),
+        }));
+      },
+
+      updateQuantity: (productId, quantity) => {
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          return;
         }
 
-        return {
-          items: [
-            ...state.items,
-            {
-              product,
-              quantity: 1,
-              discountPercent: 0,
-            },
-          ],
-        };
-      });
-    },
-
-    increaseQuantity: (
-      productId,
-    ) => {
-      set((state) => ({
-        items: state.items.map(
-          (item) =>
-            item.product.id ===
-            productId
-              ? {
-                  ...item,
-                  quantity:
-                    item.quantity + 1,
-                }
-              : item,
-        ),
-      }));
-    },
-
-    decreaseQuantity: (
-      productId,
-    ) => {
-      set((state) => ({
-        items: state.items
-          .map((item) =>
-            item.product.id ===
-            productId
-              ? {
-                  ...item,
-                  quantity:
-                    item.quantity - 1,
-                }
-              : item,
-          )
-          .filter(
-            (item) =>
-              item.quantity > 0,
-          ),
-      }));
-    },
-
-    updateQuantity: (
-      productId,
-      quantity,
-    ) => {
-      if (
-        !Number.isFinite(quantity) ||
-        quantity <= 0
-      ) {
-        return;
-      }
-
-      set((state) => ({
-        items: state.items.map(
-          (item) =>
-            item.product.id ===
-            productId
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.product.id === productId
               ? {
                   ...item,
                   quantity,
                 }
               : item,
-        ),
-      }));
-    },
-
-    updateDiscount: (
-      productId,
-      discountPercent,
-    ) => {
-      if (
-        !Number.isFinite(
-          discountPercent,
-        )
-      ) {
-        return;
-      }
-
-      const normalizedDiscount =
-        Math.min(
-          100,
-          Math.max(
-            0,
-            discountPercent,
           ),
+        }));
+      },
+
+      updateDiscount: (productId, discountPercent) => {
+        if (!Number.isFinite(discountPercent)) {
+          return;
+        }
+
+        const normalizedDiscount = Math.min(
+          100,
+          Math.max(0, discountPercent),
         );
 
-      set((state) => ({
-        items: state.items.map(
-          (item) =>
-            item.product.id ===
-            productId
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.product.id === productId
               ? {
                   ...item,
-                  discountPercent:
-                    normalizedDiscount,
+                  discountPercent: normalizedDiscount,
                 }
               : item,
-        ),
-      }));
-    },
+          ),
+        }));
+      },
 
-    removeProduct: (
-      productId,
-    ) => {
-      set((state) => ({
-        items: state.items.filter(
-          (item) =>
-            item.product.id !==
-            productId,
-        ),
-      }));
-    },
+      removeProduct: (productId) => {
+        set((state) => ({
+          items: state.items.filter(
+            (item) => item.product.id !== productId,
+          ),
+        }));
+      },
 
-    clearCart: () => {
-      set({
-        items: [],
-      });
+      clearCart: () => {
+        set({
+          items: [],
+        });
+      },
+    }),
+    {
+      name: "sellsys-sales-cart",
+      partialize: (state) => ({
+        items: state.items,
+        companyId: state.companyId,
+        branchId: state.branchId,
+      }),
     },
-  }));
+  ),
+);
 
 export function roundMoney(
   value: number,

@@ -32,7 +32,6 @@ import {
 } from "@mui/x-data-grid";
 
 import { esES } from "@mui/x-data-grid/locales";
-
 import { useMemo } from "react";
 
 import type {

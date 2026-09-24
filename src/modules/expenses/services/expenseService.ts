@@ -163,10 +163,16 @@ export async function updateExpense(
 
 export async function completeExpense(
   expenseId: string,
+  cashSessionId?: string,
 ) {
   const response =
     await httpClient.post<Expense>(
       `/expenses/${expenseId}/complete/`,
+      cashSessionId
+        ? {
+            cash_session_id: cashSessionId,
+          }
+        : {},
     );
 
   return response.data;

@@ -45,6 +45,8 @@ import { ExpensesGridCard, } from "../components/ExpensesGridCard";
 import type { Expense, ExpenseFormValues } from "../types/expense";
 import axios from "axios";
 
+import { OpenCashSessionSelect } from "../../cash/components/OpenCashSessionSelect";
+import { getCashSessions } from "../../cash/services/cashService";
 
 import { showSuccessAlert, showErrorAlert } from "../../../shared/alerts/appAlerts";
 import { ExpenseFormDialog, } from "../components/ExpenseFormDialog";
@@ -75,6 +77,30 @@ export function ExpensesPage() {
         page: 0,
         pageSize: 10,
     });
+
+
+    const openCashSessionsQuery = useQuery({
+        queryKey: [
+            "cash-sessions",
+            "expense",
+            selectedCompany?.id,
+            selectedBranch?.id,
+        ],
+        queryFn: () => getCashSessions({
+            companyId: selectedCompany!.id,
+            branchId: selectedBranch!.id,
+            status: "OPEN",
+            ordering: "-opened_at",
+            page: 1,
+            pageSize: 100,
+        }),
+        enabled: Boolean(
+            selectedCompany?.id &&
+            selectedBranch?.id
+        ),
+    });
+
+    const openCashSessions = openCashSessionsQuery.data?.results ?? [];
 
 
     /*
@@ -338,40 +364,55 @@ export function ExpensesPage() {
         },
     });
 
-    const completeExpenseMutation = useMutation< Expense, Error, Expense >({
-            mutationFn: (expense) => completeExpense( expense.id, ),
+    type CompleteExpenseMutationVariables = {
+        expense: Expense;
+        cashSessionId?: string;
+    };
 
-            onSuccess: async ( completedExpense, ) => {
-                await queryClient.invalidateQueries({
-                    queryKey: [
-                        "expenses",
-                        selectedCompany?.id,
-                        selectedBranch?.id,
-                    ],
-                });
+    const completeExpenseMutation = useMutation<Expense, Error, CompleteExpenseMutationVariables>({
+        mutationFn: ({ expense, cashSessionId }) => {
+            return completeExpense(expense.id, cashSessionId);
+        },
 
-                queryClient.removeQueries({
-                    queryKey: [
-                        "expense-detail",
-                        completedExpense.id,
-                    ],
-                });
+        onSuccess: async (completedExpense) => {
+            await Promise.all([
+            queryClient.invalidateQueries({
+                queryKey: [
+                "expenses",
+                selectedCompany?.id,
+                selectedBranch?.id,
+                ],
+            }),
 
-                void showSuccessAlert({
-                    title:
-                    "Gasto completado", 
-                    text:
-                    `"${completedExpense.description}" fue completado correctamente.`,
-                });
-            },
+            queryClient.invalidateQueries({
+                queryKey: ["cash-movements"],
+            }),
 
-            onError: (error) => {
+            queryClient.invalidateQueries({
+                queryKey: ["cash-session-summary"],
+            }),
+            ]);
+
+            queryClient.removeQueries({
+            queryKey: [
+                "expense-detail",
+                completedExpense.id,
+            ],
+            });
+
+            void showSuccessAlert({
+            title: "Gasto completado",
+            text: `"${completedExpense.description}" fue completado correctamente.`,
+            });
+        },
+
+        onError: (error) => {
             void showErrorAlert({
-                title: "No fue posible completar el gasto", 
-                text: getApiErrorMessage(
-                    error,
-                    "Ocurrió un error al completar el gasto.",
-                ),
+            title: "No fue posible completar el gasto",
+            text: getApiErrorMessage(
+                error,
+                "Ocurrió un error al completar el gasto.",
+            ),
             });
         },
     });
@@ -565,7 +606,92 @@ export function ExpensesPage() {
     };
 
 
-    const handleCompleteExpense = async ( expense: Expense,) => {
+    const handleCompleteExpense = async (expense: Expense) => {
+        if (expense.payment_method === "CASH") {
+            if (!selectedCompany || !selectedBranch) {
+            void showErrorAlert({
+                title: "No fue posible completar el gasto",
+                text: "No hay una empresa o sucursal seleccionada.",
+            });
+
+            return;
+            }
+
+            try {
+            const response = await getCashSessions({
+                companyId: selectedCompany.id,
+                branchId: selectedBranch.id,
+                status: "OPEN",
+                ordering: "-opened_at",
+                page: 1,
+                pageSize: 100,
+            });
+
+            const openCashSessions = response.results;
+
+            if (openCashSessions.length === 0) {
+                void Swal.fire({
+                title: "No hay cajas abiertas",
+                text: "Debes abrir una caja antes de completar un gasto en efectivo.",
+                icon: "warning",
+                confirmButtonText: "Aceptar",
+                confirmButtonColor: "#064A57",
+                });
+
+                return;
+            }
+
+            const cashSessionOptions = Object.fromEntries(
+                openCashSessions.map((session) => [
+                session.id,
+                `${session.cash_register_name} (${session.cash_register_code})`,
+                ]),
+            );
+
+            const result = await Swal.fire({
+                title: "¿Completar gasto?",
+                text: `Selecciona la caja de donde saldrá el efectivo para "${expense.description}".`,
+                icon: "question",
+                input: "select",
+                inputOptions: cashSessionOptions,
+                inputPlaceholder: "Selecciona una caja",
+                showCancelButton: true,
+                confirmButtonText: "Sí, completar",
+                cancelButtonText: "Cancelar",
+                reverseButtons: true,
+                confirmButtonColor: "#064A57",
+                inputValidator: (value) => {
+                if (!value) {
+                    return "Debes seleccionar una caja.";
+                }
+
+                return null;
+                },
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            completeExpenseMutation.mutate({
+                expense,
+                cashSessionId: result.value,
+            });
+
+            return;
+            } catch (error) {
+            void showErrorAlert({
+                title: "No fue posible consultar las cajas",
+                text: getApiErrorMessage(
+                error,
+                "Ocurrió un error al consultar las cajas abiertas.",
+                ),
+            });
+
+            return;
+            }
+        }
+
         const result = await Swal.fire({
             title: "¿Completar gasto?",
             text: `El gasto "${expense.description}" quedará confirmado y ya no podrá editarse.`,
@@ -574,14 +700,16 @@ export function ExpensesPage() {
             confirmButtonText: "Sí, completar",
             cancelButtonText: "Cancelar",
             reverseButtons: true,
-            confirmButtonColor: "#064A57"
+            confirmButtonColor: "#064A57",
         });
 
         if (!result.isConfirmed) {
             return;
         }
 
-        completeExpenseMutation.mutate( expense, );
+        completeExpenseMutation.mutate({
+            expense,
+        });
     };
 
 
@@ -632,18 +760,16 @@ export function ExpensesPage() {
             >
                 <Box>
                 <Typography
-                    variant="h4"
                     sx={{
-                    fontSize: {
+                        fontSize: {
                         xs: "1.65rem",
                         sm: "1.85rem",
-                    },
-
-                    fontWeight: 800,
-                    mb: 0.4,
+                        },
+                        fontWeight: 700,
+                        mb: 0.4,
                     }}
                 >
-                    Lista de gastos
+                   Gastos
                 </Typography>
 
                 <Typography

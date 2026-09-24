@@ -274,7 +274,7 @@ export function LoginPage() {
             <Typography
               variant="h5"
               sx={{
-                fontWeight: 800,
+                fontWeight: 700,
                 letterSpacing: "-0.5px",
               }}
             >
@@ -315,7 +315,7 @@ export function LoginPage() {
                         xs: "2rem",
                         sm: "2.35rem",
                       },
-                      fontWeight: 800,
+                      fontWeight: 600,
                       letterSpacing: "-1px",
                       lineHeight: 1.15,
                       mb: 1.25,
@@ -647,7 +647,7 @@ export function LoginPage() {
                   md: "2.3rem",
                   lg: "2.75rem",
                 },
-                fontWeight: 800,
+                fontWeight: 600,
                 letterSpacing: "-1px",
                 lineHeight: 1.15,
                 mb: 2,
@@ -812,7 +812,7 @@ function DashboardPreview() {
         <Typography
           sx={{
             color: "text.primary",
-            fontWeight: 800,
+            fontWeight: 600,
           }}
         >
           SellSys Dashboard
@@ -901,7 +901,7 @@ function DashboardPreview() {
               variant="subtitle2"
               sx={{
                 color: "text.primary",
-                fontWeight: 700,
+                fontWeight: 600,
                 mb: 1,
               }}
             >

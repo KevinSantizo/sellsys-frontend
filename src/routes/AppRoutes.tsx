@@ -17,6 +17,15 @@ import { SuppliersPage } from "../modules/purchases/suppliers/pages/SuppliersPag
 import { ExpensesPage, } from "../modules/expenses/pages/ExpensesPage";
 import { PurchasesPage } from "../modules/purchases/pages/PurchasesPage";
 import { CashPage } from "../modules/cash/pages/CashPage";
+import { ReportsPage } from "../modules/reports/pages/ReportsPage";
+import { SalesReportPage } from "../modules/reports/pages/SalesReportPage";
+import { PurchasesReportPage } from "../modules/reports/pages/PurchasesReportPage";
+import { ExpensesReportPage } from "../modules/reports/pages/ExpensesReportPage";
+import { CashReportPage } from "../modules/reports/pages/CashReportPage";
+import { InventoryReportPage } from "../modules/reports/pages/InventoryReportPage";
+import { ProfitabilityReportPage } from "../modules/reports/pages/ProfitabilityReportPage";
+import { CategoriesPage } from "../modules/catalog/categories/pages/CategoriesPage";
+import { BrandsPage } from "../modules/catalog/brands/pages/BrandsPage"; 
 
 function PendingPage({
   title,
@@ -57,81 +66,30 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<PublicOnlyRoute />}>
-        <Route
-          path="/login"
-          element={<LoginPage />}
-        />
+        <Route path="/login" element={<LoginPage />}/>
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route
-          path="/companies"
-          element={<CompanySelectionPage />}
-        />
-
+        <Route path="/companies"  element={<CompanySelectionPage />}/>
         <Route element={<AppLayout />}>
-          <Route
-            path="/dashboard"
-            element={<DashboardPage />}
-          />
-
-          <Route
-            path="/sales/pos"
-            element={<SalesPosPage />}
-          />
-
-          <Route
-            path="/catalog/products"
-            element={<ProductsPage />}
-          />
-
-          <Route
-            path="/purchases/suppliers"
-            element={<SuppliersPage />}
-          />
-
-          <Route
-            path="/catalog/categories"
-            element={
-              <PendingPage title="Categorías" />
-            }
-          />
-
-          <Route
-            path="/catalog/brands"
-            element={
-              <PendingPage title="Marcas" />
-            }
-          />
-
-          <Route
-            path="/catalog/units"
-            element={
-              <PendingPage title="Unidades de medida" />
-            }
-          />
-
-          <Route
-            path="/branches"
-            element={
-              <PendingPage title="Sucursales" />
-            }
-          />
-
-          <Route
-            path="/expenses"
-            element={<ExpensesPage />}
-          />
-
-          <Route
-            path="/purchases"
-            element={<PurchasesPage  />}
-          />
-
-          <Route
-            path="/cash"
-            element={<CashPage  />}
-          />
+          <Route path="/dashboard" element={<DashboardPage />}/>
+          <Route path="/sales/pos"  element={<SalesPosPage />}/>
+          <Route path="/catalog/products" element={<ProductsPage/>}/>
+          <Route path="/purchases/suppliers" element={<SuppliersPage/>}/>
+          <Route path="/catalog/categories" element={ <CategoriesPage/> }/>
+          <Route path="/catalog/brands" element={ <BrandsPage/> }/>
+          <Route path="/catalog/units" element={ <PendingPage title="Unidades de medida" /> }/>
+          <Route path="/branches"  element={ <PendingPage title="Sucursales" /> } />
+          <Route path="/expenses" element={<ExpensesPage />} />
+          <Route path="/purchases"  element={<PurchasesPage />} />
+          <Route path="/cash" element={<CashPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/reports/sales" element={<SalesReportPage />} />
+          <Route path="/reports/purchases" element={<PurchasesReportPage />} />
+          <Route path="/reports/expenses" element={<ExpensesReportPage />} />
+          <Route path="/reports/cash" element={<CashReportPage />} />
+          <Route path="/reports/inventory" element={<InventoryReportPage />} />
+          <Route path="/reports/profitability" element={<ProfitabilityReportPage />} />
         </Route>
       </Route>
 

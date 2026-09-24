@@ -157,7 +157,7 @@ export function PurchasesGridCard({
     {
       field: "purchase_number",
       headerName: "Compra",
-      minWidth: 280,
+      minWidth: 150,
       flex: 1.3,
       sortable: false,
       renderCell: (params) => {
@@ -221,7 +221,7 @@ export function PurchasesGridCard({
     {
       field: "supplier_name",
       headerName: "Proveedor",
-      minWidth: 140,
+      minWidth: 120,
       flex: 0.7,
       sortable: false,
       renderCell: (params) => (
@@ -241,7 +241,7 @@ export function PurchasesGridCard({
     {
       field: "purchase_date",
       headerName: "Fecha",
-      width: 120,
+      width: 90,
       sortable: false,
       renderCell: (params) => (
         <Typography sx={{ fontSize: "0.82rem" }}>
@@ -253,7 +253,7 @@ export function PurchasesGridCard({
     {
       field: "payment_method",
       headerName: "Método",
-      width: 150,
+      width: 120,
       sortable: false,
       renderCell: (params) => (
         <Chip

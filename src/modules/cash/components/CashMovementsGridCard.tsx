@@ -4,6 +4,7 @@ import {
   ArrowForwardRounded,
   ArrowUpwardRounded,
   FilterAltOffRounded,
+  PointOfSaleRounded,
   SearchRounded,
 } from "@mui/icons-material";
 
@@ -93,7 +94,7 @@ export function CashMovementsGridCard({
     {
       field: "date",
       headerName: "Fecha",
-      width: 115,
+      width: 120,
       sortable: false,
       valueGetter: (_value, row) => {
         return new Date(row.created_at).toLocaleDateString("es-GT");
@@ -102,7 +103,7 @@ export function CashMovementsGridCard({
     {
       field: "time",
       headerName: "Hora",
-      width: 100,
+      width: 120,
       sortable: false,
       valueGetter: (_value, row) => {
         return new Date(row.created_at).toLocaleTimeString("es-GT", {
@@ -114,16 +115,35 @@ export function CashMovementsGridCard({
     {
       field: "cash_register_name",
       headerName: "Caja",
-      minWidth: 160,
-      flex: 1,
+      minWidth: 120,
       sortable: false,
       renderCell: (params) => (
-        <Box>
-          <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: "0.86rem",
+              fontWeight: 700,
+              lineHeight: 1.2,
+            }}
+          >
             { params.row.cash_register_name }
           </Typography>
 
-          <Typography color="text.secondary" sx={{ fontSize: "0.72rem" }}>
+          <Typography
+            color="text.secondary"
+            sx={{
+              mt: 0.25,
+              fontSize: "0.72rem",
+              lineHeight: 1.2,
+            }}
+          >
             { params.row.cash_register_code }
           </Typography>
         </Box>
@@ -132,7 +152,7 @@ export function CashMovementsGridCard({
     {
       field: "movement_type",
       headerName: "Tipo",
-      width: 155,
+      width: 110,
       sortable: false,
       renderCell: (params) => (
         <Chip
@@ -176,29 +196,47 @@ export function CashMovementsGridCard({
       field: "reference",
       headerName: "Referencia",
       minWidth: 160,
-      flex: 1,
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontSize: "0.84rem" }}>
-          { params.row.reference || "—" }
-        </Typography>
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Typography sx={{ fontSize: "0.84rem" }}>
+            { params.row.reference || "—" }
+          </Typography>
+        </Box>
       ),
     },
     {
       field: "notes",
       headerName: "Notas",
       minWidth: 220,
-      flex: 1.5,
       sortable: false,
       renderCell: (params) => (
-        <Typography
-          color="text.secondary"
-          noWrap
-          title={ params.row.notes || "" }
-          sx={{ fontSize: "0.82rem" }}
+        <Box
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+          }}
         >
-          { params.row.notes || "—" }
-        </Typography>
+          <Typography
+            color="text.secondary"
+            noWrap
+            title={ params.row.notes || "" }
+            sx={{
+              fontSize: "0.82rem",
+              minWidth: 0,
+            }}
+          >
+            { params.row.notes || "—" }
+          </Typography>
+        </Box>
       ),
     },
     {
@@ -206,22 +244,30 @@ export function CashMovementsGridCard({
       headerName: "Monto",
       width: 155,
       align: "right",
-      headerAlign: "right",
+      headerAlign: "center",
       sortable: false,
       renderCell: (params) => {
         const isEntry = params.row.direction === "IN";
 
         return (
-          <Typography
+          <Box
             sx={{
               width: "100%",
-              textAlign: "right",
-              fontWeight: 800,
-              color: isEntry ? "success.main" : "error.main",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
             }}
           >
-            { isEntry ? "+" : "-" } { formatCurrency(params.row.amount) }
-          </Typography>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                color: isEntry ? "success.main" : "error.main",
+              }}
+            >
+              { isEntry ? "+" : "-" } { formatCurrency(params.row.amount) }
+            </Typography>
+          </Box>
         );
       },
     },
@@ -242,7 +288,7 @@ export function CashMovementsGridCard({
         <Typography
           sx={{
             fontSize: "1rem",
-            fontWeight: 800,
+            fontWeight: 700,
             mb: 1.5,
           }}
         >
@@ -370,8 +416,12 @@ export function CashMovementsGridCard({
         onPaginationModelChange={ onPaginationModelChange }
         pageSizeOptions={ [5, 10, 20, 50, 100] }
         hideFooter
-        disableRowSelectionOnClick
-        autoHeight
+        disableRowSelectionOnClick 
+        rowHeight={62} 
+        columnHeaderHeight={46}
+        slots={{
+          noRowsOverlay: EmptyPurchases,
+        }}
         sx={{
           border: 0,
           borderTop: "1px solid",
@@ -380,7 +430,7 @@ export function CashMovementsGridCard({
             bgcolor: "#F8F9FA",
           },
           "& .MuiDataGrid-columnHeaderTitle": {
-            fontWeight: 800,
+            fontWeight: 700,
             fontSize: "0.8rem",
           },
           "& .MuiDataGrid-cell": {
@@ -543,4 +593,28 @@ function getMovementTypeLabel(type: CashMovementType) {
     default:
       return type;
   }
+}
+
+function EmptyPurchases() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <PointOfSaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay cajas
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron cajas para mostrar.
+      </Typography>
+    </Stack>
+  );
 }

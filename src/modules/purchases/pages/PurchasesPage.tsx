@@ -46,6 +46,7 @@ import { PurchaseFormDialog } from "../components/PurchaseFormDialog";
 import { getSuppliers } from "../suppliers/services/supplierService"; 
 import { getProducts } from "../../catalog/products/services/productService";
 import { PurchaseDetailDialog } from "../components/PurchaseDetailDialog";
+import { getCashSessions } from "../../cash/services/cashService";
 
 import Swal from "sweetalert2";
 
@@ -185,9 +186,15 @@ export function PurchasesPage() {
     return quantity.toString();
   }
 
+  type CompletePurchaseMutationVariables = {
+    purchase: Purchase;
+    cashSessionId?: string;
+  };
 
-  const completePurchaseMutation = useMutation<Purchase, Error, Purchase>({
-    mutationFn: (purchase) => completePurchase(purchase.id),
+  const completePurchaseMutation = useMutation<Purchase, Error, CompletePurchaseMutationVariables>({
+    mutationFn: ({ purchase, cashSessionId }) => {
+      return completePurchase(purchase.id, cashSessionId);
+    },
 
     onSuccess: async (purchase) => {
       await Promise.all([
@@ -197,6 +204,14 @@ export function PurchasesPage() {
 
         queryClient.invalidateQueries({
           queryKey: ["products"],
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: ["cash-movements"],
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: ["cash-session-summary"],
         }),
       ]);
 
@@ -220,7 +235,6 @@ export function PurchasesPage() {
         icon: "error",
         confirmButtonText: "Aceptar",
         confirmButtonColor: "#064A57",
-
       });
     },
   });
@@ -500,6 +514,97 @@ export function PurchasesPage() {
 
 
   const handleCompletePurchase = async (purchase: Purchase) => {
+    if (purchase.payment_method === "CASH") {
+      if (!selectedCompany || !selectedBranch) {
+        void Swal.fire({
+          title: "No fue posible completar la compra",
+          text: "No hay una empresa o sucursal seleccionada.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+          confirmButtonColor: "#064A57",
+        });
+
+        return;
+      }
+
+      try {
+        const response = await getCashSessions({
+          companyId: selectedCompany.id,
+          branchId: selectedBranch.id,
+          status: "OPEN",
+          ordering: "-opened_at",
+          page: 1,
+          pageSize: 100,
+        });
+
+        const openCashSessions = response.results;
+
+        if (openCashSessions.length === 0) {
+          void Swal.fire({
+            title: "No hay cajas abiertas",
+            text: "Debes abrir una caja antes de completar una compra en efectivo.",
+            icon: "warning",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#064A57",
+          });
+
+          return;
+        }
+
+        const cashSessionOptions = Object.fromEntries(
+          openCashSessions.map((session) => [
+            session.id,
+            `${session.cash_register_name} (${session.cash_register_code})`,
+          ]),
+        );
+
+        const result = await Swal.fire({
+          title: "¿Completar compra?",
+          text: `Selecciona la caja de donde saldrá el efectivo para ${purchase.purchase_number}.`,
+          icon: "question",
+          input: "select",
+          inputOptions: cashSessionOptions,
+          inputPlaceholder: "Selecciona una caja",
+          showCancelButton: true,
+          confirmButtonText: "Sí, completar",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#064A57",
+          reverseButtons: true,
+          inputValidator: (value) => {
+            if (!value) {
+              return "Debes seleccionar una caja.";
+            }
+
+            return null;
+          },
+        });
+
+        if (!result.isConfirmed) {
+          return;
+        }
+
+        completePurchaseMutation.mutate({
+          purchase,
+          cashSessionId: result.value,
+        });
+
+        return;
+      } catch (error) {
+        void Swal.fire({
+          title: "No fue posible consultar las cajas",
+          text: getApiErrorMessage(
+            error,
+            "Ocurrió un error al consultar las cajas abiertas.",
+          ),
+          icon: "error",
+          confirmButtonText: "Aceptar",
+          confirmButtonColor: "#064A57",
+        });
+
+        return;
+      }
+    }
+
     const result = await Swal.fire({
       title: "¿Completar compra?",
       text: `Al completar ${purchase.purchase_number}, los productos ingresarán al inventario de ${selectedBranch?.name ?? "la sucursal seleccionada"}.`,
@@ -511,9 +616,13 @@ export function PurchasesPage() {
       reverseButtons: true,
     });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+      return;
+    }
 
-    completePurchaseMutation.mutate(purchase);
+    completePurchaseMutation.mutate({
+      purchase,
+    });
   };
 
 
@@ -564,15 +673,14 @@ export function PurchasesPage() {
             variant="h4"
             sx={{
               fontSize: {
-                xs: "1.65rem",
-                sm: "1.85rem",
+              xs: "1.65rem",
+              sm: "1.85rem",
               },
-
-              fontWeight: 800,
+              fontWeight: 700,
               mb: 0.4,
             }}
           >
-            Lista de compras
+            Compras
           </Typography>
 
           <Typography

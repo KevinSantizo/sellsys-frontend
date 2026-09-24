@@ -605,16 +605,15 @@ export function SuppliersPage() {
           <Typography
             variant="h4"
             sx={{
-              fontSize: {
+                fontSize: {
                 xs: "1.65rem",
                 sm: "1.85rem",
-              },
-
-              fontWeight: 800,
-              mb: 0.4,
+                },
+                fontWeight: 700,
+                mb: 0.4,
             }}
           >
-            Lista de proveedores
+            Proveedores
           </Typography>
 
           <Typography

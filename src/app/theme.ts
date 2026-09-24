@@ -41,12 +41,12 @@ export const theme = createTheme({
     ].join(","),
 
     h4: {
-      fontWeight: 800,
+      fontWeight: 700,
       letterSpacing: "-0.8px",
     },
 
     h5: {
-      fontWeight: 800,
+      fontWeight: 700,
       letterSpacing: "-0.6px",
     },
 

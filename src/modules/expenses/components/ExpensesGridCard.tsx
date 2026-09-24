@@ -2,12 +2,15 @@ import {
   ArrowBackRounded,
   ArrowForwardRounded,
   CancelOutlined,
+  CancelRounded,
   CheckCircleOutlineRounded,
+  CheckCircleRounded,
   ClearRounded,
   EditRounded,
   ReceiptLongRounded,
   RefreshRounded,
   SearchRounded,
+  ShoppingCartRounded
 } from "@mui/icons-material";
 
 import {
@@ -313,7 +316,7 @@ export function ExpensesGridCard({
                 <GridActionsCellItem
                   key="complete"
                   icon={
-                    <CheckCircleOutlineRounded
+                    <CheckCircleRounded
                       sx={{
                         color:
                           "success.main",
@@ -349,7 +352,7 @@ export function ExpensesGridCard({
                 <GridActionsCellItem
                   key="cancel"
                   icon={
-                    <CancelOutlined
+                    <CancelRounded
                       sx={{
                         color:
                           "error.main",
@@ -626,6 +629,9 @@ export function ExpensesGridCard({
 
           noResultsOverlayLabel:
             noRowsMessage,
+        }}
+        slots={{
+          noRowsOverlay: EmptyPurchases,
         }}
         sx={{
           border: 0,
@@ -955,4 +961,29 @@ function getStatusStyle(
         bgcolor: "#FEF9C3",
       };
   }
+}
+
+
+function EmptyPurchases() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <ShoppingCartRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay gastos
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron gastos para mostrar.
+      </Typography>
+    </Stack>
+  );
 }

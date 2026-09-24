@@ -400,23 +400,23 @@ export function PurchaseFormDialog({
                     />
 
                     <TextField
-                    select
-                    label="Método de pago"
-                    value={ values.payment_method }
-                    onChange={ (event) => {
-                        updateValue(
-                        "payment_method",
-                        event.target.value as PurchasePaymentMethod,
-                        );
-                    }}
-                    fullWidth
-                    disabled={ isSubmitting }
+                      select
+                      label="Método de pago"
+                      value={ values.payment_method }
+                      onChange={ (event) => {
+                          updateValue(
+                          "payment_method",
+                          event.target.value as PurchasePaymentMethod,
+                          );
+                      }}
+                      fullWidth
+                      disabled={ isSubmitting }
                     >
-                    <MenuItem value="CASH">Efectivo</MenuItem>
-                    <MenuItem value="TRANSFER">Transferencia</MenuItem>
-                    <MenuItem value="CARD">Tarjeta</MenuItem>
-                    <MenuItem value="SUPPLIER_CREDIT">Crédito de proveedor</MenuItem>
-                    <MenuItem value="OTHER">Otro</MenuItem>
+                      <MenuItem value="CASH">Efectivo</MenuItem>
+                      <MenuItem value="TRANSFER">Transferencia</MenuItem>
+                      <MenuItem value="CARD">Tarjeta</MenuItem>
+                      <MenuItem value="SUPPLIER_CREDIT">Crédito de proveedor</MenuItem>
+                      <MenuItem value="OTHER">Otro</MenuItem>
                     </TextField>
                 </Box>
 
@@ -659,7 +659,7 @@ export function PurchaseFormDialog({
                         sx={{
                             mb: 1.5,
                             fontSize: "0.9rem",
-                            fontWeight: 800,
+                            fontWeight: 700,
                         }}
                         >
                         Totales
@@ -713,7 +713,7 @@ export function PurchaseFormDialog({
                                 color="primary.main"
                                 sx={{
                                 fontSize: "1rem",
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 }}
                             >
                                 { formatCurrency(total) }

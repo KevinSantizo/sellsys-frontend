@@ -693,11 +693,11 @@ export function ProductsPage() {
                 xs: "1.65rem",
                 sm: "1.85rem",
               },
-              fontWeight: 800,
+              fontWeight: 700,
               mb: 0.4,
           }}
           >
-            Lista de productos
+            Productos
           </Typography>
 
           <Typography
