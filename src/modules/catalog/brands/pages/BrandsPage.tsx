@@ -4,6 +4,7 @@ import {
 } from "@mui/icons-material";
 
 import {
+  Alert,
   Box,
   Button,
   InputAdornment,
@@ -18,9 +19,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-} from "@tanstack/react-query";
-
-import axios from "axios";
+} from "@tanstack/react-query"; 
 
 import {
   useEffect,
@@ -28,9 +27,12 @@ import {
 } from "react";
 
 import { useCompanyStore } from "../../../companies/store/companyStore";
+import {
+  showErrorAlert,
+  showSuccessAlert,
+} from "../../../../shared/alerts/appAlerts";
 
-import { showSuccessAlert } from "../../../../shared/alerts/appAlerts";
-
+import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
 import { BrandFormDialog } from "../components/BrandFormDialog";
 import { BrandsGridCard } from "../components/BrandsGridCard";
 
@@ -113,36 +115,7 @@ export function BrandsPage() {
   const brands = brandsQuery.data?.results ?? [];
   const totalBrands = brandsQuery.data?.count ?? 0;
 
-  const getApiErrorMessage = (error: unknown) => {
-    if (!axios.isAxiosError(error)) {
-      return "Ocurrió un error inesperado.";
-    }
-
-    const data = error.response?.data;
-
-    if (typeof data?.detail === "string") {
-      return data.detail;
-    }
-
-    if (Array.isArray(data?.name)) {
-      return data.name[0];
-    }
-
-    if (typeof data === "object" && data !== null) {
-      const firstValue = Object.values(data)[0];
-
-      if (Array.isArray(firstValue) && firstValue.length > 0) {
-        return String(firstValue[0]);
-      }
-
-      if (typeof firstValue === "string") {
-        return firstValue;
-      }
-    }
-
-    return "No fue posible guardar la marca.";
-  };
-
+ 
   const createBrandMutation = useMutation({
     mutationFn: (values: BrandFormValues) => {
       if (!selectedCompany) {
@@ -172,7 +145,12 @@ export function BrandsPage() {
     },
 
     onError: (error) => {
-      setFormError(getApiErrorMessage(error));
+      setFormError(
+        getApiErrorMessage(
+          error,
+          "No fue posible crear la marca.",
+        ),
+      );
     },
   });
 
@@ -206,7 +184,12 @@ export function BrandsPage() {
     },
 
     onError: (error) => {
-      setFormError(getApiErrorMessage(error));
+      setFormError(
+        getApiErrorMessage(
+          error,
+          "No fue posible actualizar la marca.",
+        ),
+      );
     },
   });
 
@@ -226,7 +209,13 @@ export function BrandsPage() {
       setEditingBrand(brandDetail);
       setIsDialogOpen(true);
     } catch (error) {
-      setFormError(getApiErrorMessage(error));
+        await showErrorAlert({
+          title: "No fue posible cargar la marca",
+          text: getApiErrorMessage(
+              error,
+              "No fue posible cargar la información de la marca.",
+          ),
+        });
     } finally {
       setLoadingBrandDetail(false);
     }
@@ -373,20 +362,36 @@ export function BrandsPage() {
           }}
         />
       </Box>
+      {brandsQuery.isError && (
+          <Alert
+              severity="error"
+              sx={{
+                  mb: 2,
+                  borderRadius: "5px",
+              }}
+          >
+              {getApiErrorMessage(
+                  brandsQuery.error,
+                  "No fue posible cargar las marcas.",
+              )}
+          </Alert>
+      )}
 
-      <BrandsGridCard
-        brands={ brands }
-        totalBrands={ totalBrands }
-        loading={
-          brandsQuery.isLoading ||
-          brandsQuery.isFetching ||
-          loadingBrandDetail
-        }
-        search={ search }
-        paginationModel={ paginationModel }
-        onPaginationModelChange={ setPaginationModel }
-        onEdit={ handleEditBrand }
-      />
+      {!brandsQuery.isError && (
+          <BrandsGridCard
+              brands={ brands }
+              totalBrands={ totalBrands }
+              loading={
+                  brandsQuery.isLoading ||
+                  brandsQuery.isFetching ||
+                  loadingBrandDetail
+              }
+              search={ search }
+              paginationModel={ paginationModel }
+              onPaginationModelChange={ setPaginationModel }
+              onEdit={ handleEditBrand }
+          />
+      )}
 
       <BrandFormDialog
         open={ isDialogOpen }

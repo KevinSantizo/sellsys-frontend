@@ -2,6 +2,7 @@ import {
   AddRounded,
   AddShoppingCartRounded,
   DeleteOutlineRounded,
+  DownloadRounded,
   PointOfSaleRounded,
   RemoveRounded,
   SearchRounded,
@@ -50,13 +51,12 @@ import {
   calculateLineTotal,
   useSalesCartStore,
 } from "../store/salesCartStore";
-
-import axios from "axios";
+ 
 import { CheckoutSaleDialog, type CheckoutFormValues, } from "../components/CheckoutSaleDialog";
-import { checkoutSale } from "../services/salesService";
+import { checkoutSale, downloadSaleReceipt } from "../services/salesService";
 import type { SaleDetail, } from "../types/sales.types";
-import { showErrorAlert, showSuccessAlert, } from "../../../shared/alerts/appAlerts";
-
+import { showErrorAlert, showSuccessAlert, showSaleSuccessAlert  } from "../../../shared/alerts/appAlerts";
+import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
 
 function formatCurrency(
   value: number,
@@ -69,65 +69,7 @@ function formatCurrency(
     },
   )}`;
 }
-
-function findApiErrorMessage(
-  value: unknown,
-): string | null {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const message =
-        findApiErrorMessage(item);
-
-      if (message) {
-        return message;
-      }
-    }
-
-    return null;
-  }
-
-  if (
-    value !== null &&
-    typeof value === "object"
-  ) {
-    for (
-      const item
-      of Object.values(value)
-    ) {
-      const message =
-        findApiErrorMessage(item);
-
-      if (message) {
-        return message;
-      }
-    }
-  }
-
-  return null;
-}
-
-function getCheckoutErrorMessage(
-  error: unknown,
-): string {
-  if (axios.isAxiosError(error)) {
-    return (
-      findApiErrorMessage(
-        error.response?.data,
-      ) ??
-      "El servidor no pudo registrar la venta."
-    );
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "No fue posible registrar la venta.";
-}
+ 
 
 export function SalesPosPage() {
 
@@ -147,7 +89,7 @@ export function SalesPosPage() {
   };
 
   const [ checkoutOpen, setCheckoutOpen, ] = useState(false);
-
+  const [checkoutIdempotencyKey, setCheckoutIdempotencyKey] = useState<string | null>(null);
   const selectedCompany = useCompanyStore( (state) => state.selectedCompany, );
   const selectedBranch = useBranchStore( (state) => state.selectedBranch, );
 
@@ -164,9 +106,14 @@ export function SalesPosPage() {
   const [search, setSearch] = useState("");
   const [ debouncedSearch, setDebouncedSearch, ] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [isBarcodeSearching, setIsBarcodeSearching] = useState(false);
+  const [isBarcodeSearching, setIsBarcodeSearching] = useState(false); 
 
+  const [lastSale, setLastSale] = useState<SaleDetail | null>(null);
+  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
 
+  useEffect(() => {
+      setCheckoutIdempotencyKey(null);
+  }, [items, selectedCompany?.id, selectedBranch?.id]);
   useEffect(() => {
     if (!selectedCompany?.id || !selectedBranch?.id) {
       return;
@@ -254,7 +201,7 @@ export function SalesPosPage() {
     [items],
   );
 
-  const checkoutMutation = useMutation< SaleDetail, unknown, CheckoutFormValues >({
+  const checkoutMutation = useMutation<SaleDetail, unknown, CheckoutFormValues>({
     mutationFn: async (values) => {
       if (!selectedCompany) {
         throw new Error(
@@ -274,17 +221,10 @@ export function SalesPosPage() {
         );
       }
 
-      const paymentAmount =
-        values.paymentMethod === "CASH"
-          ? Number(
-              values.amountReceived,
-            )
-          : total;
+      const paymentAmount = Number(values.amountReceived);
 
       if (
-        !Number.isFinite(
-          paymentAmount,
-        ) ||
+        !Number.isFinite(paymentAmount) ||
         paymentAmount <= 0
       ) {
         throw new Error(
@@ -292,76 +232,93 @@ export function SalesPosPage() {
         );
       }
 
-      return checkoutSale({
-        company_id: selectedCompany.id,
-        branch_id: selectedBranch.id,
+      if (!checkoutIdempotencyKey) {
+        throw new Error("No se pudo generar la clave de la operación.");
+      }
 
-        cash_session_id:
-          values.paymentMethod === "CASH"
-            ? values.cashSessionId
-            : null,
-        
-        customer_name: values.customerName.trim(),
-        customer_tax_id: values.customerTaxId.trim(),
-        notes: values.notes.trim(),
+      return checkoutSale(
+        {
+          company_id: selectedCompany.id,
+          branch_id: selectedBranch.id,
 
-        items: items.map((item) => ({
-          product_id:item.product.id,
-          quantity: item.quantity.toFixed(3),
-          discount_percent: item.discountPercent.toFixed(2,),
-        })),
+          cash_session_id:
+              values.paymentMethod === "CASH"
+                  ? values.cashSessionId
+                  : null,
 
-        payments: [
-          {
-            method:
-              values.paymentMethod,
+          customer_name: values.customerName.trim(),
+          customer_tax_id: values.customerTaxId.trim(),
+          notes: values.notes.trim(),
 
-            amount:
-              paymentAmount.toFixed(2),
+          cart_discount_type: values.cartDiscountType,
+          cart_discount_value: values.cartDiscountType === "NONE" ? "0.00" : values.cartDiscountValue,
 
-            reference:
-              values.paymentMethod ===
-              "CASH"
-                ? ""
-                : values.reference.trim(),
-          },
-        ],
-      });
+          items: items.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity.toFixed(3),
+            discount_percent: item.discountPercent.toFixed(2),
+          })),
+
+          payments: [
+            {
+              method: values.paymentMethod,
+              amount: paymentAmount.toFixed(2),
+              reference: values.paymentMethod === "CASH" ? "" : values.reference.trim(),
+            },
+          ],
+        },
+        checkoutIdempotencyKey,
+      );
     },
 
     onSuccess: async (sale) => {
       setCheckoutOpen(false);
       clearCart();
+      setCheckoutIdempotencyKey(null);
       setSearch("");
       setDebouncedSearch("");
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["cash-movements"] }),
         queryClient.invalidateQueries({ queryKey: ["cash-session-summary"] }),
       ]);
-      const changeAmount = Number( sale.change_amount, );
 
-      await showSuccessAlert({
+      const changeAmount = Number(sale.change_amount);
+
+      const downloadReceipt = await showSaleSuccessAlert({
         title: "Venta registrada",
         text:
           changeAmount > 0
-            ? `${sale.sale_number} fue registrada correctamente. Cambio: ${formatCurrency(
-                changeAmount,
-              )}`
+            ? `${sale.sale_number} fue registrada correctamente. Cambio: ${formatCurrency(changeAmount)}`
             : `${sale.sale_number} fue registrada correctamente.`,
       });
+
+      if (!downloadReceipt) {
+        return;
+      }
+
+      try {
+        await downloadSaleReceipt(sale.id, sale.sale_number);
+      } catch {
+        await showErrorAlert({
+          title: "No se pudo descargar el comprobante",
+          text: "La venta fue registrada correctamente, pero no fue posible descargar el comprobante.",
+        });
+      }
     },
 
     onError: async (error) => {
       await showErrorAlert({
-        title:
-          "No se pudo registrar la venta",
-        text:
-          getCheckoutErrorMessage(
+        title: "No se pudo registrar la venta",
+       text: getApiErrorMessage(
             error,
-          ),
+            "No fue posible registrar la venta.",
+        ),
       });
     },
   });
+
+ 
 
   const totalUnits = useMemo(
     () =>
@@ -504,9 +461,7 @@ export function SalesPosPage() {
         </Box>
 
         <Chip
-          icon={
-            <PointOfSaleRounded />
-          }
+          icon={ <PointOfSaleRounded /> }
           label={`${items.length} productos · ${totalUnits} unidades`}
           variant="outlined"
           sx={{
@@ -536,380 +491,7 @@ export function SalesPosPage() {
             gap: 2,
           }}
         >
-          {/* Buscador */}
-          <Card
-            variant="outlined"
-            sx={{
-              borderRadius: "5px",
-            }}
-          >
-          {false &&  ( 
-             <>
-            <CardContent>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 700,
-                  mb: 2,
-                }}
-              >
-                Buscar productos
-              </Typography>
-
-              <TextField
-                fullWidth
-                value={search}
-                onChange={(event) => {
-                  setSearch(
-                    event.target.value,
-                  );
-                }}
-                onKeyDown={async (event) => {
-                  if (event.key !== "Enter") {
-                    return;
-                  }
-
-                  event.preventDefault();
-
-                  const value =
-                    search.trim();
-
-                  if (!value) {
-                    return;
-                  }
-
-                  const added =
-                    await addProductByBarcode(
-                      value,
-                    );
-
-                  if (added) {
-                    return;
-                  } 
-                }}
-                onPaste={(event) => {
-                  const pastedValue =
-                    event.clipboardData
-                      .getData("text")
-                      .trim();
-
-                  if (!pastedValue) {
-                    return;
-                  }
-
-                  event.preventDefault();
-
-                  setSearch(pastedValue);
-
-                  void addProductByBarcode(
-                    pastedValue,
-                  ).then((added) => {
-                    if (!added) {
-                      setSearch(pastedValue);
-                    }
-                  });
-                }}
-                placeholder="Buscar por nombre, SKU o código de barras"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchRounded
-                          sx={{
-                            color:
-                              "text.secondary",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root":
-                    {
-                      minHeight: 46,
-                      borderRadius: "5px",
-                      bgcolor: "#FFFFFF",
-                    },
-                }}
-              />
-
-              {/* Estado inicial */}
-              {!canSearch && (
-                <Box
-                  sx={{
-                    py: 6,
-                    textAlign: "center",
-                  }}
-                >
-                  <SearchRounded
-                    sx={{
-                      fontSize: 46,
-                      color:
-                        "text.disabled",
-                      mb: 1,
-                    }}
-                  />
-
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                    }}
-                  >
-                    Busca un producto
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color:
-                        "text.secondary",
-                    }}
-                  >
-                    Escribe al menos dos
-                    caracteres para comenzar.
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Cargando */}
-              {canSearch &&
-                productsQuery.isLoading && (
-                  <Box
-                    sx={{
-                      py: 6,
-                      display: "grid",
-                      placeItems: "center",
-                    }}
-                  >
-                    <CircularProgress
-                      size={32}
-                    />
-                  </Box>
-                )}
-
-              {/* Error */}
-              {canSearch &&
-                productsQuery.isError && (
-                  <Box
-                    sx={{
-                      py: 5,
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        color: "error.main",
-                        fontWeight: 700,
-                      }}
-                    >
-                      No fue posible cargar
-                      los productos.
-                    </Typography>
-
-                    <Button
-                      type="button"
-                      variant="text"
-                      onClick={() => {
-                        void productsQuery.refetch();
-                      }}
-                      sx={{
-                        mt: 1,
-                        borderRadius: "5px",
-                      }}
-                    >
-                      Intentar nuevamente
-                    </Button>
-                  </Box>
-                )}
-
-              {/* Sin resultados */}
-              {canSearch &&
-                !productsQuery.isLoading &&
-                !productsQuery.isError &&
-                products.length === 0 && (
-                  <Box
-                    sx={{
-                      py: 6,
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontWeight: 700,
-                      }}
-                    >
-                      No encontramos
-                      productos
-                    </Typography>
-
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color:
-                          "text.secondary",
-                      }}
-                    >
-                      Prueba con otro nombre,
-                      SKU o código de barras.
-                    </Typography>
-                  </Box>
-                )}
-
-              {/* Resultados */}
-              {products.length > 0 && (
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: {
-                      xs: "minmax(0, 1fr)",
-                      md: "repeat(2, minmax(0, 1fr))",
-                      lg: "repeat(3, minmax(0, 1fr))",
-                    },
-                    gap: 1.5,
-                    mt: 2,
-                  }}
-                >
-                  {products.map(
-                    (product) => (
-                      <Card
-                        key={product.id}
-                        variant="outlined"
-                        sx={{
-                          borderRadius:
-                            "5px",
-                          transition:
-                            "border-color 150ms ease, box-shadow 150ms ease",
-
-                          "&:hover": {
-                            borderColor:
-                              "primary.main",
-                            boxShadow:
-                              "0 5px 16px rgba(15, 23, 42, 0.08)",
-                          },
-                        }}
-                      >
-                        <CardContent
-                          sx={{
-                            height: "100%",
-                            display: "flex",
-                            flexDirection:
-                              "column",
-                            p: 2,
-
-                            "&:last-child": {
-                              pb: 2,
-                            },
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              flex: 1,
-                            }}
-                          >
-                            <Typography
-                              sx={{
-                                fontWeight:
-                                  700,
-                                lineHeight:
-                                  1.3,
-                              }}
-                            >
-                              {product.name}
-                            </Typography>
-
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                display:
-                                  "block",
-                                color:
-                                  "text.secondary",
-                                mt: 0.5,
-                              }}
-                            >
-                              SKU:{" "}
-                              {product.sku}
-                            </Typography>
-
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                display:
-                                  "block",
-                                color:
-                                  "text.secondary",
-                              }}
-                            >
-                              {product.category_name ??
-                                "Sin categoría"}
-                            </Typography>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              display:
-                                "flex",
-                              alignItems:
-                                "center",
-                              justifyContent:
-                                "space-between",
-                              gap: 1,
-                              mt: 2,
-                            }}
-                          >
-                            <Typography
-                              sx={{
-                                color:
-                                  "primary.main",
-                                fontWeight:
-                                  800,
-                              }}
-                            >
-                              {formatCurrency(
-                                Number(
-                                  product.sale_price,
-                                ),
-                              )}
-                            </Typography>
-
-                            <Tooltip title="Agregar al carrito">
-                              <IconButton
-                                type="button"
-                                onClick={() => {
-                                  handleAddProduct(
-                                    product,
-                                  );
-                                }}
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  borderRadius:
-                                    "5px",
-                                  bgcolor:
-                                    "primary.main",
-                                  color:
-                                    "#FFFFFF",
-
-                                  "&:hover": {
-                                    bgcolor:
-                                      "primary.dark",
-                                  },
-                                }}
-                              >
-                                <AddShoppingCartRounded fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    ),
-                  )}
-                </Box>
-              )}
-            </CardContent>
-            </>)}
-          </Card>
+  
 
           {/* Carrito */}
           <Card
@@ -923,8 +505,7 @@ export function SalesPosPage() {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent:
-                    "space-between",
+                  justifyContent: "space-between",
                   gap: 2,
                   mb: 2,
                 }}
@@ -967,8 +548,7 @@ export function SalesPosPage() {
                   Vaciar carrito
                 </Button>
               </Box>
-
-              <Divider />
+ 
 
               <Box
                 sx={{
@@ -1568,15 +1148,7 @@ export function SalesPosPage() {
         {/* Resumen */}
         <Card
           variant="outlined"
-          sx={{
-            borderRadius: "5px",
-            position: {
-              xl: "sticky",
-            },
-            top: {
-              xl: 0,
-            },
-          }}
+          sx={{ borderRadius: "5px", }}
         >
           <CardContent>
             <Typography
@@ -1716,6 +1288,10 @@ export function SalesPosPage() {
                   checkoutMutation.isPending
                 }
                 onClick={() => {
+                  if (!checkoutIdempotencyKey) {
+                      setCheckoutIdempotencyKey(crypto.randomUUID());
+                  }
+
                   setCheckoutOpen(true);
                 }}
                 sx={{
@@ -1729,6 +1305,7 @@ export function SalesPosPage() {
                   ? "Procesando..."
                   : "Cobrar"}
               </Button>
+              
             </Box>
           </CardContent>
         </Card>

@@ -26,14 +26,20 @@ type AuthState = {
   user: AuthUser | null;
   isAuthenticated: boolean;
 
+  updateTokens: (
+      accessToken: string,
+      refreshToken?: string,
+  ) => void;
+
   setTokens: (
     accessToken: string,
     refreshToken: string,
     rememberMe: boolean,
   ) => void;
-
+ 
   setUser: (user: AuthUser) => void;
   logout: () => void;
+  
 };
 
 const initialAccessToken = getStoredToken(
@@ -80,6 +86,22 @@ export const useAuthStore = create<AuthState>(
  
     },
 
+    updateTokens: (accessToken, refreshToken) => {
+      const useLocalStorage = localStorage.getItem(REFRESH_TOKEN_KEY) !== null;
+      const storage = useLocalStorage ? localStorage : sessionStorage;
+
+      storage.setItem(ACCESS_TOKEN_KEY, accessToken);
+
+      if (refreshToken) {
+          storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      }
+
+      set((state) => ({
+          accessToken,
+          refreshToken: refreshToken ?? state.refreshToken,
+          isAuthenticated: true,
+      }));
+    },
     setUser: (user) => {
       set({
         user,

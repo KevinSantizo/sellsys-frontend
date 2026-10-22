@@ -43,14 +43,12 @@ import { useBranchStore, } from "../../branches/store/branchStore";
 import { useCompanyStore, } from "../../companies/store/companyStore"; 
 import { ExpensesGridCard, } from "../components/ExpensesGridCard"; 
 import type { Expense, ExpenseFormValues } from "../types/expense";
-import axios from "axios";
-
-import { OpenCashSessionSelect } from "../../cash/components/OpenCashSessionSelect";
 import { getCashSessions } from "../../cash/services/cashService";
 
 import { showSuccessAlert, showErrorAlert } from "../../../shared/alerts/appAlerts";
 import { ExpenseFormDialog, } from "../components/ExpenseFormDialog";
 import { getSuppliers, } from "../../purchases/suppliers/services/supplierService";
+import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
 import Swal from "sweetalert2";
 
 type SaveExpenseVariables = {
@@ -273,6 +271,25 @@ export function ExpensesPage() {
     ]);
 
 
+    const formOptionsError = categoriesQuery.isError
+    ? getApiErrorMessage(
+        categoriesQuery.error,
+        "No fue posible cargar las categorías de gasto.",
+    )
+    : suppliersQuery.isError
+        ? getApiErrorMessage(
+            suppliersQuery.error,
+            "No fue posible cargar los proveedores.",
+        )
+        : null;
+
+    const expenseDetailError = isEditing && expenseDetailQuery.isError
+        ? getApiErrorMessage(
+            expenseDetailQuery.error,
+            "No fue posible cargar la información del gasto.",
+        )
+        : null;
+
     const suppliers = suppliersQuery.data?.results ?? [];
 
     const saveExpenseMutation = useMutation< Expense, Error, SaveExpenseVariables >({
@@ -481,6 +498,7 @@ export function ExpensesPage() {
         isLoading,
         isFetching,
         isError,
+        error: expensesError,
         refetch,
     } = useQuery({
         queryKey: [
@@ -863,8 +881,10 @@ export function ExpensesPage() {
 
             {isError && (
                 <Alert severity="error">
-                No fue posible cargar
-                los gastos.
+                    {getApiErrorMessage(
+                        expensesError,
+                        "No fue posible cargar los gastos.",
+                    )}
                 </Alert>
             )}
 
@@ -931,7 +951,11 @@ export function ExpensesPage() {
                 isSubmitting={ saveExpenseMutation.isPending } 
                 isLoadingOptions={ categoriesQuery.isLoading || suppliersQuery.isLoading } 
                 isLoadingExpense={ isEditing && expenseDetailQuery.isLoading } 
-                submitError={ formError } 
+                submitError={
+                    formError ??
+                    expenseDetailError ??
+                    formOptionsError
+                }
                 onClose={ handleCloseDialog } 
                 onSubmit={(values) => {
                     setFormError(null);
@@ -948,45 +972,5 @@ export function ExpensesPage() {
         </Stack>
     );
 }
-
-function getApiErrorMessage( error: unknown, fallbackMessage: string, ): string {
-  if ( !axios.isAxiosError(error) ) {
-    return fallbackMessage;
-  }
-
-  const messages = flattenErrorMessages( error.response?.data, );
-
-  if ( messages.length === 0 ) {
-    return fallbackMessage;
-  }
-
-  return messages.join(" ");
-}
-
-
-function flattenErrorMessages( value: unknown, ): string[] {
-  if ( typeof value === "string" ) {
-    return [value];
-  }
-
-  if (
-    Array.isArray(value)
-  ) {
-    return value.flatMap(
-      flattenErrorMessages,
-    );
-  }
-
-  if (
-    value &&
-    typeof value === "object"
-  ) {
-    return Object.values(
-      value,
-    ).flatMap(
-      flattenErrorMessages,
-    );
-  }
-
-  return [];
-}
+ 
+ 

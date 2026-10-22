@@ -23,10 +23,12 @@ export type PaymentInput = {
 export type CheckoutSalePayload = {
   company_id: string;
   branch_id: string;
+  cart_discount_type: "NONE" | "PERCENTAGE" | "FIXED";
+  cart_discount_value: string;
   cash_session_id?: string | null;
   customer_name: string;
   customer_tax_id: string;
-  notes: string;
+  notes: string; 
   items: SaleItemInput[];
   payments: PaymentInput[];
 };
@@ -74,7 +76,10 @@ export type SaleDetail = {
   discount_total: string;
   tax_total: string;
   total: string;
-
+  cart_discount_type: "NONE" | "PERCENTAGE" | "FIXED";
+  cart_discount_type_display: string;
+  cart_discount_value: string;
+  cart_discount_amount: string;
   amount_received: string;
   change_amount: string;
 

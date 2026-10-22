@@ -28,8 +28,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { CashRegistersGridCard } from "../components/CashRegistersGridCard";
 import type { CashRegister, CashMovementDirection, CashMovementType, CashRegisterFormValues, CashSession } from "../types/cash";
 import { useCompanyStore } from "../../companies/store/companyStore";
-import { useBranchStore } from "../../branches/store/branchStore";
-import axios from "axios";
+import { useBranchStore } from "../../branches/store/branchStore"; 
 import { CashRegisterFormDialog } from "../components/CashRegisterFormDialog";
 import { showSuccessAlert } from "../../../shared/alerts/appAlerts";
 import { OpenCashSessionDialog } from "../components/OpenCashSessionDialog";
@@ -39,6 +38,7 @@ import { ManualCashMovementDialog } from "../components/ManualCashMovementDialog
 import { CashMovementsGridCard } from "../components/CashMovementsGridCard";
 import { CashSessionsHistoryGridCard } from "../components/CashSessionsHistoryGridCard";
 import { CashSessionDetailDialog } from "../components/CashSessionDetailDialog";
+import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
 
 export function CashPage() {
 
@@ -299,40 +299,7 @@ export function CashPage() {
     const cashRegisters = cashRegistersQuery.data?.results ?? [];
     const totalCashRegisters = cashRegistersQuery.data?.count ?? 0;
  
-    const getApiErrorMessage = (error: unknown) => {
-        if (!axios.isAxiosError(error)) {
-            return "Ocurrió un error inesperado.";
-        }
-
-        const data = error.response?.data;
-
-        if (typeof data?.detail === "string") {
-            return data.detail;
-        }
-
-        if (Array.isArray(data?.code)) {
-            return data.code[0];
-        }
-
-        if (Array.isArray(data?.name)) {
-            return data.name[0];
-        }
-
-        if (typeof data === "object" && data !== null) {
-            const firstValue = Object.values(data)[0];
-
-            if (Array.isArray(firstValue) && firstValue.length > 0) {
-            return String(firstValue[0]);
-            }
-
-            if (typeof firstValue === "string") {
-            return firstValue;
-            }
-        }
-
-        return "No fue posible guardar la caja.";
-    };
-
+ 
     const closeCashSessionMutation = useMutation({
         mutationFn: ({ cashSessionId, countedAmount }: {
             cashSessionId: string;
@@ -359,7 +326,12 @@ export function CashPage() {
         },
 
         onError: (error) => {
-            setCloseSessionError(getApiErrorMessage(error));
+            setCloseSessionError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible cerrar la caja.",
+                ),
+            );
         },
     }); 
 
@@ -418,7 +390,12 @@ export function CashPage() {
             await showSuccessAlert({title: "Caja abierta correctamente."});
         },
         onError: (error) => {
-            setOpenSessionError(getApiErrorMessage(error));
+            setOpenSessionError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible abrir la caja.",
+                ),
+            );
         },
     });
 
@@ -446,7 +423,12 @@ export function CashPage() {
             await showSuccessAlert({title: "Caja creada correctamente."});
         },
         onError: (error) => {
-            setFormError(getApiErrorMessage(error));
+            setFormError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible crear la caja.",
+                ),
+            );
         },
     });
 
@@ -468,7 +450,12 @@ export function CashPage() {
             await showSuccessAlert({title: "Caja actualizada correctamente."});
         },
         onError: (error) => {
-            setFormError(getApiErrorMessage(error));
+            setFormError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible actualizar la caja.",
+                ),
+            );
         },
     });
 
@@ -514,7 +501,12 @@ export function CashPage() {
         },
 
         onError: (error) => {
-            setManualMovementError(getApiErrorMessage(error));
+            setManualMovementError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible registrar el movimiento.",
+                ),
+            );
         },
     });
 

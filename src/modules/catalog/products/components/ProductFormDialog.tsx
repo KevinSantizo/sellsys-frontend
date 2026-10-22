@@ -60,10 +60,14 @@ const emptyProductValues: ProductFormValues = {
   brand_id: "",
   base_unit_id: "",
   cost_price: "",
+  content_quantity: "",
+  content_unit_id: "",
   sale_price: "",
   track_inventory: true,
   is_active: true,
-  initial_stock: "0",
+  initial_stock: "",
+  package_quantity: "",
+  package_unit_id: "", 
 };
 
 export function ProductFormDialog({
@@ -429,113 +433,225 @@ export function ProductFormDialog({
                   ))}
                 </TextField>
 
-                <TextField
-                  select
-                  label="Unidad de medida"
-                  value={values.base_unit_id}
-                  onChange={(event) => {
-                    updateValue(
-                      "base_unit_id",
-                      event.target.value,
-                    );
+                <Box
+                  sx={{
+                      gridColumn: "1 / -1",
+                      display: "grid",
+                      gridTemplateColumns: {
+                          xs: "1fr",
+                          md: "repeat(3, 1fr)",
+                      },
+                      gap: 2,
                   }}
-                  required
-                  fullWidth
-                  disabled={
-                    isSubmitting ||
-                    isLoadingOptions
-                  }
-                >
-                  {units.map((unit) => (
-                    <MenuItem
-                      key={unit.id}
-                      value={unit.id}
-                    >
-                      {unit.name} ({unit.symbol})
-                    </MenuItem>
-                  ))}
-                </TextField>
-
-                {!isEditing &&
-                values.product_type === "PRODUCT" &&
-                values.track_inventory && (
+              >
                   <TextField
-                    label="Stock inicial"
-                    type="number"
-                    value={values.initial_stock}
-                    onChange={(event) => {
-                      updateValue(
-                        "initial_stock",
-                        event.target.value,
-                      );
-                    }}
-                    helperText={
-                      `Existencia inicial en ${branchName}`
-                    }
-                    fullWidth
-                    disabled={isSubmitting}
-                    slotProps={{
-                      htmlInput: {
-                        min: 0,
-                        step: "0.001",
-                      },
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "5px",
-                      },
-                    }}
+                      select
+                      label="Unidad de inventario"
+                      value={ values.base_unit_id }
+                      onChange={(event) => {
+                          updateValue(
+                              "base_unit_id",
+                              event.target.value,
+                          );
+                      }}
+                      required
+                      fullWidth
+                      disabled={
+                          isSubmitting ||
+                          isLoadingOptions
+                      }
+                      sx={{
+                          "& .MuiOutlinedInput-root": {
+                              borderRadius: "5px",
+                          },
+                      }}
+                  >
+                      { units.map((unit) => (
+                          <MenuItem
+                              key={ unit.id }
+                              value={ unit.id }
+                          >
+                              { unit.name } ({ unit.symbol })
+                          </MenuItem>
+                      )) }
+                  </TextField>
+
+                  <TextField
+                      label="Presentación"
+                      type="number"
+                      value={ values.content_quantity }
+                      onChange={(event) => {
+                          updateValue(
+                              "content_quantity",
+                              event.target.value,
+                          );
+                      }}
+                      disabled={ isSubmitting }
+                      placeholder="Ej. 473"
+                      fullWidth
+                      slotProps={{
+                          htmlInput: {
+                              min: 0,
+                              step: "any",
+                          },
+                      }}
+                      sx={{
+                          "& .MuiOutlinedInput-root": {
+                              borderRadius: "5px",
+                          },
+                      }}
                   />
-                )}
 
-                <TextField
-                  label="Costo"
-                  type="number"
-                  value={values.cost_price}
-                  placeholder="0.00"
-                  onChange={(event) => {
-                    updateValue(
-                      "cost_price",
-                      event.target.value,
-                    );
-                  }}
-                  fullWidth
-                  disabled={isSubmitting}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                    htmlInput: {
-                      min: 0,
-                      step: "0.01",
-                    },
-                  }}
-                />
+                  <TextField
+                      select
+                      label="Unidad de presentación"
+                      value={ values.content_unit_id }
+                      onChange={(event) => {
+                          updateValue(
+                              "content_unit_id",
+                              event.target.value,
+                          );
+                      }}
+                      disabled={
+                          isSubmitting ||
+                          isLoadingOptions
+                      }
+                      fullWidth
+                      sx={{
+                          "& .MuiOutlinedInput-root": {
+                              borderRadius: "5px",
+                          },
+                      }}
+                  >
+                      <MenuItem value="">
+                          No aplica
+                      </MenuItem>
 
-                <TextField
-                  label="Precio de venta"
-                  type="number"
-                  value={values.sale_price}
-                  placeholder="0.00"
-                  onChange={(event) => {
-                    updateValue(
-                      "sale_price",
-                      event.target.value,
-                    );
-                  }}
-                  required
-                  fullWidth
-                  disabled={isSubmitting}
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
+                      { units.map((unit) => (
+                          <MenuItem
+                              key={ unit.id }
+                              value={ unit.id }
+                          >
+                              { unit.name } ({ unit.symbol })
+                          </MenuItem>
+                      )) }
+                  </TextField>
+                </Box>
+
+                <Box
+                  sx={{
+                    mt:1,
+                    gridColumn: "1 / -1",
+                    display: "grid",
+                    gridTemplateColumns: {
+                        xs: "1fr",
+                        md: (
+                            !isEditing &&
+                            values.product_type === "PRODUCT" &&
+                            values.track_inventory
+                        )
+                            ? "repeat(3, 1fr)"
+                            : "repeat(2, 1fr)",
                     },
-                    htmlInput: {
-                      min: 0,
-                      step: "0.01",
-                    },
+                    gap: 2,
                   }}
-                />
+                >
+                    {!isEditing &&
+                        values.product_type === "PRODUCT" &&
+                        values.track_inventory && (
+                            <TextField
+                                label="Stock inicial"
+                                type="number"
+                                placeholder="0.00"
+                                value={ values.initial_stock }
+                                onChange={(event) => {
+                                    updateValue(
+                                        "initial_stock",
+                                        event.target.value,
+                                    );
+                                }}
+                                helperText={
+                                    `Existencia inicial en ${branchName}`
+                                }
+                                fullWidth
+                                disabled={ isSubmitting }
+                                slotProps={{
+                                    inputLabel: {
+                                        shrink: true,
+                                    },
+                                    htmlInput: {
+                                        min: 0,
+                                        step: "0.001",
+                                    },
+                                }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: "5px",
+                                    },
+                                }}
+                            />
+                        )}
+
+                    <TextField
+                        label="Precio costo*"
+                        type="number"
+                        value={ values.cost_price }
+                        placeholder="0.00"
+                        onChange={(event) => {
+                            updateValue(
+                                "cost_price",
+                                event.target.value,
+                            );
+                        }}
+                        fullWidth
+                        disabled={ isSubmitting }
+                        slotProps={{
+                            inputLabel: {
+                                shrink: true,
+                            },
+                            htmlInput: {
+                                min: 0,
+                                step: "0.1",
+                            },
+                        }}
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "5px",
+                            },
+                        }}
+                    />
+
+                    <TextField
+                        label="Precio de venta"
+                        type="number"
+                        value={ values.sale_price }
+                        placeholder="0.00"
+                        onChange={(event) => {
+                            updateValue(
+                                "sale_price",
+                                event.target.value,
+                            );
+                        }}
+                        required
+                        fullWidth
+                        disabled={ isSubmitting }
+                        slotProps={{
+                            inputLabel: {
+                                shrink: true,
+                            },
+                            htmlInput: {
+                                min: 0,
+                                step: "0.1",
+                            },
+                        }}
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "5px",
+                            },
+                        }}
+                    />
+                </Box>
+ 
               </Box>
 
               <TextField

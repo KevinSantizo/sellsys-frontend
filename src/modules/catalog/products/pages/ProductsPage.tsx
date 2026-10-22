@@ -27,8 +27,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import axios from "axios";
-
 import {
   useCallback,
   useEffect,
@@ -43,7 +41,7 @@ import { showSuccessAlert, showDeleteProductConfirmation, showErrorAlert,} from 
 import { useCompanyStore } from "../../../companies/store/companyStore";
 
 import { ProductFormDialog } from "../components/ProductFormDialog";
-
+import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
 import {
   getBrandOptions,
   getCategoryOptions,
@@ -72,7 +70,7 @@ import {
   useBranchStore,
 } from "../../../branches/store/branchStore";
 
- 
+
 type SaveProductVariables = {
   productId: string | null;
   values: ProductFormValues;
@@ -340,6 +338,26 @@ export function ProductsPage() {
             product.base_unit_id ??
             "",
 
+          package_quantity:
+            product.package_quantity
+              ? String(product.package_quantity)
+              : "",
+
+          package_unit_id:
+            product.package_unit?.id ??
+            product.package_unit_id ??
+            "",
+
+          content_quantity:
+            product.content_quantity
+              ? String(product.content_quantity)
+              : "",
+
+          content_unit_id:
+            product.content_unit?.id ??
+            product.content_unit_id ??
+            "",
+
           cost_price:
             product.cost_price ?? "",
 
@@ -351,7 +369,8 @@ export function ProductsPage() {
 
           is_active:
             product.is_active,
-            initial_stock: "0",
+
+          initial_stock: "0",
         };
       },
       [productDetailQuery.data],
@@ -421,19 +440,28 @@ export function ProductsPage() {
         }
 
       return createProduct({
-        company_id:
-          selectedCompany.id,
-
-          branch_id:
-            selectedBranch.id || null,
-
-          initial_stock:
-            values.track_inventory
-              ? values.initial_stock
-              : "0",
-
         ...payload,
-      });
+
+        company_id: selectedCompany.id,
+
+        branch_id: selectedBranch.id || null,
+
+        initial_stock: values.track_inventory
+            ? values.initial_stock
+            : "0",
+
+        package_quantity: values.package_quantity
+            ? Number(values.package_quantity)
+            : null,
+
+        package_unit_id: values.package_unit_id || null,
+
+        content_quantity: values.content_quantity
+            ? values.content_quantity
+            : null,
+
+        content_unit_id: values.content_unit_id || null,
+    });
     },
 
     onSuccess: async (
@@ -856,46 +884,3 @@ export function ProductsPage() {
   );
 }
  
-function getApiErrorMessage(
-  error: unknown,
-  fallbackMessage: string,
-): string {
-  if (!axios.isAxiosError(error)) {
-    return fallbackMessage;
-  }
-
-  const messages = flattenErrorMessages(
-    error.response?.data,
-  );
-
-  if (messages.length === 0) {
-    return fallbackMessage;
-  }
-
-  return messages.join(" ");
-}
-
-function flattenErrorMessages(
-  value: unknown,
-): string[] {
-  if (typeof value === "string") {
-    return [value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(
-      flattenErrorMessages,
-    );
-  }
-
-  if (
-    value &&
-    typeof value === "object"
-  ) {
-    return Object.values(value).flatMap(
-      flattenErrorMessages,
-    );
-  }
-
-  return [];
-}

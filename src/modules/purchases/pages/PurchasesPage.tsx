@@ -38,18 +38,19 @@ import type {
   PurchaseFormValues,
   PurchasePaymentMethodFilter,
   PurchaseStatusFilter, 
-} from "../suppliers/types/purchase"; 
-
-import axios from "axios"; 
-import { showSuccessAlert } from "../../../shared/alerts/appAlerts"; 
+} from "../suppliers/types/purchase";  
 import { PurchaseFormDialog } from "../components/PurchaseFormDialog";  
 import { getSuppliers } from "../suppliers/services/supplierService"; 
 import { getProducts } from "../../catalog/products/services/productService";
 import { PurchaseDetailDialog } from "../components/PurchaseDetailDialog";
 import { getCashSessions } from "../../cash/services/cashService";
-
 import Swal from "sweetalert2";
+import {
+    showErrorAlert,
+    showSuccessAlert,
+} from "../../../shared/alerts/appAlerts";
 
+import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
 
 
 export function PurchasesPage() {
@@ -225,16 +226,13 @@ export function PurchasesPage() {
       });
     },
 
-    onError: (error) => {
-      void Swal.fire({
-        title: "No fue posible completar la compra",
-        text: getApiErrorMessage(
-          error,
-          "Ocurrió un error al completar la compra.",
-        ),
-        icon: "error",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#064A57",
+    onError: async (error) => {
+      await showErrorAlert({
+          title: "No fue posible completar la compra",
+          text: getApiErrorMessage(
+              error,
+              "Ocurrió un error al completar la compra.",
+          ),
       });
     },
   });
@@ -375,16 +373,13 @@ export function PurchasesPage() {
       });
     },
 
-    onError: (error) => {
-      void Swal.fire({
+    onError: async (error) => {
+      await showErrorAlert({
         title: "No fue posible cancelar la compra",
         text: getApiErrorMessage(
           error,
           "Ocurrió un error al cancelar la compra.",
         ),
-        icon: "error",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#064A57",
       });
     },
   });
@@ -590,15 +585,12 @@ export function PurchasesPage() {
 
         return;
       } catch (error) {
-        void Swal.fire({
+        await showErrorAlert({
           title: "No fue posible consultar las cajas",
           text: getApiErrorMessage(
             error,
             "Ocurrió un error al consultar las cajas abiertas.",
           ),
-          icon: "error",
-          confirmButtonText: "Aceptar",
-          confirmButtonColor: "#064A57",
         });
 
         return;
@@ -765,7 +757,10 @@ export function PurchasesPage() {
             borderRadius: "5px",
           }}
         >
-          No fue posible cargar las compras.
+         {getApiErrorMessage(
+            purchasesQuery.error,
+            "No fue posible cargar las compras.",
+          )}
         </Alert>
       )}
 
@@ -829,35 +824,5 @@ export function PurchasesPage() {
       />
     </Stack>
   );
-
-
-  function getApiErrorMessage(error: unknown, fallbackMessage: string) {
-    if (!axios.isAxiosError(error)) {
-      return fallbackMessage;
-    }
-
-    const messages = flattenErrorMessages(error.response?.data);
-
-    return messages.length > 0
-      ? messages.join(" ")
-      : fallbackMessage;
-  }
-
-
-  function flattenErrorMessages(value: unknown): string[] {
-    if (typeof value === "string") {
-      return [value];
-    }
-
-    if (Array.isArray(value)) {
-      return value.flatMap(flattenErrorMessages);
-    }
-
-    if (value && typeof value === "object") {
-      return Object.values(value).flatMap(flattenErrorMessages);
-    }
-
-    return [];
-  }
 
 }

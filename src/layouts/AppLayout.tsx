@@ -228,29 +228,35 @@ import { getCompanies, } from "../modules/companies/services/companyService";
           >
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                flexShrink: 0,
-                borderRadius: "15px",
-                bgcolor: "primary.light",
-                color: "primary.main",
-                display: "grid",
-                placeItems: "center",
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
-              <Inventory2Rounded />
+              <Box
+                sx={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  border: "2px solid #E5E7EB",
+                  boxShadow: 1,
+                }}
+              >
+                <img
+                  src="https://res.cloudinary.com/dsnuspy5j/image/upload/v1790700000/cafzdjlooogyqeimao3w.jpg"
+                  alt="Logo de empresa"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              </Box>
             </Box>
-
-            <Typography
-              variant="h6"
-              sx={{
-                flex: 1,
-                fontWeight: 700,
-              }}
-            >
-              SellSys
-            </Typography>
-
+ 
             <IconButton
               type="button"
               onClick={() => {
@@ -274,20 +280,10 @@ import { getCompanies, } from "../modules/companies/services/companyService";
             flexShrink: 0,
             px: 2.25,
             pt: 1,
-            pb: 2,
+            pb: 2, 
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              textTransform: "uppercase",
-              letterSpacing: "0.07em",
-            }}
-          >
-            Empresa activa
-          </Typography>
-
+      
           <Stack
             direction="row"
             spacing={1.25}

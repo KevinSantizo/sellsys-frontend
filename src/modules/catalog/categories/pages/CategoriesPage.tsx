@@ -4,6 +4,7 @@ import {
 } from "@mui/icons-material";
 
 import {
+  Alert,
   Box,
   Button,
   InputAdornment,
@@ -20,8 +21,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import axios from "axios";
-
 import {
   useEffect,
   useState,
@@ -29,8 +28,12 @@ import {
 
 import { useCompanyStore } from "../../../companies/store/companyStore";
 
-import { showSuccessAlert } from "../../../../shared/alerts/appAlerts";
+import {
+    showErrorAlert,
+    showSuccessAlert,
+} from "../../../../shared/alerts/appAlerts";
 
+import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
 import { CategoriesGridCard } from "../components/CategoriesGridCard";
 import { CategoryFormDialog } from "../components/CategoryFormDialog";
 
@@ -128,40 +131,15 @@ export function CategoriesPage() {
   const totalCategories = categoriesQuery.data?.count ?? 0;
 
   const parentCategories = parentCategoriesQuery.data?.results ?? [];
+ 
 
-  const getApiErrorMessage = (error: unknown) => {
-    if (!axios.isAxiosError(error)) {
-      return "Ocurrió un error inesperado.";
-    }
+  const parentCategoriesError = parentCategoriesQuery.isError
+    ? getApiErrorMessage(
+        parentCategoriesQuery.error,
+        "No fue posible cargar las categorías padre.",
+    )
+    : null;
 
-    const data = error.response?.data;
-
-    if (typeof data?.detail === "string") {
-      return data.detail;
-    }
-
-    if (Array.isArray(data?.name)) {
-      return data.name[0];
-    }
-
-    if (Array.isArray(data?.parent_id)) {
-      return data.parent_id[0];
-    }
-
-    if (typeof data === "object" && data !== null) {
-      const firstValue = Object.values(data)[0];
-
-      if (Array.isArray(firstValue) && firstValue.length > 0) {
-        return String(firstValue[0]);
-      }
-
-      if (typeof firstValue === "string") {
-        return firstValue;
-      }
-    }
-
-    return "No fue posible guardar la categoría.";
-  };
 
   const createCategoryMutation = useMutation({
     mutationFn: (values: CategoryFormValues) => {
@@ -193,7 +171,12 @@ export function CategoriesPage() {
     },
 
     onError: (error) => {
-      setFormError(getApiErrorMessage(error));
+      setFormError(
+        getApiErrorMessage(
+          error,
+          "No fue posible crear la categoría.",
+        ),
+      );
     },
   });
 
@@ -226,9 +209,13 @@ export function CategoriesPage() {
         title: "Categoría actualizada correctamente.",
       });
     },
-
     onError: (error) => {
-      setFormError(getApiErrorMessage(error));
+      setFormError(
+        getApiErrorMessage(
+          error,
+          "No fue posible actualizar la categoría.",
+        ),
+      );
     },
   });
 
@@ -248,7 +235,13 @@ export function CategoriesPage() {
       setEditingCategory(categoryDetail);
       setIsDialogOpen(true);
     } catch (error) {
-      setFormError(getApiErrorMessage(error));
+      await showErrorAlert({
+        title: "No fue posible cargar la categoría",
+        text: getApiErrorMessage(
+          error,
+          "No fue posible cargar la información de la categoría.",
+        ),
+      });
     } finally {
       setLoadingCategoryDetail(false);
     }
@@ -396,19 +389,36 @@ export function CategoriesPage() {
         />
       </Box>
 
-      <CategoriesGridCard
-        categories={ categories }
-        totalCategories={ totalCategories }
-        loading={
-          categoriesQuery.isLoading ||
-          categoriesQuery.isFetching ||
-          loadingCategoryDetail
-        }
-        search={ search }
-        paginationModel={ paginationModel }
-        onPaginationModelChange={ setPaginationModel }
-        onEdit={ handleEditCategory }
-      />
+      {categoriesQuery.isError && (
+        <Alert
+          severity="error"
+          sx={{
+            mb: 2,
+            borderRadius: "5px",
+          }}
+        >
+          {getApiErrorMessage(
+            categoriesQuery.error,
+            "No fue posible cargar las categorías.",
+          )}
+        </Alert>
+      )}
+
+      {!categoriesQuery.isError && (
+        <CategoriesGridCard
+          categories={ categories }
+          totalCategories={ totalCategories }
+          loading={
+              categoriesQuery.isLoading ||
+              categoriesQuery.isFetching ||
+              loadingCategoryDetail
+          }
+          search={ search }
+          paginationModel={ paginationModel }
+          onPaginationModelChange={ setPaginationModel }
+          onEdit={ handleEditCategory }
+        />
+      )}
 
       <CategoryFormDialog
         open={ isDialogOpen }
@@ -418,7 +428,7 @@ export function CategoriesPage() {
         initialValues={ categoryInitialValues }
         editingCategoryId={ editingCategory?.id }
         isSubmitting={ isSubmitting }
-        error={ formError }
+        error={ formError ?? parentCategoriesError }
         onClose={ handleCloseDialog }
         onSubmit={ handleSubmitCategory }
       />

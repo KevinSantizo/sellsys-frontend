@@ -149,17 +149,7 @@ export function ManualCashMovementDialog({
               borderRadius: "5px",
               bgcolor: "#FAFAFA",
             }}
-          >
-            <Typography
-              color="text.secondary"
-              sx={{
-                fontSize: "0.75rem",
-                fontWeight: 600,
-              }}
-            >
-              Caja
-            </Typography>
-
+          > 
             <Typography
               sx={{
                 mt: 0.25,

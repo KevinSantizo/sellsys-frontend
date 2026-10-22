@@ -22,6 +22,7 @@ export function showSuccessAlert({
     timerProgressBar: true,  
     background: "#FFFFFF",
     color: "#1F2937", 
+    backdrop: "rgba(15, 23, 42, 0.62)",
     buttonsStyling: false,
     allowOutsideClick: false,
     allowEscapeKey: false,
@@ -40,6 +41,46 @@ export function showSuccessAlert({
         clearInterval(timerInterval);
     }
   });
+}
+
+type SaleSuccessAlertOptions = {
+  title: string;
+  text?: string;
+};
+
+export async function showSaleSuccessAlert({
+  title,
+  text,
+}: SaleSuccessAlertOptions): Promise<boolean> {
+  const result = await Swal.fire({
+    icon: "success",
+    title,
+    text,
+    target: document.body,
+    position: "center",
+    showCancelButton: true,
+    confirmButtonText: "Descargar comprobante",
+    cancelButtonText: "Cerrar",
+    reverseButtons: true, 
+    padding: "2rem",
+    background: "#FFFFFF",
+    color: "#1F2937",
+    backdrop: "rgba(15, 23, 42, 0.62)",
+    buttonsStyling: false,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+
+    customClass: {
+      container: "sellsys-swal-container",
+      popup: "sellsys-swal-popup",
+      title: "sellsys-swal-title",
+      htmlContainer: "sellsys-swal-text",
+      confirmButton: "sellsys-swal-confirm-button",
+      cancelButton: "sellsys-swal-cancel-button",
+    },
+  });
+
+  return result.isConfirmed;
 }
 
 type DeleteConfirmationOptions = {

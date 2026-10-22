@@ -31,6 +31,10 @@ import { CashRegisterFormDialog } from "../../cash/components/CashRegisterFormDi
 
 import type { CashRegister, CashRegisterFormValues, } from "../../cash/types/cash";
 
+export type CartDiscountType =
+  | "NONE"
+  | "PERCENTAGE"
+  | "FIXED";
 
 export type CheckoutFormValues = {
   customerName: string;
@@ -40,6 +44,8 @@ export type CheckoutFormValues = {
   amountReceived: string;
   reference: string;
   cashSessionId: string | null;
+  cartDiscountType: CartDiscountType;
+  cartDiscountValue: string;
 };
 
 type CheckoutSaleDialogProps = {
@@ -105,6 +111,8 @@ export function CheckoutSaleDialog({
   const [openCashSessionError, setOpenCashSessionError] = useState<string | null>(null);
   const [isCashRegisterDialogOpen, setIsCashRegisterDialogOpen] = useState(false);
   const [createCashRegisterError, setCreateCashRegisterError] = useState<string | null>(null);
+  const [cartDiscountType, setCartDiscountType] = useState<CartDiscountType>("NONE");
+  const [cartDiscountValue, setCartDiscountValue] = useState("");
   
   const openCashSessionsQuery = useQuery({
     queryKey: [
@@ -125,6 +133,7 @@ export function CheckoutSaleDialog({
   });
 
   const openCashSessions = openCashSessionsQuery.data?.results ?? [];
+
 
   const cashRegistersQuery = useQuery({
     queryKey: [
@@ -169,11 +178,134 @@ export function CheckoutSaleDialog({
     setOpenCashSessionError(null);
     setIsCashRegisterDialogOpen(false);
     setCreateCashRegisterError(null);
+    setCartDiscountType("NONE");
+    setCartDiscountValue("");
 
   }, [open, total]);
 
-  const isCash = paymentMethod === "CASH";
+  
+  useEffect(() => {
+    if (!open || paymentMethod !== "CASH") {
+      return;
+    }
 
+    if (openCashSessions.length === 1) {
+      setCashSessionId(openCashSessions[0].id);
+      return;
+    }
+
+    if (openCashSessions.length === 0) {
+      setCashSessionId("");
+    }
+  }, [
+    open,
+    paymentMethod,
+    openCashSessions.length,
+    openCashSessions[0]?.id,
+  ]);
+
+  
+  useEffect(() => {
+    if (
+      !open ||
+      paymentMethod !== "CASH" ||
+      openCashSessions.length > 0
+    ) {
+      return;
+    }
+
+    if (cashRegisters.length === 1) {
+      setSelectedCashRegisterId(cashRegisters[0].id);
+      return;
+    }
+
+    if (cashRegisters.length === 0) {
+      setSelectedCashRegisterId("");
+    }
+  }, [
+    open,
+    paymentMethod,
+    openCashSessions.length,
+    cashRegisters.length,
+    cashRegisters[0]?.id,
+  ]);
+
+  const isCash = paymentMethod === "CASH";
+  const cartDiscountValueNumber = Number(cartDiscountValue) || 0;
+
+  const cartDiscountAmount = useMemo(() => {
+    if (cartDiscountType === "PERCENTAGE") {
+      return total * cartDiscountValueNumber / 100;
+    }
+
+    if (cartDiscountType === "FIXED") {
+      return cartDiscountValueNumber;
+    }
+
+    return 0;
+  }, [
+    total,
+    cartDiscountType,
+    cartDiscountValueNumber,
+  ]);
+
+  const finalTotal = useMemo(() => {
+    return Math.max(
+      total - cartDiscountAmount,
+      0,
+    );
+  }, [
+    total,
+    cartDiscountAmount,
+  ]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setAmountReceived(
+      finalTotal.toFixed(2),
+    );
+  }, [
+    open,
+    finalTotal,
+  ]);
+
+  const discountError = useMemo(() => {
+    if (cartDiscountType === "NONE") {
+      return "";
+    }
+
+    if (cartDiscountValue.trim() === "") {
+      return "Ingresa el valor del descuento.";
+    }
+
+    if (cartDiscountValueNumber < 0) {
+      return "El descuento no puede ser negativo.";
+    }
+
+    if (
+      cartDiscountType === "PERCENTAGE" &&
+      cartDiscountValueNumber > 100
+    ) {
+      return "El porcentaje no puede ser mayor al 100%.";
+    }
+
+    if (
+      cartDiscountType === "FIXED" &&
+      cartDiscountValueNumber > total
+    ) {
+      return "El descuento no puede ser mayor al total del carrito.";
+    }
+
+    return "";
+  }, [
+    total,
+    cartDiscountType,
+    cartDiscountValue,
+    cartDiscountValueNumber,
+  ]);
   const requiresReference =
     paymentMethod === "CARD" ||
     paymentMethod === "TRANSFER";
@@ -183,31 +315,32 @@ export function CheckoutSaleDialog({
   const missingAmount = useMemo(
     () =>
       Math.max(
-        total - amountReceivedNumber,
+        finalTotal - amountReceivedNumber,
         0,
       ),
-    [total, amountReceivedNumber],
+    [finalTotal, amountReceivedNumber],
   );
 
   const changeAmount = useMemo(
     () =>
-      Math.max(
-        amountReceivedNumber - total,
-        0,
-      ),
-    [total, amountReceivedNumber],
-  );
+        Math.max(
+          amountReceivedNumber - finalTotal,
+          0,
+        ),
+      [finalTotal, amountReceivedNumber],
+    );
 
   const canSubmit =
-    total > 0 &&
-    amountReceivedNumber >= total &&
+    finalTotal > 0 &&
+    amountReceivedNumber >= finalTotal &&
+    discountError === "" &&
     (!requiresReference || reference.trim() !== "") &&
     (!isCash || cashSessionId !== "");
 
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
-    setAmountReceived(total.toFixed(2));
+    setAmountReceived(finalTotal.toFixed(2));
 
     if (method === "CASH") {
       setReference("");
@@ -217,10 +350,7 @@ export function CheckoutSaleDialog({
   };
 
   const handleSubmit = async () => {
-    if (
-      !canSubmit ||
-      loading
-    ) {
+    if ( !canSubmit || loading ) {
       return;
     }
 
@@ -232,6 +362,11 @@ export function CheckoutSaleDialog({
       amountReceived,
       reference,
       cashSessionId: isCash ? cashSessionId : null,
+      cartDiscountType,
+      cartDiscountValue:
+        cartDiscountType === "NONE"
+          ? "0.00"
+          : cartDiscountValue,
     });
   };
 
@@ -438,7 +573,100 @@ export function CheckoutSaleDialog({
             </Box>
 
             <Divider />
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: cartDiscountType === "NONE"
+                    ? "1fr"
+                    : "repeat(2, minmax(0, 1fr))",
+                },
+                gap: 1.5,
+              }}
+            >
+              <TextField
+                select
+                label="Descuento general"
+                value={ cartDiscountType }
+                disabled={ loading }
+                onChange={(event) => {
+                  const value = event.target.value as CartDiscountType;
 
+                  setCartDiscountType(value);
+                  setCartDiscountValue("");
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "5px",
+                  },
+                }}
+              >
+                <MenuItem value="NONE">
+                  Sin descuento
+                </MenuItem>
+
+                <MenuItem value="PERCENTAGE">
+                  Porcentaje
+                </MenuItem>
+
+                <MenuItem value="FIXED">
+                  Monto fijo
+                </MenuItem>
+              </TextField>
+
+              {cartDiscountType !== "NONE" && (
+                <TextField
+                  type="number"
+                  label={
+                    cartDiscountType === "PERCENTAGE"
+                      ? "Porcentaje"
+                      : "Monto de descuento"
+                  }
+                  value={ cartDiscountValue }
+                  disabled={ loading }
+                  onChange={(event) => {
+                    setCartDiscountValue(
+                      event.target.value,
+                    );
+                  }}
+                  error={ discountError !== "" }
+                  helperText={
+                    discountError || " "
+                  }
+                  slotProps={{
+                    htmlInput: {
+                      min: 0,
+                      step: "0.01",
+                      max:
+                        cartDiscountType === "PERCENTAGE"
+                          ? 100
+                          : undefined,
+                    },
+                    input: {
+                      startAdornment:
+                        cartDiscountType === "FIXED" ? (
+                          <InputAdornment position="start">
+                            Q
+                          </InputAdornment>
+                        ) : undefined,
+
+                      endAdornment:
+                        cartDiscountType === "PERCENTAGE" ? (
+                          <InputAdornment position="end">
+                            %
+                          </InputAdornment>
+                        ) : undefined,
+                    },
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "5px",
+                    },
+                  }}
+                />
+              )}
+            </Box>
             <TextField
               select
               label="Método de pago"
@@ -509,7 +737,36 @@ export function CheckoutSaleDialog({
                     loading={ true }
                     onChange={ setCashSessionId }
                   />
-                ) : openCashSessions.length > 0 ? (
+                ) : openCashSessions.length === 1 ? (
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: "5px",
+                      bgcolor: "#FAFAFA",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Caja seleccionada automáticamente
+                    </Typography>
+
+                    <Typography
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.3,
+                        fontSize: "0.78rem",
+                      }}
+                    >
+                      Hay una única caja abierta disponible para esta sucursal.
+                    </Typography>
+                  </Box>
+                ) : openCashSessions.length > 1 ? (
                   <OpenCashSessionSelect
                     cashSessions={ openCashSessions }
                     value={ cashSessionId }
@@ -596,28 +853,32 @@ export function CheckoutSaleDialog({
                         display: "grid",
                         gridTemplateColumns: {
                           xs: "1fr",
-                          sm: "minmax(0, 1fr) auto",
+                          sm: cashRegisters.length === 1
+                            ? "auto"
+                            : "minmax(0, 1fr) auto",
                         },
                         gap: 1,
                       }}
                     >
-                      <TextField
-                        select
-                        label="Caja disponible"
-                        value={ selectedCashRegisterId }
-                        onChange={(event) => setSelectedCashRegisterId(event.target.value)}
-                        sx={{
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "5px",
-                          },
-                        }}
-                      >
-                        {cashRegisters.map((cashRegister) => (
-                          <MenuItem key={ cashRegister.id } value={ cashRegister.id }>
-                            { cashRegister.name } ({ cashRegister.code })
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      {cashRegisters.length > 1 && (
+                        <TextField
+                          select
+                          label="Caja disponible"
+                          value={ selectedCashRegisterId }
+                          onChange={(event) => setSelectedCashRegisterId(event.target.value)}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "5px",
+                            },
+                          }}
+                        >
+                          {cashRegisters.map((cashRegister) => (
+                            <MenuItem key={ cashRegister.id } value={ cashRegister.id }>
+                              { cashRegister.name } ({ cashRegister.code })
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      )}
 
                       <Button
                         variant="contained"
@@ -668,7 +929,7 @@ export function CheckoutSaleDialog({
               }}
               error={
                 amountReceivedNumber > 0 &&
-                amountReceivedNumber < total
+                amountReceivedNumber < finalTotal
               }
               helperText={
                 missingAmount > 0
@@ -715,7 +976,7 @@ export function CheckoutSaleDialog({
               value={notes}
               disabled={loading}
               multiline
-              minRows={2}
+              minRows={1}
               onChange={(event) => {
                 setNotes(
                   event.target.value,
@@ -743,8 +1004,7 @@ export function CheckoutSaleDialog({
               <Box
                 sx={{
                   display: "flex",
-                  justifyContent:
-                    "space-between",
+                  justifyContent: "space-between",
                   gap: 2,
                 }}
               >
@@ -753,7 +1013,7 @@ export function CheckoutSaleDialog({
                     color: "text.secondary",
                   }}
                 >
-                  Total
+                  Total del carrito
                 </Typography>
 
                 <Typography
@@ -761,10 +1021,61 @@ export function CheckoutSaleDialog({
                     fontWeight: 700,
                   }}
                 >
-                  {formatCurrency(total)}
+                  { formatCurrency(total) }
                 </Typography>
               </Box>
 
+              {cartDiscountType !== "NONE" && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between", 
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
+                    Descuento 
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      color: "error.main",
+                      fontWeight: 700,
+                    }}
+                  >
+                    -{ formatCurrency(cartDiscountAmount) }
+                  </Typography>
+                </Box>
+              )} 
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                  }}
+                >
+                  Total a pagar
+                </Typography>
+
+                <Typography 
+                  sx={{
+                    color: "primary.main",
+                    fontWeight: 900,
+                  }}
+                >
+                  { formatCurrency(finalTotal) }
+                </Typography>
+              </Box>
+              <Divider />
               <Box
                 sx={{
                   display: "flex",
@@ -813,8 +1124,7 @@ export function CheckoutSaleDialog({
                       Cambio
                     </Typography>
 
-                    <Typography
-                      variant="h5"
+                    <Typography 
                       sx={{
                         color:
                           "primary.main",

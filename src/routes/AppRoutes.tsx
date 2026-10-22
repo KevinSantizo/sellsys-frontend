@@ -26,6 +26,7 @@ import { InventoryReportPage } from "../modules/reports/pages/InventoryReportPag
 import { ProfitabilityReportPage } from "../modules/reports/pages/ProfitabilityReportPage";
 import { CategoriesPage } from "../modules/catalog/categories/pages/CategoriesPage";
 import { BrandsPage } from "../modules/catalog/brands/pages/BrandsPage"; 
+import { UnitsOfMeasurePage } from "../modules/catalog/units/pages/UnitsOfMeasurePage";
 
 function PendingPage({
   title,
@@ -78,7 +79,7 @@ export function AppRoutes() {
           <Route path="/purchases/suppliers" element={<SuppliersPage/>}/>
           <Route path="/catalog/categories" element={ <CategoriesPage/> }/>
           <Route path="/catalog/brands" element={ <BrandsPage/> }/>
-          <Route path="/catalog/units" element={ <PendingPage title="Unidades de medida" /> }/>
+          <Route path="/catalog/units" element={ <UnitsOfMeasurePage /> }/>
           <Route path="/branches"  element={ <PendingPage title="Sucursales" /> } />
           <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/purchases"  element={<PurchasesPage />} />
