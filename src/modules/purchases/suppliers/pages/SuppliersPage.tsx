@@ -1,4 +1,3 @@
-import axios from "axios";
 import {showSuccessAlert,} from "../../../../shared/alerts/appAlerts";
 
 import {
@@ -47,7 +46,7 @@ import type { Supplier, SupplierFormValues } from "../types/supplier";
 import { SuppliersGridCard } from "../components/SuppliersGridCard";
 
 import { SupplierFormDialog, } from "../components/SupplierFormDialog";
-
+import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
 type SaveSupplierVariables = {
   supplierId: string | null;
   values: SupplierFormValues;
@@ -91,36 +90,13 @@ export function SuppliersPage() {
         };
     }, [ supplierDetailQuery.data, ]);
 
-    function getApiErrorMessage( error: unknown, fallbackMessage: string, ) : string {
-        if (!axios.isAxiosError(error)) {
-            return fallbackMessage;
-        }
-
-        const messages = flattenErrorMessages( error.response?.data, );
-
-        if ( messages.length === 0 ) {
-            return fallbackMessage;
-        }
-
-        return messages.join(" ");
-        }
-
-
-        function flattenErrorMessages( value: unknown, ): string[] {
-        if ( typeof value === "string" ) {
-            return [value];
-        }
-
-        if ( Array.isArray(value) ) {
-            return value.flatMap( flattenErrorMessages, );
-        }
-
-        if ( value && typeof value === "object" ) {
-            return Object.values( value, ).flatMap( flattenErrorMessages, );
-        }
-
-        return [];
-    }
+    const supplierDetailError = isEditing && supplierDetailQuery.isError
+    ? getApiErrorMessage(
+        supplierDetailQuery.error,
+        "No fue posible cargar la información del proveedor.",
+    )
+    : null;
+ 
 
     const saveSupplierMutation = useMutation<Supplier, Error, SaveSupplierVariables>
     ({
@@ -281,6 +257,7 @@ export function SuppliersPage() {
         isLoading,
         isFetching,
         isError,
+        error: suppliersError,
         refetch,
     } = useQuery({
         queryKey: [
@@ -683,11 +660,18 @@ export function SuppliersPage() {
 
       {/* ERROR */}
       {isError && (
-        <Alert severity="error">
-          No fue posible cargar los
-          proveedores.
-        </Alert>
-      )}
+            <Alert
+                severity="error"
+                sx={{
+                    borderRadius: "5px",
+                }}
+            >
+                {getApiErrorMessage(
+                    suppliersError,
+                    "No fue posible cargar los proveedores.",
+                )}
+            </Alert>
+        )}
 
 
       {/* LISTADO */}
@@ -738,7 +722,7 @@ export function SuppliersPage() {
 
             isSubmitting= { saveSupplierMutation.isPending } 
             isLoadingSupplier={ isEditing && supplierDetailQuery.isLoading } 
-            submitError={ formError } 
+            submitError={ formError ?? supplierDetailError } 
             onClose={ handleCloseDialog } 
             onSubmit={(values) => {
                 setFormError(null); 

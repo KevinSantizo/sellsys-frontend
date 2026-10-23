@@ -4,6 +4,7 @@ import {
 } from "@mui/icons-material";
 
 import {
+    Alert,
     Box,
     Button,
     InputAdornment,
@@ -18,10 +19,7 @@ import {
     useMutation,
     useQuery,
     useQueryClient,
-} from "@tanstack/react-query";
-
-import axios from "axios";
-
+} from "@tanstack/react-query"; 
 import {
     useEffect,
     useState,
@@ -29,7 +27,12 @@ import {
 
 import { useCompanyStore } from "../../../companies/store/companyStore";
 
-import { showSuccessAlert } from "../../../../shared/alerts/appAlerts";
+import {
+    showErrorAlert,
+    showSuccessAlert,
+} from "../../../../shared/alerts/appAlerts";
+
+import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
 
 import { UnitOfMeasureFormDialog } from "../components/UnitOfMeasureFormDialog";
 import { UnitsOfMeasureGridCard } from "../components/UnitsOfMeasureGridCard";
@@ -113,40 +116,6 @@ export function UnitsOfMeasurePage() {
     const units = unitsQuery.data?.results ?? [];
     const totalUnits = unitsQuery.data?.count ?? 0;
 
-    const getApiErrorMessage = (error: unknown) => {
-        if (!axios.isAxiosError(error)) {
-            return "Ocurrió un error inesperado.";
-        }
-
-        const data = error.response?.data;
-
-        if (typeof data?.detail === "string") {
-            return data.detail;
-        }
-
-        if (Array.isArray(data?.name)) {
-            return data.name[0];
-        }
-
-        if (Array.isArray(data?.symbol)) {
-            return data.symbol[0];
-        }
-
-        if (typeof data === "object" && data !== null) {
-            const firstValue = Object.values(data)[0];
-
-            if (Array.isArray(firstValue) && firstValue.length > 0) {
-                return String(firstValue[0]);
-            }
-
-            if (typeof firstValue === "string") {
-                return firstValue;
-            }
-        }
-
-        return "No fue posible guardar la unidad de medida.";
-    };
-
     const createUnitMutation = useMutation({
         mutationFn: (values: UnitOfMeasureFormValues) => {
             if (!selectedCompany) {
@@ -178,7 +147,12 @@ export function UnitsOfMeasurePage() {
         },
 
         onError: (error) => {
-            setFormError(getApiErrorMessage(error));
+            setFormError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible crear la unidad de medida.",
+                ),
+            );
         },
     });
 
@@ -214,7 +188,12 @@ export function UnitsOfMeasurePage() {
         },
 
         onError: (error) => {
-            setFormError(getApiErrorMessage(error));
+            setFormError(
+                getApiErrorMessage(
+                    error,
+                    "No fue posible actualizar la unidad de medida.",
+                ),
+            );
         },
     });
 
@@ -234,7 +213,13 @@ export function UnitsOfMeasurePage() {
             setEditingUnit(unitDetail);
             setIsDialogOpen(true);
         } catch (error) {
-            setFormError(getApiErrorMessage(error));
+            await showErrorAlert({
+                title: "No fue posible cargar la unidad",
+                text: getApiErrorMessage(
+                    error,
+                    "No fue posible cargar la información de la unidad de medida.",
+                ),
+            });
         } finally {
             setLoadingUnitDetail(false);
         }
@@ -383,20 +368,36 @@ export function UnitsOfMeasurePage() {
                     }}
                 />
             </Box>
+            {unitsQuery.isError && (
+                <Alert
+                    severity="error"
+                    sx={{
+                        mb: 2,
+                        borderRadius: "5px",
+                    }}
+                >
+                    {getApiErrorMessage(
+                        unitsQuery.error,
+                        "No fue posible cargar las unidades de medida.",
+                    )}
+                </Alert>
+            )}
 
-            <UnitsOfMeasureGridCard
-                units={ units }
-                totalUnits={ totalUnits }
-                loading={
-                    unitsQuery.isLoading ||
-                    unitsQuery.isFetching ||
-                    loadingUnitDetail
-                }
-                search={ search }
-                paginationModel={ paginationModel }
-                onPaginationModelChange={ setPaginationModel }
-                onEdit={ handleEditUnit }
-            />
+            {!unitsQuery.isError && (
+                <UnitsOfMeasureGridCard
+                    units={ units }
+                    totalUnits={ totalUnits }
+                    loading={
+                        unitsQuery.isLoading ||
+                        unitsQuery.isFetching ||
+                        loadingUnitDetail
+                    }
+                    search={ search }
+                    paginationModel={ paginationModel }
+                    onPaginationModelChange={ setPaginationModel }
+                    onEdit={ handleEditUnit }
+                />
+            )}
 
             <UnitOfMeasureFormDialog
                 open={ isDialogOpen }
