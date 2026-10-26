@@ -1,5 +1,4 @@
 import {
-  CameraAltRounded,
   CheckCircleRounded,
   CloseRounded,
   CropFree

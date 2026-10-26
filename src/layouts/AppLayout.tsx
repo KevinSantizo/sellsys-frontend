@@ -8,7 +8,6 @@ import {
   MenuRounded,
   ScaleRounded,
   ShoppingBagRounded,
-  StoreRounded,
   SwapHorizRounded,
   PointOfSaleRounded,
   LocalShippingRounded, 

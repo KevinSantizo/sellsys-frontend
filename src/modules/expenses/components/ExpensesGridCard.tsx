@@ -1,9 +1,7 @@
 import {
   ArrowBackRounded,
-  ArrowForwardRounded,
-  CancelOutlined,
-  CancelRounded,
-  CheckCircleOutlineRounded,
+  ArrowForwardRounded, 
+  CancelRounded, 
   CheckCircleRounded,
   ClearRounded,
   EditRounded,

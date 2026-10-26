@@ -4,8 +4,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,8 +12,6 @@ import {
 
 import { 
   AttachMoney,
-  CategoryRounded,
-  Inventory2Rounded,
   ShoppingBagRounded, 
 
 } from "@mui/icons-material";
@@ -32,18 +28,9 @@ import {
 import { useCompanyStore } from "../../companies/store/companyStore";
 import { useQuery } from "@tanstack/react-query";
 
-import {
-  getProducts,
-} from "../../catalog/products/services/productService";
-
-import {
-  getBrandOptions,
-  getCategoryOptions,
-} from "../../catalog/products/services/catalogReferenceService";
- 
 import { useBranchStore } from "../../branches/store/branchStore";
 
-import { getWeeklySales, getYearlySales  } from "../services/dashboardService";
+import { getYearlySales  } from "../services/dashboardService";
 
 import {
   getCashReport,
@@ -52,7 +39,8 @@ import {
   getReportDaily,
   getReportSummary,
 } from "../../reports/services/reportsService";
- 
+
+/** 
 type WeeklySalesTooltipProps = {
   active?: boolean;
   payload?: Array<{
@@ -64,6 +52,7 @@ type WeeklySalesTooltipProps = {
     };
   }>;
 };
+*/
 
 type YearlySalesTooltipProps = {
   active?: boolean;
@@ -78,6 +67,8 @@ type YearlySalesTooltipProps = {
     };
   }>;
 };
+
+/** 
 
 function WeeklySalesTooltip({
   active,
@@ -147,6 +138,7 @@ function WeeklySalesTooltip({
     </Box>
   );
 }
+*/
 
 function YearlySalesTooltip({
   active,
@@ -409,6 +401,7 @@ export function DashboardPage() {
       0,
     ) ?? 0;
 
+  /**  
   const weeklySalesQuery = useQuery({
     queryKey: [
       "dashboard-weekly-sales",
@@ -436,8 +429,8 @@ export function DashboardPage() {
       Boolean(selectedCompany?.id) &&
       Boolean(selectedBranch?.id),
   });
-
-  const weeklySales = weeklySalesQuery.data;
+ */
+  //const weeklySales = weeklySalesQuery.data;
 
   const yearlySalesQuery = useQuery({
     queryKey: [
@@ -469,7 +462,7 @@ export function DashboardPage() {
 
   const yearlySales = yearlySalesQuery.data;
 
-
+/** 
   const weeklySalesChartData =
   weeklySales?.days.map((item) => ({
     day: item.day,
@@ -477,7 +470,7 @@ export function DashboardPage() {
     salesCount: item.sales_count,
     total: Number(item.total),
   })) ?? [];
-
+*/
   const yearlySalesChartData =
   yearlySales?.months.map((item) => ({
     month: item.month,
@@ -497,6 +490,7 @@ export function DashboardPage() {
     (item) => item.total > 0 || item.salesCount > 0,
   );
 
+  /**
   const productsQuery = useQuery({
     queryKey: [
       "dashboard-products-count",
@@ -561,6 +555,7 @@ export function DashboardPage() {
 
     enabled: Boolean(selectedCompany?.id),
   });
+  */
 
   const inventoryQuery = useQuery({
     queryKey: [

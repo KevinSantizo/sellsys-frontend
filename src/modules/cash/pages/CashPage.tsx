@@ -1,7 +1,5 @@
 import {
   AddRounded,
-  DownloadRounded,
-  UploadRounded,
 } from "@mui/icons-material";
 
 import {

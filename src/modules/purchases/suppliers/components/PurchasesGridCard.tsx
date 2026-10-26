@@ -357,22 +357,6 @@ export function PurchasesGridCard({
       : "Todavía no hay proveedores registrados.";
 
 
-  const handlePageChange = (_event: unknown, page: number) => {
-    onPaginationModelChange({
-      ...paginationModel,
-      page: page - 1,
-    });
-  };
-
-
-  const handlePageSizeChange = (pageSize: number) => {
-    onPaginationModelChange({
-      page: 0,
-      pageSize,
-    });
-  };
-
-
   return (
     <>
       <Paper
@@ -1008,18 +992,6 @@ function formatDate(value: string) {
   if (parts.length !== 3) return value;
 
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
-}
-
-
-function getPaginationLabel(page: number, pageSize: number, total: number) {
-  if (total === 0) {
-    return "0 de 0";
-  }
-
-  const from = page * pageSize + 1;
-  const to = Math.min((page + 1) * pageSize, total);
-
-  return `${from}-${to} de ${total}`;
 }
 
 

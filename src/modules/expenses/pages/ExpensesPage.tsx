@@ -76,31 +76,7 @@ export function ExpensesPage() {
         pageSize: 10,
     });
 
-
-    const openCashSessionsQuery = useQuery({
-        queryKey: [
-            "cash-sessions",
-            "expense",
-            selectedCompany?.id,
-            selectedBranch?.id,
-        ],
-        queryFn: () => getCashSessions({
-            companyId: selectedCompany!.id,
-            branchId: selectedBranch!.id,
-            status: "OPEN",
-            ordering: "-opened_at",
-            page: 1,
-            pageSize: 100,
-        }),
-        enabled: Boolean(
-            selectedCompany?.id &&
-            selectedBranch?.id
-        ),
-    });
-
-    const openCashSessions = openCashSessionsQuery.data?.results ?? [];
-
-
+ 
     /*
     * Búsqueda con debounce.
     */

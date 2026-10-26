@@ -4,7 +4,6 @@ import {
   AddRounded, 
   FileDownloadOutlined,
   FileUploadOutlined, 
-  LocalShippingRounded 
 } from "@mui/icons-material";
 
 import {
@@ -18,14 +17,12 @@ import {
   Alert,
   Box,
   Button,
-  Chip, 
   Paper,
   Stack, 
   Typography, 
 } from "@mui/material";
 
 import { 
-  type GridColDef,
   type GridPaginationModel,
 } from "@mui/x-data-grid";
 
@@ -307,246 +304,7 @@ export function SuppliersPage() {
     suppliersResponse?.count ?? 0;
 
 
-  /*
-   * Columnas.
-   */
-    const columns =
-        useMemo<GridColDef<Supplier>[]>(
-        () => [
-            {
-                field: "name",
-                headerName: "Proveedor",
-                flex: 1.5,
-                minWidth: 280,
-                sortable: true,
-                renderCell: (params) => {
-                    const supplier = params.row;
 
-                    return (
-                    <Box
-                        sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.75,
-                        height: "100%",
-                        width: "100%",
-                        }}
-                    >
-                        <Box
-                        sx={{
-                            width: 40,
-                            height: 40,
-                            flexShrink: 0,
-                            borderRadius: "10px",
-                            bgcolor: "primary.light",
-                            color: "primary.main",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                        >
-                        <LocalShippingRounded
-                            sx={{
-                            fontSize: 22,
-                            }}
-                        />
-                        </Box>
-
-                        <Box
-                        sx={{
-                            minWidth: 0,
-                        }}
-                        >
-                        <Typography
-                            sx={{
-                                overflow: "hidden",
-                                fontSize: "0.88rem",
-                                fontWeight: 700,
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                            }}
-                        >
-                            {supplier.name}
-                        </Typography>
-
-                        <Typography
-                            sx={{
-                            mt: 0.35,
-                            fontSize: "0.8rem",
-                            color: "text.secondary",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            }}
-                        > 
-                        </Typography>
-                        </Box>
-                    </Box>
-                    );
-                },
-            },
-
-            {
-            field: "tax_id",
-            headerName: "NIT",
-            flex: 0.75,
-            minWidth: 130,
-
-            renderCell: (params) => (
-                <Typography
-                sx={{
-                    fontSize: "0.875rem",
-                }}
-                >
-                {params.value || "—"}
-                </Typography>
-            ),
-            },
-
-            {
-            field: "contact_name",
-            headerName: "Contacto",
-            flex: 1,
-            minWidth: 170,
-
-            renderCell: (params) => (
-                <Typography
-                sx={{
-                    fontSize: "0.875rem",
-                }}
-                >
-                {params.value || "—"}
-                </Typography>
-            ),
-            },
-
-            {
-            field: "phone",
-            headerName: "Teléfono",
-            flex: 0.8,
-            minWidth: 140,
-
-            renderCell: (params) => (
-                <Typography
-                sx={{
-                    fontSize: "0.875rem",
-                }}
-                >
-                {params.value || "—"}
-                </Typography>
-            ),
-            },
-
-            {
-            field: "email",
-            headerName: "Correo",
-            flex: 1.2,
-            minWidth: 220,
-
-            renderCell: (params) => (
-                <Typography
-                sx={{
-                    fontSize: "0.875rem",
-                }}
-                >
-                {params.value || "—"}
-                </Typography>
-            ),
-            },
-
-            {
-            field: "is_active",
-            headerName: "Estado",
-            width: 120,
-            sortable: false,
-
-            renderCell: (params) => {
-                const isActive =
-                Boolean(params.value);
-
-                return (
-                <Chip
-                    size="small"
-                    label={
-                    isActive
-                        ? "Activo"
-                        : "Inactivo"
-                    }
-                    sx={{
-                    borderRadius: "5px",
-                    fontWeight: 700,
-                    fontSize: "0.75rem",
-
-                    bgcolor:
-                        isActive
-                        ? "#DCFCE7"
-                        : "#F3F4F6",
-
-                    color:
-                        isActive
-                        ? "#166534"
-                        : "#6B7280",
-                    }}
-                />
-                );
-            },
-            },
-        ],
-        [],
-        );
-
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(
-        totalSuppliers /
-            paginationModel.pageSize,
-        ),
-    );
-
-  const currentPage =
-    paginationModel.page + 1;
-
-  const firstResult =
-    totalSuppliers === 0
-      ? 0
-      : paginationModel.page *
-          paginationModel.pageSize +
-        1;
-
-  const lastResult = Math.min(
-    (paginationModel.page + 1) *
-      paginationModel.pageSize,
-    totalSuppliers,
-  );
-
-
-  const handlePreviousPage = () => {
-    if (paginationModel.page === 0) {
-      return;
-    }
-
-    setPaginationModel(
-      (current) => ({
-        ...current,
-        page: current.page - 1,
-      }),
-    );
-  };
-
-
-  const handleNextPage = () => {
-    if (currentPage >= totalPages) {
-      return;
-    }
-
-    setPaginationModel(
-      (current) => ({
-        ...current,
-        page: current.page + 1,
-      }),
-    );
-  };
 
 
   if (!selectedCompany) {
