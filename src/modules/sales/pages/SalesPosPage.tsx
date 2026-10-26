@@ -1,10 +1,7 @@
 import {
-  AddRounded,
-  AddShoppingCartRounded,
-  CameraAltRounded,
+  AddRounded, 
   CropFree,
-  DeleteOutlineRounded,
-  DownloadRounded,
+  DeleteOutlineRounded, 
   PointOfSaleRounded,
   RemoveRounded,
   SearchRounded,
@@ -59,7 +56,7 @@ import {
 import { CheckoutSaleDialog, type CheckoutFormValues, } from "../components/CheckoutSaleDialog";
 import { checkoutSale, downloadSaleReceipt } from "../services/salesService";
 import type { SaleDetail, } from "../types/sales.types";
-import { showErrorAlert, showSuccessAlert, showSaleSuccessAlert  } from "../../../shared/alerts/appAlerts";
+import { showErrorAlert, showSaleSuccessAlert  } from "../../../shared/alerts/appAlerts";
 import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
 import { BarcodeScannerInline } from "../components/BarcodeScannerInline";
 
@@ -118,9 +115,6 @@ export function SalesPosPage() {
   const [ debouncedSearch, setDebouncedSearch, ] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isBarcodeSearching, setIsBarcodeSearching] = useState(false); 
-
-  const [lastSale, setLastSale] = useState<SaleDetail | null>(null);
-  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
   const [ barcodeScannerOpen, setBarcodeScannerOpen ] = useState(false);
 
 
@@ -194,8 +188,7 @@ export function SalesPosPage() {
   });
 
   const suggestedProducts = productsQuery.data?.results ?? [];
-  const isSearchingProducts = productsQuery.isFetching;
-  const products = productsQuery.data?.results ?? [];
+  const isSearchingProducts = productsQuery.isFetching; 
   const subtotal = useMemo(
     () =>
       calculateCartSubtotal(items),
