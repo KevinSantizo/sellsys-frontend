@@ -8,6 +8,7 @@ import {
   SearchRounded,
   CleaningServicesOutlined,
   DeleteOutlineRounded,
+  PointOfSaleRounded,
 } from "@mui/icons-material";
 
 import {
@@ -441,33 +442,28 @@ export function ProductsGridCard({
         overflow: "hidden",
       }}
     >
+      {/* TOOLBAR */}
       <Stack
-        direction={{
-          xs: "column",
-          sm: "row",
+        spacing={{
+          xs: 2,
+          sm: 1.5,
         }}
-        spacing={1}
         sx={{
-          px: 2,
-          py: 1.5,
-          alignItems: {
-            xs: "stretch",
-            sm: "center",
-          },  
-          justifyContent: "space-between",
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          ml: {
-            xs: 0,
-            lg: "auto",
+          px: {
+            xs: 2,
+            sm: 2,
           },
 
-          flexWrap: {
-            xs: "nowrap",
-            md: "wrap",
+          py: {
+            xs: 2,
+            sm: 1.5,
           },
+
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
+        {/* BUSCADOR */}
         <TextField
           value={search}
           onChange={(event) => {
@@ -477,17 +473,17 @@ export function ProductsGridCard({
           }}
           placeholder="Buscar producto"
           size="small"
+          fullWidth
           sx={{
-            width: {
+            maxWidth: {
               xs: "100%",
-              sm: 280,
+              sm: 360,
             },
 
-            "& .MuiOutlinedInput-root":
-              {
-                borderRadius: "15px",
-                bgcolor: "#FFFFFF",
-              },
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "15px",
+              bgcolor: "#FFFFFF",
+            },
           }}
           slotProps={{
             input: {
@@ -503,49 +499,45 @@ export function ProductsGridCard({
                 </InputAdornment>
               ),
 
-              endAdornment: search ? (
-                <InputAdornment position="end">
-                  <IconButton
-                    type="button"
-                    size="small"
-                    aria-label="Limpiar búsqueda"
-                    onClick={() => {
-                      onSearchChange("");
-                    }}
-                  >
-                    <ClearRounded fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              ) : undefined,
+              endAdornment:
+                search ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      type="button"
+                      size="small"
+                      aria-label="Limpiar búsqueda"
+                      onClick={() => {
+                        onSearchChange("");
+                      }}
+                    >
+                      <ClearRounded fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : undefined,
             },
           }}
         />
 
-        <Stack
-          direction={{
-            xs: "column",
-            sm: "row",
-          }}
-          spacing={1}
+        {/* FILTROS */}
+        <Box
           sx={{
-            alignItems: {
-              xs: "stretch",
-              sm: "center",
+            display: "grid",
+
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(3, minmax(0, 1fr))",
+              lg: "150px 190px 160px auto",
             },
 
-            justifyContent: "flex-end",
-
-            ml: {
-              xs: 0,
-              lg: "auto",
+            gap: {
+              xs: 1.5,
+              sm: 1,
             },
 
-            flexWrap: {
-              xs: "nowrap",
-              md: "wrap",
-            },
+            alignItems: "center",
           }}
         >
+          {/* ESTADO */}
           <TextField
             select
             label="Estado"
@@ -557,12 +549,8 @@ export function ProductsGridCard({
                   .value as ProductStatusFilter,
               );
             }}
+            fullWidth
             sx={{
-              width: {
-                xs: "100%",
-                sm: 150,
-              },
-
               "& .MuiOutlinedInput-root": {
                 borderRadius: "15px",
                 bgcolor: "#FFFFFF",
@@ -582,6 +570,7 @@ export function ProductsGridCard({
             </MenuItem>
           </TextField>
 
+          {/* CATEGORÍA */}
           <TextField
             select
             label="Categoría"
@@ -593,12 +582,8 @@ export function ProductsGridCard({
               );
             }}
             disabled={loading}
+            fullWidth
             sx={{
-              width: {
-                xs: "100%",
-                sm: 190,
-              },
-
               "& .MuiOutlinedInput-root": {
                 borderRadius: "15px",
                 bgcolor: "#FFFFFF",
@@ -609,53 +594,19 @@ export function ProductsGridCard({
               Todas
             </MenuItem>
 
-            {categories.map((category) => (
-              <MenuItem
-                key={category.id}
-                value={category.id}
-              >
-                {category.name}
-              </MenuItem>
-            ))}
+            {categories.map(
+              (category) => (
+                <MenuItem
+                  key={category.id}
+                  value={category.id}
+                >
+                  {category.name}
+                </MenuItem>
+              ),
+            )}
           </TextField>
-         
-         {/* <TextField
-            select
-            label="Marca"
-            size="small"
-            value={brandFilter}
-            onChange={(event) => {
-              onBrandFilterChange(
-                event.target.value,
-              );
-            }}
-            disabled={loading}
-            sx={{
-              width: {
-                xs: "100%",
-                sm: 170,
-              },
 
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "15px",
-                bgcolor: "#FFFFFF",
-              },
-            }}
-          >
-            <MenuItem value="ALL">
-              Todas
-            </MenuItem>
-
-            {brands.map((brand) => (
-              <MenuItem
-                key={brand.id}
-                value={brand.id}
-              >
-                {brand.name}
-              </MenuItem>
-            ))}
-          </TextField>
-        */}
+          {/* TIPO */}
           <TextField
             select
             label="Tipo"
@@ -668,12 +619,8 @@ export function ProductsGridCard({
               );
             }}
             disabled={loading}
+            fullWidth
             sx={{
-              width: {
-                xs: "100%",
-                sm: 160,
-              },
-
               "& .MuiOutlinedInput-root": {
                 borderRadius: "15px",
                 bgcolor: "#FFFFFF",
@@ -693,58 +640,88 @@ export function ProductsGridCard({
             </MenuItem>
           </TextField>
 
-          <Tooltip title="Limpiar filtros">
-            <span>
-              <IconButton
-                type="button"  
-                disabled={
-                  !hasActiveFilters ||
-                  loading
-                }
-                onClick={onClearFilters}
-                sx={{ 
-                  width: 40,
-                  height: 40,
-                  border: "1px solid",
-                  borderColor:
-                    "divider",
-                  borderRadius: "15px",
-                  bgcolor: "#FFFFFF",
-                }}
-              > 
-              <CleaningServicesOutlined fontSize="small"/>
-              </IconButton>
-            </span>
-          </Tooltip>
+          {/* ACCIONES */}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              width: {
+                xs: "100%",
+                lg: "auto",
+              },
 
-          <Tooltip title="Actualizar productos">
-            <span>
-              <IconButton
-                type="button"
-                disabled={loading}
-                onClick={onRefresh}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  border: "1px solid",
-                  borderColor:
-                    "divider",
-                  borderRadius: "15px",
-                  bgcolor: "#FFFFFF",
-                }}
-              >
-                {loading ? (
-                  <CircularProgress
-                    size={18}
-                  />
-                ) : (
-                  <RefreshRounded fontSize="small" />
-                )}
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Stack>
-        
+              gridColumn: {
+                xs: "1",
+                sm: "1 / -1",
+                lg: "auto",
+              },
+
+              justifyContent: {
+                xs: "flex-end",
+                sm: "flex-end",
+              },
+
+              alignItems: "center",
+            }}
+          >
+          {/* LIMPIAR */}
+            <Tooltip title="Limpiar filtros">
+              <span>
+                <IconButton
+                  type="button"
+                  disabled={
+                    !hasActiveFilters ||
+                    loading
+                  }
+                  onClick={onClearFilters}
+                  sx={{
+                    width: 40,
+                    height: 40,
+
+                    border: "1px solid",
+                    borderColor: "divider",
+
+                    borderRadius: "10px",
+
+                    bgcolor: "#FFFFFF",
+                  }}
+                >
+                  <CleaningServicesOutlined fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+
+            {/* ACTUALIZAR */}
+            <Tooltip title="Actualizar productos">
+              <span>
+                <IconButton
+                  type="button"
+                  disabled={loading}
+                  onClick={onRefresh}
+                  sx={{
+                    width: 40,
+                    height: 40,
+
+                    border: "1px solid",
+                    borderColor: "divider",
+
+                    borderRadius: "10px",
+
+                    bgcolor: "#FFFFFF",
+                  }}
+                >
+                  {loading ? (
+                    <CircularProgress
+                      size={16}
+                    />
+                  ) : (
+                    <RefreshRounded fontSize="small" />
+                  )}
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+        </Box>
       </Stack>
 
       <DataGrid
@@ -781,6 +758,9 @@ export function ProductsGridCard({
 
           noResultsOverlayLabel:
             noRowsMessage,
+        }}
+        slots={{
+          noRowsOverlay: EmptyProducts,
         }}
         sx={{
           border: 0,
@@ -1022,5 +1002,30 @@ export function ProductsGridCard({
         </Stack>
       </Stack>
     </Paper>
+  );
+}
+
+
+function EmptyProducts() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <Inventory2Rounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay productos
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron productos para mostrar.
+      </Typography>
+    </Stack>
   );
 }

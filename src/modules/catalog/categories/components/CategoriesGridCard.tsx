@@ -1,6 +1,7 @@
 import {
   ArrowBackRounded,
   ArrowForwardRounded,
+  CategoryRounded,
   EditRounded,
 } from "@mui/icons-material";
 
@@ -177,6 +178,9 @@ export function CategoriesGridCard({
           ...esES.components.MuiDataGrid.defaultProps.localeText,
           noRowsLabel: noRowsMessage,
           noResultsOverlayLabel: noRowsMessage,
+        }}
+        slots={{
+          noRowsOverlay: EmptyCategories,
         }}
         sx={{
           border: 0,
@@ -371,5 +375,29 @@ export function CategoriesGridCard({
         </Stack>
       </Stack>
     </Box>
+  );
+}
+
+function EmptyCategories() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <CategoryRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay categorías
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se categorías cajas para mostrar.
+      </Typography>
+    </Stack>
   );
 }

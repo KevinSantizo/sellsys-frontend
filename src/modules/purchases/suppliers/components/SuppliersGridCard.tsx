@@ -459,7 +459,9 @@ export function SuppliersGridCard({
           noResultsOverlayLabel:
             noRowsMessage,
         }}
-
+        slots={{
+          noRowsOverlay: EmptySuppliers,
+        }}
         sx={{
           border: 0,
 
@@ -767,5 +769,30 @@ export function SuppliersGridCard({
         </Stack>
       </Stack>
     </Paper>
+  );
+}
+
+
+function EmptySuppliers() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <LocalShippingRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay proveedores
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron proveedores para mostrar.
+      </Typography>
+    </Stack>
   );
 }

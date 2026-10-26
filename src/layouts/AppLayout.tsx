@@ -101,11 +101,13 @@ import { getCompanies, } from "../modules/companies/services/companyService";
       path: "/catalog/units",
       icon: <ScaleRounded />,
     },
+    /**
     {
       label: "Sucursales",
       path: "/branches",
       icon: <StoreRounded />,
     },
+     */
     {
       label: "Gastos",
       path: "/expenses",

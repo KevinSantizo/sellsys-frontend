@@ -2,6 +2,7 @@ import {
   ArrowBackRounded,
   ArrowForwardRounded,
   EditRounded,
+  ShoppingBagRounded,
 } from "@mui/icons-material";
 
 import {
@@ -160,6 +161,9 @@ export function BrandsGridCard({
           ...esES.components.MuiDataGrid.defaultProps.localeText,
           noRowsLabel: noRowsMessage,
           noResultsOverlayLabel: noRowsMessage,
+        }}
+        slots={{
+          noRowsOverlay: EmptyBrands,
         }}
         sx={{
           border: 0,
@@ -344,5 +348,29 @@ export function BrandsGridCard({
         </Stack>
       </Stack>
     </Box>
+  );
+}
+
+function EmptyBrands() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <ShoppingBagRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay Marcas
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron marcas para mostrar.
+      </Typography>
+    </Stack>
   );
 }

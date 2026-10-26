@@ -1,6 +1,8 @@
 import {
   AddRounded,
   AddShoppingCartRounded,
+  CameraAltRounded,
+  CropFree,
   DeleteOutlineRounded,
   DownloadRounded,
   PointOfSaleRounded,
@@ -19,11 +21,13 @@ import {
   Divider,
   IconButton,
   InputAdornment,
+  Paper,
+  Stack,
   TextField,
   Tooltip,
   Typography,
-  Paper,
-  Stack,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
 import {
@@ -57,6 +61,7 @@ import { checkoutSale, downloadSaleReceipt } from "../services/salesService";
 import type { SaleDetail, } from "../types/sales.types";
 import { showErrorAlert, showSuccessAlert, showSaleSuccessAlert  } from "../../../shared/alerts/appAlerts";
 import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
+import { BarcodeScannerInline } from "../components/BarcodeScannerInline";
 
 function formatCurrency(
   value: number,
@@ -72,6 +77,12 @@ function formatCurrency(
  
 
 export function SalesPosPage() {
+
+  const theme = useTheme();
+
+  const isMobile = useMediaQuery(
+    theme.breakpoints.down("sm"),
+  );
 
   const queryClient = useQueryClient();
 
@@ -110,6 +121,8 @@ export function SalesPosPage() {
 
   const [lastSale, setLastSale] = useState<SaleDetail | null>(null);
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
+  const [ barcodeScannerOpen, setBarcodeScannerOpen ] = useState(false);
+
 
   useEffect(() => {
       setCheckoutIdempotencyKey(null);
@@ -471,6 +484,40 @@ export function SalesPosPage() {
           }}
         />
       </Box>
+      {isMobile && !barcodeScannerOpen && (
+        <Button
+          type="button" 
+          fullWidth
+          startIcon={
+            <CropFree />
+          }
+          onClick={() => {
+            setBarcodeScannerOpen(true);
+          }}
+          sx={{
+            mb: 2,
+            minHeight: 48,
+            borderRadius: "5px",
+            fontWeight: 700,
+            textTransform: "none",
+            bgcolor: "#FFFFFF",
+          }}
+        >
+          Escanear producto
+        </Button>
+      )}
+
+      {isMobile && (
+        <BarcodeScannerInline
+          open={barcodeScannerOpen}
+          onClose={() => {
+            setBarcodeScannerOpen(false);
+          }}
+          onDetected={
+            addProductByBarcode
+          }
+        />
+      )}
 
       <Box
         sx={{
@@ -858,63 +905,76 @@ export function SalesPosPage() {
                         >
                           <Box
                             sx={{
-                              display:
-                                "grid",
-                              gridTemplateColumns:
-                                {
-                                  xs: "minmax(0, 1fr)",
-                                  md: "minmax(180px, 1fr) 142px 118px 110px 42px",
-                                },
-                              alignItems:
-                                "center",
-                              gap: 1.5,
-                              py: 2,
+                              display: "grid",
+
+                              gridTemplateColumns: {
+                                xs: "minmax(0, 1fr) auto",
+                                md: "minmax(180px, 1fr) 142px 118px 110px 42px",
+                              },
+
+                              gridTemplateAreas: {
+                                xs: `
+                                  "product product"
+                                  "quantity discount"
+                                  "total delete"
+                                `,
+                                md: `
+                                  "product quantity discount total delete"
+                                `,
+                              },
+
+                              alignItems: "center",
+
+                              columnGap: {
+                                xs: 1,
+                                md: 1.5,
+                              },
+
+                              rowGap: {
+                                xs: 1.5,
+                                md: 0,
+                              },
+
+                              py: {
+                                xs: 1.75,
+                                md: 2,
+                              },
                             }}
                           >
                             {/* Producto */}
                             <Box
                               sx={{
+                                gridArea: "product",
                                 minWidth: 0,
                               }}
                             >
                               <Typography
                                 sx={{
-                                  fontWeight:
-                                    700,
-                                  overflow:
-                                    "hidden",
-                                  textOverflow:
-                                    "ellipsis",
-                                  whiteSpace:
-                                    "nowrap",
+                                  fontWeight: 700,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+
+                                  whiteSpace: {
+                                    xs: "normal",
+                                    md: "nowrap",
+                                  },
                                 }}
                               >
-                                {
-                                  item
-                                    .product
-                                    .name
-                                }
+                                {item.product.name}
                               </Typography>
 
                               <Typography
                                 variant="caption"
                                 sx={{
-                                  color:
-                                    "text.secondary",
+                                  color: "text.secondary",
+                                  display: "block",
+                                  mt: 0.25,
                                 }}
                               >
-                                {
-                                  item
-                                    .product
-                                    .sku
-                                }{" "}
+                                {item.product.sku}{" "}
                                 ·{" "}
                                 {formatCurrency(
-                                  Number(
-                                    item
-                                      .product
-                                      .sale_price,
-                                  ),
+                                  Number(item.product.sale_price),
                                 )}
                               </Typography>
                             </Box>
@@ -922,11 +982,11 @@ export function SalesPosPage() {
                             {/* Cantidad */}
                             <Box
                               sx={{
-                                display:
-                                  "flex",
-                                alignItems:
-                                  "center",
+                                gridArea: "quantity",
+                                display: "flex",
+                                alignItems: "center",
                                 gap: 0.5,
+                                minWidth: 0,
                               }}
                             >
                               <IconButton
@@ -934,18 +994,15 @@ export function SalesPosPage() {
                                 size="small"
                                 onClick={() => {
                                   decreaseQuantity(
-                                    item
-                                      .product
-                                      .id,
+                                    item.product.id,
                                   );
                                 }}
                                 sx={{
-                                  border:
-                                    "1px solid",
-                                  borderColor:
-                                    "divider",
-                                  borderRadius:
-                                    "5px",
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  borderRadius: "5px",
+                                  width: 36,
+                                  height: 36,
                                 }}
                               >
                                 <RemoveRounded fontSize="small" />
@@ -954,7 +1011,9 @@ export function SalesPosPage() {
                               <TextField
                                 type="number"
                                 size="small"
-                                value={formatQuantity(item.quantity)}
+                                value={formatQuantity(
+                                  item.quantity,
+                                )}
                                 onChange={(event) => {
                                   updateQuantity(
                                     item.product.id,
@@ -967,16 +1026,20 @@ export function SalesPosPage() {
                                     step: 1,
                                     style: {
                                       textAlign: "center",
-                                      paddingLeft: 6,
-                                      paddingRight: 6,
+                                      paddingLeft: 4,
+                                      paddingRight: 4,
                                     },
                                   },
                                 }}
                                 sx={{
-                                  width: 64,
+                                  width: {
+                                    xs: 68,
+                                    md: 64,
+                                  },
 
                                   "& .MuiOutlinedInput-root": {
                                     borderRadius: "15px",
+                                    height: 40,
                                   },
 
                                   "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
@@ -996,18 +1059,15 @@ export function SalesPosPage() {
                                 size="small"
                                 onClick={() => {
                                   increaseQuantity(
-                                    item
-                                      .product
-                                      .id,
+                                    item.product.id,
                                   );
                                 }}
                                 sx={{
-                                  border:
-                                    "1px solid",
-                                  borderColor:
-                                    "divider",
-                                  borderRadius:
-                                    "5px",
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  borderRadius: "5px",
+                                  width: 36,
+                                  height: 36,
                                 }}
                               >
                                 <AddRounded fontSize="small" />
@@ -1032,7 +1092,7 @@ export function SalesPosPage() {
                                   max: 100,
                                   step: 1,
                                   style: {
-                                    textAlign: "center", 
+                                    textAlign: "center",
                                   },
                                 },
 
@@ -1044,11 +1104,22 @@ export function SalesPosPage() {
                                   ),
                                 },
                               }}
-                              sx={{ 
-                                
-                                width: 75,
+                              sx={{
+                                gridArea: "discount",
+
+                                width: {
+                                  xs: 92,
+                                  md: 75,
+                                },
+
+                                justifySelf: {
+                                  xs: "end",
+                                  md: "start",
+                                },
+
                                 "& .MuiOutlinedInput-root": {
                                   borderRadius: "5px",
+                                  height: 46,
                                 },
 
                                 "& .MuiInputAdornment-root": {
@@ -1070,23 +1141,24 @@ export function SalesPosPage() {
                             {/* Total */}
                             <Box
                               sx={{
+                                gridArea: "total",
+
                                 textAlign: {
                                   xs: "left",
                                   md: "right",
                                 },
+
+                                alignSelf: "center",
                               }}
                             >
-                              {item.discountPercent >
-                                0 && (
+                              {item.discountPercent > 0 && (
                                 <Typography
                                   variant="caption"
                                   sx={{
-                                    display:
-                                      "block",
-                                    color:
-                                      "text.secondary",
-                                    textDecoration:
-                                      "line-through",
+                                    display: "block",
+                                    color: "text.secondary",
+                                    textDecoration: "line-through",
+                                    lineHeight: 1.2,
                                   }}
                                 >
                                   {formatCurrency(
@@ -1097,8 +1169,12 @@ export function SalesPosPage() {
 
                               <Typography
                                 sx={{
-                                  fontWeight:
-                                    800,
+                                  fontWeight: 800,
+
+                                  fontSize: {
+                                    xs: "1.05rem",
+                                    md: "1rem",
+                                  },
                                 }}
                               >
                                 {formatCurrency(
@@ -1113,16 +1189,18 @@ export function SalesPosPage() {
                                 type="button"
                                 onClick={() => {
                                   removeProduct(
-                                    item
-                                      .product
-                                      .id,
+                                    item.product.id,
                                   );
                                 }}
                                 sx={{
-                                  borderRadius:
-                                    "5px",
-                                  color:
-                                    "error.main",
+                                  gridArea: "delete",
+                                  justifySelf: "end",
+
+                                  borderRadius: "5px",
+                                  color: "error.main",
+
+                                  width: 38,
+                                  height: 38,
                                 }}
                               >
                                 <DeleteOutlineRounded />
@@ -1327,7 +1405,7 @@ export function SalesPosPage() {
           await checkoutMutation.mutateAsync(values);
         }}
       />
-
+      
     </Box>
     
   );

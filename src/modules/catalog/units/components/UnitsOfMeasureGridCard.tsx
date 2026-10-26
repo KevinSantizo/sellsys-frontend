@@ -2,6 +2,7 @@ import {
     ArrowBackRounded,
     ArrowForwardRounded,
     EditRounded,
+    ScaleRounded,
 } from "@mui/icons-material";
 
 import {
@@ -11,6 +12,7 @@ import {
     IconButton,
     MenuItem,
     Pagination,
+    Stack,
     TextField,
     Tooltip,
     Typography,
@@ -224,6 +226,9 @@ export function UnitsOfMeasureGridCard({
                     noRowsLabel: noRowsMessage,
                     noResultsOverlayLabel: noRowsMessage,
                 }}
+                slots={{
+                    noRowsOverlay: EmptyUnits,
+                }}
                 sx={{
                     border: 0,
 
@@ -420,4 +425,28 @@ export function UnitsOfMeasureGridCard({
             </Box>
         </Box>
     );
+}
+
+function EmptyUnits() {
+  return (
+    <Stack 
+      sx={{
+        height: "100%",
+        minHeight: 160,
+        alignItems: "center",
+        justifyContent: "center",
+        spacing: 0.6,
+      }}
+    >
+      <ScaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
+
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+        No hay unidades de medida
+      </Typography>
+
+      <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+        No se encontraron unidades de medida para mostrar.
+      </Typography>
+    </Stack>
+  );
 }
