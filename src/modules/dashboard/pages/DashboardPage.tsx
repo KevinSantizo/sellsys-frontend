@@ -1001,33 +1001,32 @@ export function DashboardPage() {
                   >
                     <Box
                       sx={{
+                        minHeight: 320,
                         width: "100%",
                         display: "flex",
-                        flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        textAlign: "center",
-                        px: 2,
                       }}
                     >
-                      <Typography
-                        sx={{
-                          fontSize: "1rem",
-                          fontWeight: 700,
-                        }}
-                      >
-                        No hay ventas en los últimos 30 días
-                      </Typography>
+                      <Box sx={{ textAlign: "center" }}>
+                        <Typography
+                          sx={{
+                            fontSize: "0.9rem", fontWeight: 600
+                          }}
+                        >
+                          No hay ventas en los últimos 30 días
+                        </Typography>
 
-                      <Typography
-                        sx={{
-                          mt: 0.5,
-                          color: "text.secondary",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        Las ventas registradas aparecerán aquí.
-                      </Typography>
+                        <Typography
+                          sx={{
+                            mt: 0.5,
+                            color: "text.secondary",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Las ventas registradas aparecerán aquí.
+                        </Typography>
+                      </Box> 
                     </Box>
                   </Box>
                 ) :(

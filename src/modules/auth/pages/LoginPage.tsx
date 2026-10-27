@@ -170,7 +170,7 @@ export function LoginPage() {
           );
         } else if (!error.response) {
           setLoginError(
-            "No fue posible conectarse con el servidor. Verifica que Django esté funcionando.",
+            "No fue posible conectarse con el servidor.",
           );
         } else if (error.response?.status === 400) {
           setLoginError(
