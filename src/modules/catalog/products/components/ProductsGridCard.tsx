@@ -184,7 +184,7 @@ export function ProductsGridCard({
                   }}
                 >
                   {row.name} {row.content_quantity && row.content_unit_symbol
-                  ? `Presentación: ${Number(row.content_quantity).toLocaleString("es-GT", {
+                  ? `${Number(row.content_quantity).toLocaleString("es-GT", {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 4,
                     })} ${row.content_unit_symbol}`
