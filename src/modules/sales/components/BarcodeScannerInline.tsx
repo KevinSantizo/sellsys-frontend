@@ -38,10 +38,6 @@ export function BarcodeScannerInline({
   onClose,
   onDetected,
 }: BarcodeScannerInlineProps) {
-  const [
-    paused,
-    setPaused,
-  ] = useState(false);
 
   const [
     error,
@@ -70,7 +66,6 @@ export function BarcodeScannerInline({
       processingRef.current = false;
       lastBarcodeRef.current = null;
 
-      setPaused(false);
       setError(null);
       setSuccess(null);
     }
@@ -192,40 +187,27 @@ export function BarcodeScannerInline({
       }, 1500);
   };
 
-  const resumeScanner = (
-    barcode: string,
-    delay = 700,
-  ) => {
-    if (
-      resumeTimeoutRef.current !== null
-    ) {
+  const resumeScanner = ( barcode: string, delay = 800, ) => {
+    if ( resumeTimeoutRef.current !== null) {
       window.clearTimeout(
         resumeTimeoutRef.current,
       );
     }
 
-    resumeTimeoutRef.current =
+  resumeTimeoutRef.current =
+    window.setTimeout(() => {
+      processingRef.current = false;
+
       window.setTimeout(() => {
-        processingRef.current = false;
-
-        setPaused(false);
-
-        /*
-         * Dejamos un pequeño bloqueo
-         * adicional para evitar que la
-         * cámara vuelva a leer inmediatamente
-         * el mismo código.
-         */
-        window.setTimeout(() => {
-          if (
-            lastBarcodeRef.current ===
-            barcode
-          ) {
-            lastBarcodeRef.current =
-              null;
-          }
-        }, 1000);
-      }, delay);
+        if (
+          lastBarcodeRef.current ===
+          barcode
+        ) {
+          lastBarcodeRef.current =
+            null;
+        }
+      }, 700);
+    }, delay);
   };
 
   if (!open) {
@@ -326,7 +308,6 @@ export function BarcodeScannerInline({
         }}
       >
         <Scanner
-          paused={paused}
           constraints={{
             facingMode: {
               ideal: "environment",
@@ -346,9 +327,7 @@ export function BarcodeScannerInline({
             torch: true,
             zoom: true,
           }}
-          onScan={async (
-            detectedCodes,
-          ) => {
+          onScan={async ( detectedCodes, ) => {
             const barcode =
               detectedCodes[0]
                 ?.rawValue
@@ -358,26 +337,18 @@ export function BarcodeScannerInline({
               return;
             }
 
-            if (
-              processingRef.current
-            ) {
+            if (processingRef.current) {
               return;
             }
 
-            if (
-              lastBarcodeRef.current ===
-              barcode
-            ) {
+            if (lastBarcodeRef.current === barcode) {
               return;
             }
 
-            processingRef.current =
-              true;
-
+            processingRef.current = true;
             lastBarcodeRef.current =
               barcode;
 
-            setPaused(true);
             setError(null);
 
             try {
@@ -391,19 +362,9 @@ export function BarcodeScannerInline({
                   barcode,
                 );
 
-                /*
-                 * NO cerramos la cámara.
-                 *
-                 * Antes teníamos:
-                 *
-                 * onClose();
-                 *
-                 * Ahora simplemente
-                 * reanudamos el scanner.
-                 */
                 resumeScanner(
                   barcode,
-                  500,
+                  700,
                 );
 
                 return;
@@ -411,9 +372,7 @@ export function BarcodeScannerInline({
 
               setSuccess(null);
 
-              setError(
-                `No se encontró un producto con el código ${barcode}.`,
-              );
+              setError(`No se encontró un producto con el código ${barcode}.`,);
 
               resumeScanner(
                 barcode,
@@ -421,10 +380,7 @@ export function BarcodeScannerInline({
               );
             } catch {
               setSuccess(null);
-
-              setError(
-                "No fue posible procesar el código de barras.",
-              );
+              setError("No fue posible procesar el código de barras.",);
 
               resumeScanner(
                 barcode,
@@ -435,10 +391,7 @@ export function BarcodeScannerInline({
           onError={(
             scannerError,
           ) => {
-            setError(
-              scannerError.message ||
-                "No fue posible iniciar la cámara.",
-            );
+            setError(scannerError.message ||"No fue posible iniciar la cámara.");
           }}
         />
 
@@ -461,20 +414,13 @@ export function BarcodeScannerInline({
           <Box
             sx={{
               width: "90%",
-              height: 90,
-
-              border:
-                success
+              height: 90, 
+              border: success
                   ? "2px solid #2e7d32"
-                  : "2px solid #FFFFFF",
-
-              borderRadius: "10px",
-
-              boxShadow:
-                "0 0 0 9999px rgba(0,0,0,0.18)",
-
-              transition:
-                "border-color 0.2s ease",
+                  : "2px solid #FFFFFF", 
+              borderRadius: "10px", 
+              boxShadow: "0 0 0 9999px rgba(0,0,0,0.18)", 
+              transition: "border-color 0.2s ease",
             }}
           />
         </Box>
@@ -483,11 +429,8 @@ export function BarcodeScannerInline({
       <Typography
         variant="body2"
         sx={{
-          mt: 1.2,
-
-          color:
-            "text.secondary",
-
+          mt: 1.2, 
+          color: "text.secondary", 
           textAlign: "center",
         }}
       >
