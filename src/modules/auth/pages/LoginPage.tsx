@@ -248,39 +248,7 @@ export function LoginPage() {
             },
           }}
         >
-          {/* Logo */}
-          <Stack
-            direction="row"
-            spacing={1.25}
-            sx={{
-              alignItems: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Box
-              sx={{
-                width: 44,
-                height: 44,
-                borderRadius: 2,
-                bgcolor: "primary.main",
-                color: "primary.contrastText",
-                display: "grid",
-                placeItems: "center",
-              }}
-            >
-              <Inventory2Rounded />
-            </Box>
-
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                letterSpacing: "-0.5px",
-              }}
-            >
-              SellSys
-            </Typography>
-          </Stack>
+           
 
           {/* Formulario */}
           <Box
@@ -333,8 +301,7 @@ export function LoginPage() {
                       },
                     }}
                   >
-                    Ingresa tus credenciales para acceder a
-                    SellSys.
+                    Ingresa tus credenciales para acceder.
                   </Typography>
                 </Box>
 
@@ -534,6 +501,7 @@ export function LoginPage() {
                   </Typography>
                 </Divider>
 
+                {/**  
                 <Stack
                   direction="row"
                   spacing={0.5}
@@ -573,6 +541,7 @@ export function LoginPage() {
                     Crear cuenta
                   </Button>
                 </Stack>
+              */}
               </Stack>
             </Box>
           </Box>

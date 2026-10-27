@@ -17,6 +17,8 @@ export type Product = {
   track_inventory: boolean;
   is_active: boolean;
   current_stock: string;
+  content_quantity: string | null;
+  content_unit_symbol: string | null;
 };
 
 export type GetProductsParams = {

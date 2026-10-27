@@ -506,7 +506,9 @@ export function SalesPosPage() {
           onClose={() => {
             setBarcodeScannerOpen(false);
           }}
-          onDetected={addProductByBarcode}
+          onDetected={
+            addProductByBarcode
+          }
         />
       )}
 
@@ -750,24 +752,40 @@ export function SalesPosPage() {
                                   minWidth: 0,
                                 }}
                               >
-                                <Typography
+                                <Stack
+                                  direction="row"
+                                  spacing={0.75}
                                   sx={{
-                                    fontWeight: 700,
-                                    fontSize:
-                                      "0.9rem",
-
-                                    overflow:
-                                      "hidden",
-
-                                    textOverflow:
-                                      "ellipsis",
-
-                                    whiteSpace:
-                                      "nowrap",
+                                    alignItems: "center",
+                                    minWidth: 0,
+                                    flexWrap: "wrap",
                                   }}
                                 >
-                                  {product.name}
-                                </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontWeight: 700,
+                                      fontSize: "0.9rem",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {product.name}
+                                  </Typography>
+
+                                  {product.content_quantity && product.content_unit_symbol && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color: "text.secondary",
+                                        fontWeight: 600,
+                                        whiteSpace: "nowrap",
+                                      }}
+                                    >
+                                      {formatQuantity(product.content_quantity)} {product.content_unit_symbol}
+                                    </Typography>
+                                  )}
+                                </Stack>
 
                                 <Typography
                                   variant="body2"
@@ -939,20 +957,42 @@ export function SalesPosPage() {
                                 minWidth: 0,
                               }}
                             >
-                              <Typography
+                              <Stack
+                                direction="row"
+                                spacing={0.75}
                                 sx={{
-                                  fontWeight: 700,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-
-                                  whiteSpace: {
-                                    xs: "normal",
-                                    md: "nowrap",
-                                  },
+                                  alignItems: "center",
+                                  minWidth: 0,
+                                  flexWrap: "wrap",
                                 }}
                               >
-                                {item.product.name}
-                              </Typography>
+                                <Typography
+                                  sx={{
+                                    fontWeight: 700,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: {
+                                      xs: "normal",
+                                      md: "nowrap",
+                                    },
+                                  }}
+                                >
+                                  {item.product.name}
+                                </Typography>
+
+                                {item.product.content_quantity && item.product.content_unit_symbol && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "text.secondary",
+                                      fontWeight: 600,
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {formatQuantity(item.product.content_quantity)} {item.product.content_unit_symbol}
+                                  </Typography>
+                                )}
+                              </Stack>
 
                               <Typography
                                 variant="caption"

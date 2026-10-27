@@ -183,7 +183,12 @@ export function ProductsGridCard({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {row.name}
+                  {row.name} {row.content_quantity && row.content_unit_symbol
+                  ? `Presentación: ${Number(row.content_quantity).toLocaleString("es-GT", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 4,
+                    })} ${row.content_unit_symbol}`
+                  : " "}
                 </Typography>
 
                 <Typography
@@ -272,27 +277,18 @@ export function ProductsGridCard({
 
             return (
               <Chip
-                label={`${stock.toLocaleString(
-                  "es-GT",
-                  {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 3,
-                  },
-                )}  `}
+                label={`${stock.toLocaleString("es-GT", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 3,
+                })}`}
                 size="small"
                 sx={{
                   height: 26,
                   borderRadius: "5px",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-
-                  color: hasStock
-                    ? "#166534"
-                    : "#991B1B",
-
-                  bgcolor: hasStock
-                    ? "#DCFCE7"
-                    : "#FEE2E2",
+                  color: hasStock ? "#166534" : "#991B1B",
+                  bgcolor: hasStock ? "#DCFCE7" : "#FEE2E2",
                 }}
               />
             );
