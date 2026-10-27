@@ -190,7 +190,6 @@ export function ProductsGridCard({
                     })} ${row.content_unit_symbol}`
                   : " "}
                 </Typography>
-
                 <Typography
                   variant="body2"
                   sx={{
