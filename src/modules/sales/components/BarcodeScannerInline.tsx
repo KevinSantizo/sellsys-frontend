@@ -91,25 +91,14 @@ export function BarcodeScannerInline({
 
   const playSuccessSound = async () => {
     try {
-      const AudioContextClass =
-        window.AudioContext;
-
-      const audioContext =
-        new AudioContextClass();
-
-      if (
-        audioContext.state ===
-        "suspended"
-      ) {
+      const AudioContextClass = window.AudioContext;
+      const audioContext =new AudioContextClass();
+      if (audioContext.state ==="suspended") {
         await audioContext.resume();
       }
 
-      const oscillator =
-        audioContext.createOscillator();
-
-      const gainNode =
-        audioContext.createGain();
-
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
       oscillator.connect(
         gainNode,
       );
@@ -137,12 +126,7 @@ export function BarcodeScannerInline({
       );
 
       oscillator.start();
-
-      oscillator.stop(
-        audioContext.currentTime +
-          0.12,
-      );
-
+      oscillator.stop(audioContext.currentTime +0.12,);
       oscillator.addEventListener(
         "ended",
         () => {
@@ -159,26 +143,17 @@ export function BarcodeScannerInline({
   const successFeedback = async (
     barcode: string,
   ) => {
-    setSuccess(
-      `Producto agregado · ${barcode}`,
-    );
+    setSuccess(`Producto agregado · ${barcode}`,);
 
     setError(null);
-
-    if (
-      "vibrate" in navigator
-    ) {
+    if ("vibrate" in navigator) {
       navigator.vibrate(80);
     }
 
     await playSuccessSound();
 
-    if (
-      successTimeoutRef.current !== null
-    ) {
-      window.clearTimeout(
-        successTimeoutRef.current,
-      );
+    if (successTimeoutRef.current !== null) {
+      window.clearTimeout(successTimeoutRef.current,);
     }
 
     successTimeoutRef.current =
@@ -189,22 +164,15 @@ export function BarcodeScannerInline({
 
   const resumeScanner = ( barcode: string, delay = 800, ) => {
     if ( resumeTimeoutRef.current !== null) {
-      window.clearTimeout(
-        resumeTimeoutRef.current,
-      );
+      window.clearTimeout(resumeTimeoutRef.current,);
     }
 
   resumeTimeoutRef.current =
     window.setTimeout(() => {
-      processingRef.current = false;
-
+      processingRef.current = false; 
       window.setTimeout(() => {
-        if (
-          lastBarcodeRef.current ===
-          barcode
-        ) {
-          lastBarcodeRef.current =
-            null;
+        if ( lastBarcodeRef.current ===  barcode ) {
+          lastBarcodeRef.current = null;
         }
       }, 700);
     }, delay);
@@ -220,11 +188,9 @@ export function BarcodeScannerInline({
       sx={{
         p: 1.5,
         mb: 2,
-        borderRadius: "12px",
-
+        borderRadius: "12px", 
         border: "1px solid",
-        borderColor: "divider",
-
+        borderColor: "divider", 
         bgcolor: "#FFFFFF",
       }}
     >
@@ -232,12 +198,9 @@ export function BarcodeScannerInline({
         direction="row"
         spacing={1}
         sx={{
-          mb: 1.5,
-
-          alignItems: "center",
-
-          justifyContent:
-            "space-between",
+          mb: 1.5, 
+          alignItems: "center", 
+          justifyContent: "space-between",
         }}
       >
         <Stack
@@ -271,12 +234,8 @@ export function BarcodeScannerInline({
       {success && (
         <Alert
           severity="success"
-          icon={
-            <CheckCircleRounded />
-          }
-          sx={{
-            mb: 1.5,
-          }}
+          icon={ <CheckCircleRounded /> }
+          sx={{ mb: 1.5, }}
         >
           {success}
         </Alert>
@@ -285,9 +244,7 @@ export function BarcodeScannerInline({
       {error && (
         <Alert
           severity="warning"
-          sx={{
-            mb: 1.5,
-          }}
+          sx={{ mb: 1.5, }}
         >
           {error}
         </Alert>
@@ -295,15 +252,11 @@ export function BarcodeScannerInline({
 
       <Box
         sx={{
-          position: "relative",
-
+          position: "relative", 
           width: "100%",
-          height: 175,
-
-          overflow: "hidden",
-
-          borderRadius: "12px",
-
+          height: 175, 
+          overflow: "hidden", 
+          borderRadius: "12px", 
           bgcolor: "#000000",
         }}
       >
@@ -370,10 +323,8 @@ export function BarcodeScannerInline({
                 return;
               }
 
-              setSuccess(null);
-
-              setError(`No se encontró un producto con el código ${barcode}.`,);
-
+              setSuccess(null); 
+              setError(`No se encontró un producto con el código ${barcode}.`,); 
               resumeScanner(
                 barcode,
                 1200,
@@ -390,25 +341,18 @@ export function BarcodeScannerInline({
           }}
           onError={(
             scannerError,
-          ) => {
-            setError(scannerError.message ||"No fue posible iniciar la cámara.");
-          }}
+          ) => { setError(scannerError.message ||"No fue posible iniciar la cámara."); }}
         />
 
         {/* Marco para apuntar */}
         <Box
           sx={{
-            pointerEvents: "none",
-
+            pointerEvents: "none", 
             position: "absolute",
-            inset: 0,
-
-            display: "flex",
-
-            alignItems: "center",
-
-            justifyContent:
-              "center",
+            inset: 0, 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
           }}
         >
           <Box
