@@ -25,18 +25,16 @@ import {
 
 type BarcodeScannerInlineProps = {
   open: boolean;
-
   onClose: () => void;
-
-  onDetected: (
-    barcode: string,
-  ) => Promise<boolean>;
+  onDetected: ( barcode: string, ) => Promise<boolean>;
+  successLabel?: string;
 };
 
 export function BarcodeScannerInline({
   open,
   onClose,
   onDetected,
+  successLabel = "Producto agregado",
 }: BarcodeScannerInlineProps) {
 
   const [
@@ -143,7 +141,7 @@ export function BarcodeScannerInline({
   const successFeedback = async (
     barcode: string,
   ) => {
-    setSuccess(`Producto agregado · ${barcode}`,);
+    setSuccess(`${successLabel} · ${barcode}`);
 
     setError(null);
     if ("vibrate" in navigator) {

@@ -506,9 +506,7 @@ export function SalesPosPage() {
           onClose={() => {
             setBarcodeScannerOpen(false);
           }}
-          onDetected={
-            addProductByBarcode
-          }
+          onDetected={addProductByBarcode}
         />
       )}
 

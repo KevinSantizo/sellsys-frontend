@@ -1,4 +1,4 @@
-import { InfoOutlined } from "@mui/icons-material";
+import { CropFree, InfoOutlined } from "@mui/icons-material";
 
 import {
   Alert,
@@ -16,6 +16,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
 import {
@@ -31,6 +33,8 @@ import type {
   ProductType,
   UnitOption,
 } from "../types/product";
+
+import { BarcodeScannerInline } from "../../../sales/components/BarcodeScannerInline";
 
 type ProductFormDialogProps = {
   open: boolean;
@@ -87,16 +91,16 @@ export function ProductFormDialog({
   onClose,
   onSubmit,
 }: ProductFormDialogProps) {
-  const [values, setValues] =
-    useState<ProductFormValues>(
-      emptyProductValues,
-    );
 
-  const [validationError, setValidationError] =
-    useState<string | null>(null);
+  const [barcodeScannerOpen, setBarcodeScannerOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [values, setValues] = useState<ProductFormValues>( emptyProductValues, );
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
+      setBarcodeScannerOpen(false);
       return;
     }
 
@@ -105,11 +109,10 @@ export function ProductFormDialog({
     });
 
     setValidationError(null);
+    setBarcodeScannerOpen(false);
   }, [open, initialValues]);
 
-  const updateValue = <
-    Key extends keyof ProductFormValues,
-  >(
+  const updateValue = <Key extends keyof ProductFormValues>(
     key: Key,
     value: ProductFormValues[Key],
   ) => {
@@ -330,24 +333,60 @@ export function ProductFormDialog({
                   disabled={isSubmitting}
                 />
 
-                <TextField
-                  label="Código de barras"
-                  value={values.barcode}
-                  onChange={(event) => {
-                    updateValue(
-                      "barcode",
-                      event.target.value,
-                    );
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }
-                  }}
-                  fullWidth
-                  disabled={isSubmitting}
-                />
+                <Box>
+                  <TextField
+                    label="Código de barras"
+                    value={values.barcode}
+                    onChange={(event) => {
+                      updateValue("barcode", event.target.value);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }
+                    }}
+                    fullWidth
+                    disabled={isSubmitting}
+                  />
+
+                  {isMobile && !barcodeScannerOpen && (
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<CropFree />}
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setBarcodeScannerOpen(true);
+                      }}
+                      sx={{
+                        mt: 1,
+                        minHeight: 42,
+                        borderRadius: "5px",
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Escanear código
+                    </Button>
+                  )}
+                </Box>
+
+                {isMobile && barcodeScannerOpen && (
+                  <Box sx={{ gridColumn: "1 / -1" }}>
+                    <BarcodeScannerInline
+                      open={barcodeScannerOpen}
+                      onClose={() => {
+                        setBarcodeScannerOpen(false);
+                      }}
+                      onDetected={async (barcode) => {
+                        updateValue("barcode", barcode);
+                        return true;
+                      }}
+                    />
+                  </Box>
+                )}
 
                 <TextField
                   select
