@@ -401,27 +401,24 @@ export function ProductsPage() {
         sku: values.sku.trim(),
         barcode:
           values.barcode.trim() || null,
-        product_type:
-          values.product_type,
-        category_id:
-          values.category_id || null,
-        brand_id:
-          values.brand_id || null,
-        base_unit_id:
-          values.base_unit_id,
-        cost_price:
-          values.cost_price || "0.00",
-        sale_price:
-          values.sale_price,
+        product_type: values.product_type,
+        category_id: values.category_id || null,
+        brand_id: values.brand_id || null,
+        base_unit_id: values.base_unit_id,
+        cost_price: values.cost_price || "0.00",
+        sale_price: values.sale_price,
 
         track_inventory:
           values.product_type === "SERVICE"
             ? false
             : values.track_inventory,
 
-        is_active:
-          values.is_active,
+        is_active: values.is_active,
+        image_url: values.image_url ?? null,
+
+        image_public_id: values.image_public_id ?? null,
       };
+
 
       if (productId) {
         return updateProduct(

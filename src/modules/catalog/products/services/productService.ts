@@ -83,3 +83,29 @@ export async function deleteProduct(
     `catalog/products/${productId}/`,
   );
 }
+
+export type UploadProductImageResponse = {
+  image_url: string;
+  image_public_id: string;
+};
+
+export async function uploadProductImage(
+  file: File,
+): Promise<UploadProductImageResponse> {
+  const formData = new FormData();
+
+  formData.append("image", file);
+
+  const response =
+    await httpClient.post<UploadProductImageResponse>(
+      "catalog/products/upload-image/",
+      formData,
+      {
+        headers: {
+          "Content-Type": undefined,
+        },
+      },
+    );
+
+  return response.data;
+}

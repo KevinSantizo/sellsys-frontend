@@ -1,4 +1,5 @@
 import {
+  AttachMoney,
   BusinessRounded,
   CategoryRounded,
   ChevronLeftRounded,
@@ -12,7 +13,6 @@ import {
   PointOfSaleRounded,
   LocalShippingRounded, 
   ReceiptLongRounded,
-  
   } from "@mui/icons-material";
 
 import {
@@ -64,6 +64,11 @@ import { getCompanies, } from "../modules/companies/services/companyService";
       label: "Punto de venta",
       path: "/sales/pos",
       icon: <PointOfSaleRounded />,
+    },
+    {
+      label: "Ventas",
+      path: "/sales",
+      icon: <AttachMoney />,
     },
     {
       label: "Productos",

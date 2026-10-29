@@ -10,7 +10,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   FormControlLabel,
+  IconButton,
   MenuItem,
   Stack,
   TextField,
@@ -23,6 +25,7 @@ import {
 import {
   useEffect,
   useState,
+  type ChangeEvent,
   type FormEvent,
 } from "react";
 
@@ -33,8 +36,13 @@ import type {
   ProductType,
   UnitOption,
 } from "../types/product";
-
+ 
 import { BarcodeScannerInline } from "../../../sales/components/BarcodeScannerInline";
+import { uploadProductImage } from "../services/productService";
+import AddIcon from "@mui/icons-material/Add";
+import CameraAltOutlinedIcon from "@mui/icons-material/CameraAltOutlined";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 
 type ProductFormDialogProps = {
   open: boolean;
@@ -73,6 +81,8 @@ const emptyProductValues: ProductFormValues = {
   initial_stock: "",
   package_quantity: "",
   package_unit_id: "", 
+  image_url: null,
+  image_public_id: null,
 };
 
 export function ProductFormDialog({
@@ -100,6 +110,11 @@ export function ProductFormDialog({
   const [values, setValues] = useState<ProductFormValues>( emptyProductValues, );
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false); 
+  const [imageSourceOpen, setImageSourceOpen] =  useState(false);
+
   useEffect(() => {
     if (!open) {
       setBarcodeScannerOpen(false);
@@ -109,6 +124,12 @@ export function ProductFormDialog({
     setValues({
       ...(initialValues ?? emptyProductValues),
     });
+
+    setSelectedImage(null);
+
+    setImagePreview(
+      initialValues?.image_url ?? null,
+    );
 
     setValidationError(null);
     setBarcodeScannerOpen(false);
@@ -140,7 +161,82 @@ export function ProductFormDialog({
     }));
   };
 
-  const handleSubmit = (
+  const handleImageChange = ( event: ChangeEvent<HTMLInputElement>, ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setValidationError(
+        "Debes seleccionar un archivo de imagen válido.",
+      );
+
+      return;
+    }
+
+    if (
+      imagePreview &&
+      imagePreview.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(
+        imagePreview,
+      );
+    }
+
+    setSelectedImage(
+      file,
+    );
+
+    const previewUrl =
+      URL.createObjectURL(
+        file,
+      );
+
+    setImagePreview(
+      previewUrl,
+    );
+
+    setValidationError(null);
+
+    setImageSourceOpen(false);
+  };
+
+  const handleRemoveImage = () => {
+    if (
+      imagePreview &&
+      imagePreview.startsWith("blob:")
+    ) {
+      URL.revokeObjectURL(
+        imagePreview,
+      );
+    }
+
+    setSelectedImage(null);
+    setImagePreview(null);
+
+    setValues((current) => ({
+      ...current,
+      image_url: null,
+      image_public_id: null,
+    }));
+  };
+
+  useEffect(() => {
+    return () => {
+      if (
+        imagePreview &&
+        imagePreview.startsWith("blob:")
+      ) {
+        URL.revokeObjectURL(
+          imagePreview,
+        );
+      }
+    };
+  }, [imagePreview]);
+
+  const handleSubmit = async (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
@@ -220,12 +316,38 @@ export function ProductFormDialog({
       }
     }
 
-    onSubmit(values);
+    let imageUrl = values.image_url ?? null;
+
+    let imagePublicId = values.image_public_id ?? null;
+
+    if (selectedImage) {
+      try {
+        setIsUploadingImage(true); 
+        const uploadedImage = await uploadProductImage(selectedImage); 
+        imageUrl = uploadedImage.image_url; 
+        imagePublicId = uploadedImage.image_public_id;
+        } catch {
+          setValidationError(
+            "No se pudo subir la imagen del producto.",
+          );
+
+          return;
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+      
+      onSubmit({
+        ...values, 
+        image_url: imageUrl, 
+        image_public_id: imagePublicId,
+    });
   };
 
   const handleClose = () => {
     if (
       isSubmitting ||
+      isUploadingImage ||
       isLoadingProduct
     ) {
       return;
@@ -235,6 +357,7 @@ export function ProductFormDialog({
   };
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={handleClose}
@@ -297,7 +420,168 @@ export function ProductFormDialog({
                     submitError}
                 </Alert>
               )}
+              <Box>
+                <Typography
+                  sx={{
+                    mb: 1,
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  Imagen del producto
+                </Typography>
 
+                {!imagePreview ? (
+                  <>
+                    {isMobile ? (
+                      <Box
+                        onClick={() => {
+                          setImageSourceOpen(true);
+                        }}
+                        sx={{
+                          width: 180,
+                          height: 120,
+                          border: "1.5px dashed",
+                          borderColor: "divider",
+                          borderRadius: "5px",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          bgcolor: "background.paper",
+                          transition: "all 150ms ease",
+
+                          "&:hover": {
+                            borderColor: "primary.main",
+                            bgcolor: "action.hover",
+                          },
+                        }}
+                      >
+                        <AddIcon
+                          sx={{
+                            fontSize: 34,
+                            mb: 0.5,
+                            color: "text.primary",
+                          }}
+                        />
+
+                        <Typography
+                          sx={{
+                            fontSize: "0.75rem",
+                            color: "text.secondary",
+                          }}
+                        >
+                          Agregar imagen
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box
+                        component="label"
+                        sx={{
+                          width: 180,
+                          height: 120,
+                          border: "1.5px dashed",
+                          borderColor: "divider",
+                          borderRadius: "5px",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          bgcolor: "background.paper",
+                          transition: "all 150ms ease",
+
+                          "&:hover": {
+                            borderColor: "primary.main",
+                            bgcolor: "action.hover",
+                          },
+                        }}
+                      >
+                        <ImageOutlinedIcon
+                          sx={{
+                            fontSize: 34,
+                            mb: 0.5,
+                            color: "text.secondary",
+                          }}
+                        />
+
+                        <Typography
+                          sx={{
+                            fontSize: "0.75rem",
+                            color: "text.secondary",
+                          }}
+                        >
+                          Seleccionar imagen
+                        </Typography>
+
+                        <input
+                          hidden
+                          type="file"
+                          accept="image/*"
+                          onChange={
+                            handleImageChange
+                          }
+                        />
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: 180,
+                      height: 120,
+                      borderRadius: "5px",
+                      overflow: "hidden",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      bgcolor: "background.paper",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={imagePreview}
+                      alt="Vista previa del producto"
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        bgcolor: "background.paper",
+                        p: 0.5,
+                      }}
+                    />
+
+                    <IconButton
+                      type="button"
+                      size="small"
+                      onClick={
+                        handleRemoveImage
+                      }
+                      disabled={
+                        isSubmitting ||
+                        isUploadingImage
+                      }
+                      sx={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        bgcolor: "background.paper",
+                        boxShadow: 1,
+
+                        "&:hover": {
+                          bgcolor:
+                            "background.paper",
+                        },
+                      }}
+                    >
+                      <CloseIcon
+                        fontSize="small"
+                      />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
               <Box
                 sx={{
                   display: "grid",
@@ -797,6 +1081,7 @@ export function ProductFormDialog({
             onClick={handleClose}
             disabled={
               isSubmitting ||
+              isUploadingImage ||
               isLoadingProduct
             }
             sx={{
@@ -811,6 +1096,7 @@ export function ProductFormDialog({
             variant="contained"
             disabled={
               isSubmitting ||
+              isUploadingImage ||
               isLoadingOptions ||
               isLoadingProduct ||
               units.length === 0
@@ -819,13 +1105,122 @@ export function ProductFormDialog({
               borderRadius: "5px",
             }}
           >
-            {isSubmitting
+            {isUploadingImage
+            ? "Subiendo imagen..."
+            : isSubmitting
               ? "Guardando..."
               : submitLabel}
           </Button>
         </DialogActions>
       </Box>
     </Dialog>
+    <Drawer
+      anchor="bottom"
+      open={
+        imageSourceOpen
+      }
+      onClose={() => {
+        setImageSourceOpen(
+          false,
+        );
+      }}
+      slotProps={{
+        paper: {
+          sx: {
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            px: 2,
+            pt: 1.5,
+            pb: 3,
+          },
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: 40,
+          height: 4,
+          bgcolor: "divider",
+          borderRadius: 10,
+          mx: "auto",
+          mb: 2,
+        }}
+      />
+
+      <Typography
+        sx={{
+          fontWeight: 700,
+          fontSize: "1rem",
+          mb: 1.5,
+        }}
+      >
+        Agregar imagen
+      </Typography>
+
+      <Stack
+        spacing={1}
+      >
+        <Button
+          component="label"
+          variant="text"
+          startIcon={
+            <ImageOutlinedIcon />
+          }
+          sx={{
+            minHeight: 52,
+            justifyContent:
+              "flex-start",
+            textTransform:
+              "none",
+            color:
+              "text.primary",
+            fontWeight: 500,
+          }}
+        >
+          Seleccionar desde la galería
+
+          <input
+            hidden
+            type="file"
+            accept="image/*"
+            onChange={
+              handleImageChange
+            }
+          />
+        </Button>
+
+        <Button
+          component="label"
+          variant="text"
+          startIcon={
+            <CameraAltOutlinedIcon />
+          }
+          sx={{
+            minHeight: 52,
+            justifyContent:
+              "flex-start",
+            textTransform:
+              "none",
+            color:
+              "text.primary",
+            fontWeight: 500,
+          }}
+        >
+          Tomar foto
+
+          <input
+            hidden
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={
+              handleImageChange
+            }
+          />
+        </Button>
+      </Stack>
+    </Drawer>
+    </>
   );
 }
 

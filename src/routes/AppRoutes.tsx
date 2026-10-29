@@ -19,6 +19,7 @@ import { PurchasesPage } from "../modules/purchases/pages/PurchasesPage";
 import { CashPage } from "../modules/cash/pages/CashPage";
 import { ReportsPage } from "../modules/reports/pages/ReportsPage";
 import { SalesReportPage } from "../modules/reports/pages/SalesReportPage";
+import { SalesHistoryPage } from "../modules/sales/pages/SalesHistoryPage.tsx";
 import { PurchasesReportPage } from "../modules/reports/pages/PurchasesReportPage";
 import { ExpensesReportPage } from "../modules/reports/pages/ExpensesReportPage";
 import { CashReportPage } from "../modules/reports/pages/CashReportPage";
@@ -75,6 +76,7 @@ export function AppRoutes() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />}/>
           <Route path="/sales/pos"  element={<SalesPosPage />}/>
+          <Route path="/sales"  element={<SalesHistoryPage/>}/>
           <Route path="/catalog/products" element={<ProductsPage/>}/>
           <Route path="/purchases/suppliers" element={<SuppliersPage/>}/>
           <Route path="/catalog/categories" element={ <CategoriesPage/> }/>

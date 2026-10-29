@@ -19,6 +19,8 @@ export type Product = {
   current_stock: string;
   content_quantity: string | null;
   content_unit_symbol: string | null;
+  image_url: string | null;
+  image_public_id: string | null;
 };
 
 export type GetProductsParams = {
@@ -51,6 +53,8 @@ export type ProductFormValues = {
   track_inventory: boolean;
   is_active: boolean;
   initial_stock: string;
+  image_url?: string | null;
+  image_public_id?: string | null;
 };
 
 export type PaginatedProductsResponse = {
@@ -89,6 +93,8 @@ export type CreateProductPayload = {
   is_active: boolean;
 
   initial_stock: string;
+  image_url?: string | null;
+  image_public_id?: string | null;
 };
 
 export type CategoryOption = {
@@ -139,6 +145,8 @@ export type ProductDetail = Product & {
   base_unit_id?: string | null;
   package_unit_id?: string | null;
   content_unit_id?: string | null;
+  image_url: string | null;
+  image_public_id: string | null;
 };
 
 export type UpdateProductPayload = {
@@ -162,6 +170,8 @@ export type UpdateProductPayload = {
   sale_price?: string;
   track_inventory?: boolean;
   is_active?: boolean;
+  image_url?: string | null;
+  image_public_id?: string | null;
 };
 
 export type ProductStatusFilter =

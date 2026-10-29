@@ -225,6 +225,8 @@ export function PurchasesPage() {
           package_unit_id: values.package_unit_id || null,
           content_quantity: values.content_quantity || null,
           content_unit_id: values.content_unit_id || null,
+          image_url: values.image_url ?? null,
+          image_public_id: values.image_public_id ?? null,
         });
       },
 

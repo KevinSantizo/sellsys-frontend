@@ -95,3 +95,38 @@ export type SaleDetail = {
   items: SaleItem[];
   payments: SalePayment[];
 };
+
+export type SaleListItem = {
+  id: string;
+  sale_number: string;
+
+  company_name: string;
+  branch_name: string;
+
+  status: SaleStatus;
+  status_display: string;
+
+  customer_name: string;
+
+  subtotal: string;
+  discount_total: string;
+  tax_total: string;
+  total: string;
+
+  amount_received: string;
+  change_amount: string;
+
+  item_count: number;
+
+  created_by_name: string | null;
+
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type SalesResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: SaleListItem[];
+};

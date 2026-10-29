@@ -33,8 +33,7 @@ import {
   type GridPaginationModel,
 } from "@mui/x-data-grid";
 
-import { esES } from "@mui/x-data-grid/locales";
-
+import { esES } from "@mui/x-data-grid/locales"; 
 import {
   useMemo,
 } from "react";
@@ -148,25 +147,42 @@ export function ProductsGridCard({
               sx={{
                 width: "100%",
                 alignItems: "center",
+                py: 1,
               }}
             >
               <Box
                 sx={{
-                  width: 34,
-                  height: 34,
+                  width: 70,
+                  height: 70,
                   flexShrink: 0,
                   borderRadius: "5px",
                   bgcolor: "primary.light",
                   color: "primary.main",
                   display: "grid",
                   placeItems: "center",
+                  overflow: "hidden",
                 }}
               >
-                <Inventory2Rounded
-                  sx={{
-                    fontSize: 18,
-                  }}
-                />
+                {row.image_url ? (
+                  <Box
+                    component="img"
+                    src={row.image_url}
+                    alt={row.name}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      bgcolor: "background.paper",
+                      
+                    }}
+                  />
+                ) : (
+                  <Inventory2Rounded
+                    sx={{
+                      fontSize: 28, 
+                    }}
+                  />
+                )}
               </Box>
 
               <Box
@@ -183,18 +199,22 @@ export function ProductsGridCard({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {row.name} {row.content_quantity && row.content_unit_symbol
-                  ? `${Number(row.content_quantity).toLocaleString("es-GT", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 4,
-                    })} ${row.content_unit_symbol}`
-                  : " "}
+                  {row.name}{" "}
+                  {row.content_quantity &&
+                  row.content_unit_symbol
+                    ? `${Number(
+                        row.content_quantity,
+                      ).toLocaleString("es-GT", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 4,
+                      })} ${row.content_unit_symbol}`
+                    : " "}
                 </Typography>
+
                 <Typography
                   variant="body2"
                   sx={{
-                    color:
-                      "text.secondary",
+                    color: "text.secondary",
                     fontSize: "0.75rem",
                   }}
                 >
@@ -765,7 +785,7 @@ export function ProductsGridCard({
         disableColumnFilter
         hideFooter
         getRowId={(row) => row.id}
-        rowHeight={62}
+        rowHeight={80}
         columnHeaderHeight={46}
         localeText={{
           ...esES.components.MuiDataGrid
