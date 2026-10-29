@@ -79,7 +79,7 @@ export function ExpenseFormDialog({
   submitLabel,
   initialValues,
   categories,
-  suppliers,
+  //suppliers,
   isSubmitting,
   isLoadingOptions,
   isLoadingExpense,
