@@ -50,6 +50,7 @@ type ProductFormDialogProps = {
   categories: CategoryOption[];
   brands: BrandOption[];
   units: UnitOption[];
+  hideInitialStock?: boolean;
   onClose: () => void;
   onSubmit: (values: ProductFormValues) => void;
 };
@@ -88,6 +89,7 @@ export function ProductFormDialog({
   categories,
   brands,
   units,
+  hideInitialStock = false,
   onClose,
   onSubmit,
 }: ProductFormDialogProps) {
@@ -196,6 +198,7 @@ export function ProductFormDialog({
     }
 
     if (
+      !hideInitialStock &&
       !isEditing &&
       values.product_type === "PRODUCT" &&
       values.track_inventory
@@ -595,9 +598,10 @@ export function ProductFormDialog({
                     gap: 2,
                   }}
                 >
-                    {!isEditing &&
-                        values.product_type === "PRODUCT" &&
-                        values.track_inventory && (
+                    {!hideInitialStock &&
+                      !isEditing &&
+                      values.product_type === "PRODUCT" &&
+                      values.track_inventory && (
                             <TextField
                                 label="Stock inicial"
                                 type="number"

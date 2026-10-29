@@ -41,7 +41,7 @@ import type {
 } from "../suppliers/types/purchase";  
 import { PurchaseFormDialog } from "../components/PurchaseFormDialog";  
 import { getSuppliers } from "../suppliers/services/supplierService"; 
-import { getProducts } from "../../catalog/products/services/productService";
+import { createProduct, getProducts } from "../../catalog/products/services/productService";
 import { PurchaseDetailDialog } from "../components/PurchaseDetailDialog";
 import { getCashSessions } from "../../cash/services/cashService";
 import Swal from "sweetalert2";
@@ -51,7 +51,17 @@ import {
 } from "../../../shared/alerts/appAlerts";
 
 import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
+import { ProductFormDialog } from "../../catalog/products/components/ProductFormDialog";
+import {
+  getBrandOptions,
+  getCategoryOptions,
+  getUnitOptions,
+} from "../../catalog/products/services/catalogReferenceService";
 
+import type {
+  Product,
+  ProductFormValues,
+} from "../../catalog/products/types/product";
 
 export function PurchasesPage() {
   const queryClient = useQueryClient(); 
@@ -76,6 +86,12 @@ export function PurchasesPage() {
     page: 0,
     pageSize: 10,
   });
+
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  
+  const [createProductError, setCreateProductError] = useState<string | null>(null);
+  const [purchaseItemIndex, setPurchaseItemIndex] = useState<number | null>(null);
+  const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     setPaginationModel((current) => ({
@@ -145,10 +161,96 @@ export function PurchasesPage() {
     }),
 
     enabled:
-      Boolean(selectedCompany?.id) &&
-      Boolean(selectedBranch?.id) &&
-      isPurchaseDialogOpen,
-  });
+        Boolean(selectedCompany?.id) &&
+        Boolean(selectedBranch?.id) &&
+        isPurchaseDialogOpen,
+    });
+
+    const categoriesQuery = useQuery({
+      queryKey: [
+        "catalog-categories",
+        selectedCompany?.id,
+      ],
+      queryFn: () => getCategoryOptions(selectedCompany!.id),
+      enabled: Boolean(selectedCompany?.id) && isProductDialogOpen,
+    });
+
+    const brandsQuery = useQuery({
+      queryKey: [
+        "catalog-brands",
+        selectedCompany?.id,
+      ],
+      queryFn: () => getBrandOptions(selectedCompany!.id),
+      enabled: Boolean(selectedCompany?.id) && isProductDialogOpen,
+    });
+
+    const unitsQuery = useQuery({
+      queryKey: [
+        "catalog-units",
+        selectedCompany?.id,
+      ],
+      queryFn: () => getUnitOptions(selectedCompany!.id),
+      enabled: Boolean(selectedCompany?.id) && isProductDialogOpen,
+    });
+
+    const createProductMutation = useMutation({
+      mutationFn: (values: ProductFormValues) => {
+        if (!selectedCompany) {
+          throw new Error("No existe una empresa seleccionada.");
+        }
+
+        if (!selectedBranch) {
+          throw new Error("No existe una sucursal seleccionada.");
+        }
+
+        return createProduct({
+          company_id: selectedCompany.id,
+          branch_id: selectedBranch.id,
+          name: values.name.trim(),
+          description: values.description.trim(),
+          sku: values.sku.trim(),
+          barcode: values.barcode.trim() || null,
+          product_type: "PRODUCT",
+          category_id: values.category_id || null,
+          brand_id: values.brand_id || null,
+          base_unit_id: values.base_unit_id,
+          cost_price: values.cost_price || "0.00",
+          sale_price: values.sale_price,
+          track_inventory: true,
+          is_active: true,
+          initial_stock: "0",
+          package_quantity: values.package_quantity
+            ? Number(values.package_quantity)
+            : null,
+          package_unit_id: values.package_unit_id || null,
+          content_quantity: values.content_quantity || null,
+          content_unit_id: values.content_unit_id || null,
+        });
+      },
+
+      onSuccess: async (product) => {
+        setCreateProductError(null);
+        setIsProductDialogOpen(false);
+        setCreatedProduct(product);
+
+        await queryClient.invalidateQueries({
+          queryKey: [
+            "purchase-products",
+            selectedCompany?.id,
+            selectedBranch?.id,
+          ],
+        });
+      },
+
+      onError: (error) => {
+        setCreateProductError(
+          getApiErrorMessage(
+            error,
+            "No fue posible crear el producto.",
+          ),
+        );
+      },
+    });
 
 
   const purchaseProducts = useMemo(() => {
@@ -200,11 +302,23 @@ export function PurchasesPage() {
     onSuccess: async (purchase) => {
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: ["purchases", selectedCompany?.id, selectedBranch?.id],
+          queryKey: [
+            "purchases",
+            selectedCompany?.id,
+            selectedBranch?.id,
+          ],
         }),
 
         queryClient.invalidateQueries({
           queryKey: ["products"],
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: [
+            "purchase-products",
+            selectedCompany?.id,
+            selectedBranch?.id,
+          ],
         }),
 
         queryClient.invalidateQueries({
@@ -217,7 +331,10 @@ export function PurchasesPage() {
       ]);
 
       queryClient.removeQueries({
-        queryKey: ["purchase-detail", purchase.id],
+        queryKey: [
+          "purchase-detail",
+          purchase.id,
+        ],
       });
 
       void showSuccessAlert({
@@ -319,23 +436,40 @@ export function PurchasesPage() {
     onSuccess: async (purchase) => {
       setFormError(null);
       setIsPurchaseDialogOpen(false);
+      setEditingPurchaseId(null);
 
-      setPaginationModel((current) => ({
-        ...current,
-        page: 0,
-      }));
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [
+            "purchases",
+            selectedCompany?.id,
+            selectedBranch?.id,
+          ],
+        }),
 
-      await queryClient.invalidateQueries({
+        queryClient.invalidateQueries({
+          queryKey: ["products"],
+        }),
+
+        queryClient.invalidateQueries({
+          queryKey: [
+            "purchase-products",
+            selectedCompany?.id,
+            selectedBranch?.id,
+          ],
+        }),
+      ]);
+
+      queryClient.removeQueries({
         queryKey: [
-          "purchases",
-          selectedCompany?.id,
-          selectedBranch?.id,
+          "purchase-detail",
+          purchase.id,
         ],
       });
 
       void showSuccessAlert({
-        title: "Compra guardada correctamente",
-        text: `${purchase.purchase_number} fue registrada como borrador.`,
+        title: "Compra actualizada correctamente",
+        text: `${purchase.purchase_number} fue actualizada correctamente.`,
       });
     },
 
@@ -790,28 +924,135 @@ export function PurchasesPage() {
       )}
 
       <PurchaseFormDialog
-        open={ isPurchaseDialogOpen }
-        title={ isEditing ? "Editar compra" : "Nueva compra" }
-        submitLabel={ isEditing ? "Guardar cambios" : "Guardar compra" }
-        initialValues={ isEditing ? purchaseInitialValues : undefined }
-        suppliers={ suppliers }
-        products={ purchaseProducts }
-        branchName={ selectedBranch?.name ?? "Sucursal activa" }
-        isSubmitting={ createPurchaseMutation.isPending || updatePurchaseMutation.isPending }
-        isLoadingOptions={ suppliersQuery.isLoading || purchaseProductsQuery.isLoading }
-        isLoadingPurchase={ isEditing && purchaseDetailQuery.isLoading }
-        submitError={ formError }
-        formatCurrency={ formatCurrency }
-        onClose={ handleClosePurchaseDialog }
+        open={isPurchaseDialogOpen}
+        title={
+          isEditing
+            ? "Editar compra"
+            : "Nueva compra"
+        }
+        submitLabel={
+          isEditing
+            ? "Guardar cambios"
+            : "Guardar compra"
+        }
+        initialValues={
+          isEditing
+            ? purchaseInitialValues
+            : undefined
+        }
+        suppliers={suppliers}
+        products={purchaseProducts}
+        branchName={
+          selectedBranch?.name ??
+          "Sucursal activa"
+        }
+        isSubmitting={
+          createPurchaseMutation.isPending ||
+          updatePurchaseMutation.isPending
+        }
+        isLoadingOptions={
+          suppliersQuery.isLoading ||
+          purchaseProductsQuery.isLoading
+        }
+        isLoadingPurchase={
+          isEditing &&
+          purchaseDetailQuery.isLoading
+        }
+        submitError={formError}
+        formatCurrency={formatCurrency}
+        createdProduct={createdProduct}
+        createdProductItemIndex={purchaseItemIndex}
+        onCreateProduct={(itemIndex) => {
+          setPurchaseItemIndex(itemIndex);
+          setCreatedProduct(null);
+          setCreateProductError(null);
+          setIsProductDialogOpen(true);
+        }}
+        onProductConsumed={() => {
+          setCreatedProduct(null);
+          setPurchaseItemIndex(null);
+        }}
+        onClose={handleClosePurchaseDialog}
         onSubmit={(values) => {
           setFormError(null);
 
           if (isEditing) {
-            updatePurchaseMutation.mutate(values);
+            updatePurchaseMutation.mutate(
+              values,
+            );
+
             return;
           }
 
-          createPurchaseMutation.mutate(values);
+          createPurchaseMutation.mutate(
+            values,
+          );
+        }}
+      />
+
+      <ProductFormDialog
+        open={isProductDialogOpen}
+        title="Nuevo producto"
+        submitLabel="Crear producto"
+        isEditing={false}
+        branchName={
+          selectedBranch?.name ??
+          "Sucursal activa"
+        }
+        isSubmitting={
+          createProductMutation.isPending
+        }
+        isLoadingOptions={
+          categoriesQuery.isLoading ||
+          brandsQuery.isLoading ||
+          unitsQuery.isLoading
+        }
+        isLoadingProduct={false}
+        submitError={createProductError}
+        categories={
+          categoriesQuery.data ?? []
+        }
+        brands={
+          brandsQuery.data ?? []
+        }
+        units={
+          unitsQuery.data ?? []
+        }
+        hideInitialStock
+        initialValues={{
+          name: "",
+          description: "",
+          sku: "",
+          barcode: "",
+          product_type: "PRODUCT",
+          category_id: "",
+          brand_id: "",
+          base_unit_id: "",
+          cost_price: "",
+          sale_price: "",
+          track_inventory: true,
+          is_active: true,
+          initial_stock: "0",
+          package_quantity: "",
+          package_unit_id: "",
+          content_quantity: "",
+          content_unit_id: "",
+        }}
+        onClose={() => {
+          if (createProductMutation.isPending) {
+            return;
+          }
+
+          setIsProductDialogOpen(false);
+          setCreateProductError(null);
+          setPurchaseItemIndex(null);
+        }}
+        onSubmit={(values) => {
+          setCreateProductError(null);
+
+          createProductMutation.mutate(
+            values,
+          );
         }}
       />
 
