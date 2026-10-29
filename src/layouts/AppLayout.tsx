@@ -372,9 +372,23 @@ import { getCompanies, } from "../modules/companies/services/companyService";
           sx={{
             flex: 1,
             minHeight: 0,
-            overflow: "hidden",
+            overflowY: "auto",
+            overflowX: "hidden",
             px: 1.5,
             py: 0.5,
+
+            "&::-webkit-scrollbar": {
+              width: 6,
+            },
+
+            "&::-webkit-scrollbar-thumb": {
+              bgcolor: "rgba(0, 0, 0, 0.18)",
+              borderRadius: 10,
+            },
+
+            "&::-webkit-scrollbar-track": {
+              bgcolor: "transparent",
+            },
           }}
         >
           {navigationItems.map((item) => {
