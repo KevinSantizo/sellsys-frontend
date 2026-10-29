@@ -293,6 +293,30 @@ export function ProductsGridCard({
             );
           },
         },
+
+        {
+          field: "cost_price",
+          headerName: "Precio costo",
+          width: 140,
+          align: "right",
+          headerAlign: "right",
+          renderCell: ({ row }) => (
+            <Typography
+              variant="body2"
+              sx={{
+                width: "100%",
+                fontWeight: 700,
+                textAlign: "right",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {formatCurrency(
+                row.cost_price,
+              )}
+            </Typography>
+          ),
+        },
+
         {
           field: "sale_price",
           headerName: "Precio",

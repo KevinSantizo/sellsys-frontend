@@ -35,7 +35,6 @@ import type {
   PurchasePaymentMethod,
 } from "../../purchases/suppliers/types/purchase";
 
-
 type PurchaseFormDialogProps = {
   open: boolean;
   title: string;
@@ -49,17 +48,22 @@ type PurchaseFormDialogProps = {
   isLoadingPurchase: boolean;
   submitError: string | null;
   formatCurrency: (value: string | number) => string;
+
+  createdProduct?: Product | null;
+  createdProductItemIndex?: number | null;
+
+  onCreateProduct: (itemIndex: number) => void;
+  onProductConsumed: () => void;
+
   onClose: () => void;
   onSubmit: (values: PurchaseFormValues) => void;
 };
-
 
 const emptyPurchaseItem: PurchaseItemFormValues = {
   product_id: "",
   quantity: "1",
   unit_cost: "",
 };
-
 
 const emptyPurchaseValues: PurchaseFormValues = {
   supplier_id: "",
@@ -74,7 +78,6 @@ const emptyPurchaseValues: PurchaseFormValues = {
   ],
 };
 
-
 export function PurchaseFormDialog({
   open,
   title,
@@ -88,32 +91,72 @@ export function PurchaseFormDialog({
   isLoadingPurchase,
   submitError,
   formatCurrency,
+  createdProduct,
+  createdProductItemIndex,
+  onCreateProduct,
+  onProductConsumed,
   onClose,
   onSubmit,
 }: PurchaseFormDialogProps) {
-  const [values, setValues] = useState<PurchaseFormValues>(emptyPurchaseValues);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [values, setValues] = useState<PurchaseFormValues>(
+    emptyPurchaseValues,
+  );
 
+  const [validationError, setValidationError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
 
     setValues(
       initialValues
         ? {
             ...initialValues,
-            items: initialValues.items.map((item) => ({ ...item })),
+            items: initialValues.items.map((item) => ({
+              ...item,
+            })),
           }
         : {
             ...emptyPurchaseValues,
             purchase_date: getCurrentLocalDate(),
-            items: [{ ...emptyPurchaseItem }],
+            items: [
+              { ...emptyPurchaseItem },
+            ],
           },
     );
 
     setValidationError(null);
   }, [open, initialValues]);
 
+  useEffect(() => {
+    if (!createdProduct || createdProductItemIndex === null || createdProductItemIndex === undefined) {
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      items: current.items.map((item, index) => {
+        if (index !== createdProductItemIndex) {
+          return item;
+        }
+
+        return {
+          ...item,
+          product_id: createdProduct.id,
+          unit_cost: createdProduct.cost_price ?? "0.00",
+        };
+      }),
+    }));
+
+    onProductConsumed();
+  }, [
+    createdProduct,
+    createdProductItemIndex,
+    onProductConsumed,
+  ]);
 
   const updateValue = <Key extends keyof PurchaseFormValues>(
     key: Key,
@@ -125,7 +168,6 @@ export function PurchaseFormDialog({
     }));
   };
 
-
   const updateItem = (
     index: number,
     key: keyof PurchaseItemFormValues,
@@ -134,7 +176,9 @@ export function PurchaseFormDialog({
     setValues((current) => ({
       ...current,
       items: current.items.map((item, itemIndex) => {
-        if (itemIndex !== index) return item;
+        if (itemIndex !== index) {
+          return item;
+        }
 
         return {
           ...item,
@@ -144,14 +188,20 @@ export function PurchaseFormDialog({
     }));
   };
 
-
-  const handleProductChange = (index: number, productId: string) => {
-    const product = products.find((item) => item.id === productId);
+  const handleProductChange = (
+    index: number,
+    productId: string,
+  ) => {
+    const product = products.find(
+      (item) => item.id === productId,
+    );
 
     setValues((current) => ({
       ...current,
       items: current.items.map((item, itemIndex) => {
-        if (itemIndex !== index) return item;
+        if (itemIndex !== index) {
+          return item;
+        }
 
         return {
           ...item,
@@ -161,7 +211,6 @@ export function PurchaseFormDialog({
       }),
     }));
   };
-
 
   const handleAddItem = () => {
     setValues((current) => ({
@@ -173,16 +222,18 @@ export function PurchaseFormDialog({
     }));
   };
 
-
   const handleRemoveItem = (index: number) => {
-    if (values.items.length === 1) return;
+    if (values.items.length === 1) {
+      return;
+    }
 
     setValues((current) => ({
       ...current,
-      items: current.items.filter((_, itemIndex) => itemIndex !== index),
+      items: current.items.filter(
+        (_, itemIndex) => itemIndex !== index,
+      ),
     }));
   };
-
 
   const subtotal = useMemo(() => {
     return values.items.reduce((total, item) => {
@@ -197,7 +248,6 @@ export function PurchaseFormDialog({
     }, 0);
   }, [values.items]);
 
-
   const discountTotal = Number(values.discount_total) || 0;
   const taxTotal = Number(values.tax_total) || 0;
 
@@ -206,25 +256,37 @@ export function PurchaseFormDialog({
     subtotal - discountTotal + taxTotal,
   );
 
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
     setValidationError(null);
 
-    if (isSubmitting || isLoadingPurchase) return;
+    if (isSubmitting || isLoadingPurchase) {
+      return;
+    }
 
     if (!values.supplier_id) {
-      setValidationError("Debes seleccionar un proveedor.");
+      setValidationError(
+        "Debes seleccionar un proveedor.",
+      );
+
       return;
     }
 
     if (!values.purchase_date) {
-      setValidationError("Debes seleccionar la fecha de la compra.");
+      setValidationError(
+        "Debes seleccionar la fecha de la compra.",
+      );
+
       return;
     }
 
     if (values.items.length === 0) {
-      setValidationError("La compra debe contener al menos un producto.");
+      setValidationError(
+        "La compra debe contener al menos un producto.",
+      );
+
       return;
     }
 
@@ -232,12 +294,17 @@ export function PurchaseFormDialog({
 
     for (const item of values.items) {
       if (!item.product_id) {
-        setValidationError("Debes seleccionar un producto en todas las líneas.");
+        setValidationError(
+          "Debes seleccionar un producto en todas las líneas.",
+        );
+
         return;
       }
 
       if (productIds.has(item.product_id)) {
-        const product = products.find((productItem) => productItem.id === item.product_id);
+        const product = products.find(
+          (productItem) => productItem.id === item.product_id,
+        );
 
         setValidationError(
           `El producto "${product?.name ?? "seleccionado"}" está repetido en la compra.`,
@@ -252,88 +319,112 @@ export function PurchaseFormDialog({
       const unitCost = Number(item.unit_cost);
 
       if (!Number.isFinite(quantity) || quantity <= 0) {
-        setValidationError("Todas las cantidades deben ser mayores a cero.");
+        setValidationError(
+          "Todas las cantidades deben ser mayores a cero.",
+        );
+
         return;
       }
 
       if (!Number.isFinite(unitCost) || unitCost < 0) {
-        setValidationError("Todos los costos unitarios deben ser válidos.");
+        setValidationError(
+          "Todos los costos unitarios deben ser válidos.",
+        );
+
         return;
       }
     }
 
     if (discountTotal < 0) {
-      setValidationError("El descuento no puede ser negativo.");
+      setValidationError(
+        "El descuento no puede ser negativo.",
+      );
+
       return;
     }
 
     if (discountTotal > subtotal) {
-      setValidationError("El descuento no puede ser mayor al subtotal.");
+      setValidationError(
+        "El descuento no puede ser mayor al subtotal.",
+      );
+
       return;
     }
 
     if (taxTotal < 0) {
-      setValidationError("El impuesto no puede ser negativo.");
+      setValidationError(
+        "El impuesto no puede ser negativo.",
+      );
+
       return;
     }
 
     onSubmit(values);
   };
 
-
   const loading = isLoadingOptions || isLoadingPurchase;
-
 
   return (
     <Dialog
-        open={ open }
-        onClose={ isSubmitting ? undefined : onClose }
-        fullWidth
-        maxWidth="md"
-        slotProps={{
-            paper: {
-                sx: {
-                    borderRadius: "5px",
-                    maxHeight: "calc(100vh - 32px)",
-                    overflow: "hidden",
-                },
-            },
-        }}
-    >
-      <Box component="form"
-        onSubmit={ handleSubmit }
-        noValidate
-        sx={{
-            display: "flex",
-            flexDirection: "column",
+      open={open}
+      onClose={isSubmitting ? undefined : onClose}
+      fullWidth
+      maxWidth="md"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "5px",
             maxHeight: "calc(100vh - 32px)",
             overflow: "hidden",
-        }}>
-        <DialogTitle sx={{ fontWeight: 800 }}>
-          { title }
+          },
+        },
+      }}
+    >
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        noValidate
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          maxHeight: "calc(100vh - 32px)",
+          overflow: "hidden",
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 800,
+          }}
+        >
+          {title}
         </DialogTitle>
 
-        <DialogContent  
-            dividers
-            sx={{
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                p: 3,
-            }}
+        <DialogContent
+          dividers
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            p: 3,
+          }}
         >
           {loading ? (
-            <Stack 
+            <Stack
               sx={{
-                    minHeight: 340,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    spacing: 1.5
-                }}
+                minHeight: 340,
+                alignItems: "center",
+                justifyContent: "center",
+                spacing: 1.5,
+              }}
             >
               <CircularProgress size={32} />
 
-              <Typography color="text.secondary" sx={{ fontSize: "0.85rem" }}>
+              <Typography
+                color="text.secondary"
+                sx={{
+                  fontSize: "0.85rem",
+                }}
+              >
                 Cargando información...
               </Typography>
             </Stack>
@@ -341,487 +432,627 @@ export function PurchaseFormDialog({
             <Stack spacing={3}>
               {(validationError || submitError) && (
                 <Alert severity="error">
-                  { validationError || submitError }
+                  {validationError || submitError}
                 </Alert>
               )}
 
-                <Box>
-                <Typography sx={{ mb: 1.5, fontSize: "0.9rem", fontWeight: 800 }}>
-                    Información de la compra
+              <Box>
+                <Typography
+                  sx={{
+                    mb: 1.5,
+                    fontSize: "0.9rem",
+                    fontWeight: 800,
+                  }}
+                >
+                  Información de la compra
                 </Typography>
 
                 <Box
-                    sx={{
+                  sx={{
                     display: "grid",
                     gridTemplateColumns: {
-                        xs: "1fr",
-                        sm: "repeat(2, minmax(0, 1fr))",
+                      xs: "1fr",
+                      sm: "repeat(2, minmax(0, 1fr))",
                     },
                     gap: 2,
-                    }}
+                  }}
                 >
-                    <TextField
+                  <TextField
                     select
                     label="Proveedor"
-                    value={ values.supplier_id }
-                    onChange={ (event) => updateValue("supplier_id", event.target.value) }
+                    value={values.supplier_id}
+                    onChange={(event) => {
+                      updateValue(
+                        "supplier_id",
+                        event.target.value,
+                      );
+                    }}
                     required
                     fullWidth
-                    disabled={ isSubmitting }
-                    >
+                    disabled={isSubmitting}
+                  >
                     {suppliers.map((supplier) => (
-                        <MenuItem key={ supplier.id } value={ supplier.id }>
-                        { supplier.name }
-                        </MenuItem>
+                      <MenuItem
+                        key={supplier.id}
+                        value={supplier.id}
+                      >
+                        {supplier.name}
+                      </MenuItem>
                     ))}
-                    </TextField>
+                  </TextField>
 
-                    <TextField
+                  <TextField
                     label="Factura del proveedor"
-                    value={ values.supplier_invoice_number }
-                    onChange={ (event) => updateValue("supplier_invoice_number", event.target.value) }
+                    value={values.supplier_invoice_number}
+                    onChange={(event) => {
+                      updateValue(
+                        "supplier_invoice_number",
+                        event.target.value,
+                      );
+                    }}
                     fullWidth
-                    disabled={ isSubmitting }
-                    />
+                    disabled={isSubmitting}
+                  />
 
-                    <TextField
+                  <TextField
                     label="Fecha de compra"
                     type="date"
-                    value={ values.purchase_date }
-                    onChange={ (event) => updateValue("purchase_date", event.target.value) }
+                    value={values.purchase_date}
+                    onChange={(event) => {
+                      updateValue(
+                        "purchase_date",
+                        event.target.value,
+                      );
+                    }}
                     required
                     fullWidth
-                    disabled={ isSubmitting }
+                    disabled={isSubmitting}
                     slotProps={{
-                        inputLabel: {
+                      inputLabel: {
                         shrink: true,
-                        },
+                      },
                     }}
-                    />
+                  />
 
-                    <TextField
-                      select
-                      label="Método de pago"
-                      value={ values.payment_method }
-                      onChange={ (event) => {
-                          updateValue(
-                          "payment_method",
-                          event.target.value as PurchasePaymentMethod,
-                          );
-                      }}
-                      fullWidth
-                      disabled={ isSubmitting }
-                    >
-                      <MenuItem value="CASH">Efectivo</MenuItem>
-                      <MenuItem value="TRANSFER">Transferencia</MenuItem>
-                      <MenuItem value="CARD">Tarjeta</MenuItem>
-                      <MenuItem value="SUPPLIER_CREDIT">Crédito de proveedor</MenuItem>
-                      <MenuItem value="OTHER">Otro</MenuItem>
-                    </TextField>
+                  <TextField
+                    select
+                    label="Método de pago"
+                    value={values.payment_method}
+                    onChange={(event) => {
+                      updateValue(
+                        "payment_method",
+                        event.target.value as PurchasePaymentMethod,
+                      );
+                    }}
+                    fullWidth
+                    disabled={isSubmitting}
+                  >
+                    <MenuItem value="CASH">
+                      Efectivo
+                    </MenuItem>
+
+                    <MenuItem value="TRANSFER">
+                      Transferencia
+                    </MenuItem>
+
+                    <MenuItem value="CARD">
+                      Tarjeta
+                    </MenuItem>
+
+                    <MenuItem value="SUPPLIER_CREDIT">
+                      Crédito de proveedor
+                    </MenuItem>
+
+                    <MenuItem value="OTHER">
+                      Otro
+                    </MenuItem>
+                  </TextField>
                 </Box>
 
                 <Typography
-                    color="text.secondary"
-                    sx={{ mt: 1.2, fontSize: "0.76rem" }}
+                  color="text.secondary"
+                  sx={{
+                    mt: 1.2,
+                    fontSize: "0.76rem",
+                  }}
                 >
-                    Sucursal: { branchName || "Sin sucursal seleccionada" }
+                  Sucursal: {branchName || "Sin sucursal seleccionada"}
                 </Typography>
-                </Box> 
+              </Box>
 
-                <Box>
-                    <Box
+              <Box>
+                <Box
+                  sx={{
+                    mb: 1.5,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                    width: "100%",
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: "0.9rem",
+                        fontWeight: 800,
+                      }}
+                    >
+                      Productos
+                    </Typography>
+
+                    <Typography
+                      color="text.secondary"
+                      sx={{
+                        mt: 0.25,
+                        fontSize: "0.76rem",
+                      }}
+                    >
+                      Agrega los productos incluidos en esta compra.
+                    </Typography>
+                  </Box>
+
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    startIcon={<AddRounded />}
+                    onClick={handleAddItem}
+                    disabled={isSubmitting}
+                    sx={{
+                      borderRadius: "5px",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Agregar producto
+                  </Button>
+                </Box>
+
+                <Stack spacing={1.25}>
+                  {values.items.map((item, index) => {
+                    const itemSubtotal =
+                      (Number(item.quantity) || 0) *
+                      (Number(item.unit_cost) || 0);
+
+                    return (
+                      <Box
+                        key={index}
                         sx={{
-                            mb: 1.5,
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 2,
-                            width: "100%",
+                          p: 1.5,
+                          border: "1px solid",
+                          borderColor: "divider",
+                          borderRadius: "5px",
+                          bgcolor: "#FFFFFF",
                         }}
+                      >
+                        <Box
+                          sx={{
+                            display: "grid",
+                            gridTemplateColumns: {
+                              xs: "1fr",
+                              sm: "minmax(0, 1fr) minmax(110px, 0.35fr)",
+                              md: "minmax(260px, 2fr) 120px 150px 150px 40px",
+                            },
+                            gap: 1.25,
+                            alignItems: "start",
+                          }}
                         >
-                        <Box>
-                            <Typography sx={{ fontSize: "0.9rem", fontWeight: 800 }}>
-                            Productos
+                          <Stack spacing={0.5}>
+                            <TextField
+                              select
+                              label="Producto"
+                              value={item.product_id}
+                              onChange={(event) => {
+                                handleProductChange(
+                                  index,
+                                  event.target.value,
+                                );
+                              }}
+                              required
+                              fullWidth
+                              disabled={isSubmitting}
+                            >
+                              {products.map((product) => (
+                                <MenuItem
+                                  key={product.id}
+                                  value={product.id}
+                                  disabled={values.items.some(
+                                    (
+                                      purchaseItem,
+                                      purchaseItemIndex,
+                                    ) =>
+                                      purchaseItemIndex !== index &&
+                                      purchaseItem.product_id === product.id,
+                                  )}
+                                >
+                                  {product.name} - {product.sku}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+
+                            <Button
+                              type="button"
+                              size="small"
+                              startIcon={<AddRounded />}
+                              onClick={() => {
+                                onCreateProduct(index);
+                              }}
+                              disabled={isSubmitting}
+                              sx={{
+                                alignSelf: "flex-start",
+                                minWidth: 0,
+                                px: 0.5,
+                                textTransform: "none",
+                                fontWeight: 700,
+                              }}
+                            >
+                              Crear nuevo producto
+                            </Button>
+                          </Stack>
+
+                          <TextField
+                            label="Cantidad"
+                            type="number"
+                            value={item.quantity}
+                            onChange={(event) => {
+                              updateItem(
+                                index,
+                                "quantity",
+                                event.target.value,
+                              );
+                            }}
+                            required
+                            fullWidth
+                            disabled={isSubmitting}
+                            slotProps={{
+                              htmlInput: {
+                                min: 0.001,
+                                step: 0.001,
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Costo unitario"
+                            type="number"
+                            value={item.unit_cost}
+                            onChange={(event) => {
+                              updateItem(
+                                index,
+                                "unit_cost",
+                                event.target.value,
+                              );
+                            }}
+                            placeholder="0.00"
+                            required
+                            fullWidth
+                            disabled={isSubmitting}
+                            slotProps={{
+                              htmlInput: {
+                                min: 0,
+                                step: 0.01,
+                              },
+                            }}
+                          />
+
+                          <Box
+                            sx={{
+                              height: 56,
+                              px: 1.5,
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "center",
+                              border: "1px solid",
+                              borderColor: "divider",
+                              borderRadius: "5px",
+                              bgcolor: "#FAFAFA",
+                            }}
+                          >
+                            <Typography
+                              color="text.secondary"
+                              sx={{
+                                fontSize: "0.68rem",
+                              }}
+                            >
+                              Subtotal
                             </Typography>
 
                             <Typography
-                            color="text.secondary"
-                            sx={{ mt: 0.25, fontSize: "0.76rem" }}
+                              sx={{
+                                mt: 0.2,
+                                fontSize: "0.86rem",
+                                fontWeight: 800,
+                              }}
                             >
-                            Agrega los productos incluidos en esta compra.
+                              {formatCurrency(itemSubtotal)}
                             </Typography>
-                        </Box>
+                          </Box>
 
-                        <Button
+                          <IconButton
                             type="button"
-                            variant="outlined"
-                            startIcon={<AddRounded />}
-                            onClick={ handleAddItem }
-                            disabled={ isSubmitting }
-                            sx={{
-                            borderRadius: "5px",
-                            textTransform: "none",
-                            fontWeight: 700,
-                            flexShrink: 0,
+                            onClick={() => {
+                              handleRemoveItem(index);
                             }}
-                        >
-                            Agregar producto
-                        </Button>
-                    </Box>
+                            disabled={
+                              isSubmitting ||
+                              values.items.length === 1
+                            }
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              mt: 1,
+                              borderRadius: "5px",
+                              color: "error.main",
+                              justifySelf: "center",
+                            }}
+                          >
+                            <DeleteOutlineRounded fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Box>
 
-                    <Stack spacing={1.25}>
-                        {values.items.map((item, index) => {
-                        const itemSubtotal =
-                            (Number(item.quantity) || 0) *
-                            (Number(item.unit_cost) || 0);
+              <Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "repeat(2, minmax(0, 1fr))",
+                    },
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    label="Descuento"
+                    type="number"
+                    value={values.discount_total}
+                    onChange={(event) => {
+                      updateValue(
+                        "discount_total",
+                        event.target.value,
+                      );
+                    }}
+                    placeholder="0.00"
+                    fullWidth
+                    disabled={isSubmitting}
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                        step: 0.01,
+                      },
+                    }}
+                  />
 
-                        return (
-                            <Box
-                                key={ index }
-                                sx={{
-                                    p: 1.5,
-                                    border: "1px solid",
-                                    borderColor: "divider",
-                                    borderRadius: "5px",
-                                    bgcolor: "#FFFFFF",
-                                }}
-                            >
-                            <Box
-                                sx={{
-                                    display: "grid",
-                                    gridTemplateColumns: {
-                                        xs: "1fr",
-                                        sm: "minmax(0, 1fr) minmax(110px, 0.35fr)",
-                                        md: "minmax(260px, 2fr) 120px 150px 150px 40px",
-                                    },
-                                    gap: 1.25,
-                                    alignItems: "center",
-                                }}
-                            >
-                                <TextField
-                                    select
-                                    label="Producto"
-                                    value={ item.product_id }
-                                    onChange={ (event) => handleProductChange(index, event.target.value) }
-                                    required
-                                    fullWidth
-                                    disabled={ isSubmitting }
-                                >
-                                    {products.map((product) => (
-                                        <MenuItem
-                                            key={ product.id }
-                                            value={ product.id }
-                                            disabled={
-                                                values.items.some(
-                                                (purchaseItem, purchaseItemIndex) =>
-                                                    purchaseItemIndex !== index &&
-                                                    purchaseItem.product_id === product.id,
-                                                )
-                                            }
-                                            >
-                                            { product.name } - { product.sku }
-                                        </MenuItem>
-                                    ))}
-                                </TextField>
-
-                                <TextField
-                                    label="Cantidad"
-                                    type="number"
-                                    value={ item.quantity }
-                                    onChange={ (event) => updateItem(index, "quantity", event.target.value) }
-                                    required
-                                    fullWidth
-                                    disabled={ isSubmitting }
-                                    slotProps={{
-                                        htmlInput: {
-                                        min: 1,
-                                        step: 1,
-                                        },
-                                    }}
-                                />
-
-                                <TextField
-                                    label="Costo unitario"
-                                    type="number"
-                                    value={ item.unit_cost }
-                                    onChange={ (event) => updateItem(index, "unit_cost", event.target.value) }
-                                    placeholder="0.00"
-                                    required
-                                    fullWidth
-                                    disabled={ isSubmitting }
-                                    slotProps={{
-                                        htmlInput: {
-                                        min: 0,
-                                        step: 0.01,
-                                        },
-                                    }}
-                                />
-
-                                    <Box
-                                    sx={{
-                                        height: 56,
-                                        px: 1.5,
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "center",
-                                        border: "1px solid",
-                                        borderColor: "divider",
-                                        borderRadius: "5px",
-                                        bgcolor: "#FAFAFA",
-                                    }}
-                                    >
-                                        <Typography color="text.secondary" sx={{ fontSize: "0.68rem" }}>
-                                            Subtotal
-                                        </Typography>
-
-                                        <Typography sx={{ mt: 0.2, fontSize: "0.86rem", fontWeight: 800 }}>
-                                            { formatCurrency(itemSubtotal) }
-                                        </Typography>
-                                    </Box>
-
-                                <IconButton
-                                type="button"
-                                onClick={ () => handleRemoveItem(index) }
-                                disabled={ isSubmitting || values.items.length === 1 }
-                                sx={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: "5px",
-                                    color: "error.main",
-                                    justifySelf: "center",
-                                }}
-                                >
-                                <DeleteOutlineRounded fontSize="small" />
-                                </IconButton>
-                            </Box>
-                            </Box>
-                        );
-                        })}
-                    </Stack>
+                  <TextField
+                    label="Impuesto"
+                    type="number"
+                    value={values.tax_total}
+                    onChange={(event) => {
+                      updateValue(
+                        "tax_total",
+                        event.target.value,
+                      );
+                    }}
+                    placeholder="0.00"
+                    fullWidth
+                    disabled={isSubmitting}
+                    slotProps={{
+                      htmlInput: {
+                        min: 0,
+                        step: 0.01,
+                      },
+                    }}
+                  />
                 </Box>
- 
-                <Box>
-                    <Box
-                        sx={{
-                        display: "grid",
-                        gridTemplateColumns: {
-                            xs: "1fr",
-                            sm: "repeat(2, minmax(0, 1fr))",
-                        },
-                        gap: 2,
-                        }}
-                    >
-                        <TextField
-                        label="Descuento"
-                        type="number"
-                        value={ values.discount_total }
-                        onChange={ (event) => updateValue("discount_total", event.target.value) }
-                        placeholder="0.00"
-                        fullWidth
-                        disabled={ isSubmitting }
-                        slotProps={{
-                            htmlInput: {
-                            min: 0,
-                            step: 0.01,
-                            },
-                        }}
-                        />
 
-                        <TextField
-                        label="Impuesto"
-                        type="number"
-                        value={ values.tax_total }
-                        onChange={ (event) => updateValue("tax_total", event.target.value) }
-                        placeholder="0.00"
-                        fullWidth
-                        disabled={ isSubmitting }
-                        slotProps={{
-                            htmlInput: {
-                            min: 0,
-                            step: 0.01,
-                            },
-                        }}
-                        />
-                    </Box>
+                <Box
+                  sx={{
+                    mt: 2,
+                    ml: "auto",
+                    width: {
+                      xs: "100%",
+                      sm: 320,
+                    },
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      mb: 1.5,
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Totales
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      p: 2,
+                      bgcolor: "#FAFAFA",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: "5px",
+                    }}
+                  >
+                    <SummaryRow
+                      label="Subtotal"
+                      value={formatCurrency(subtotal)}
+                    />
+
+                    <SummaryRow
+                      label="Descuento"
+                      value={`- ${formatCurrency(discountTotal)}`}
+                    />
+
+                    <SummaryRow
+                      label="Impuesto"
+                      value={formatCurrency(taxTotal)}
+                    />
 
                     <Box
-                        sx={{
-                        mt: 2,
-                        ml: "auto",
-                        width: {
-                            xs: "100%",
-                            sm: 320,
-                        },
-                        }}
+                      sx={{
+                        mt: 1.25,
+                        pt: 1.25,
+                        borderTop: "1px solid",
+                        borderColor: "divider",
+                      }}
                     >
+                      <Stack
+                        direction="row"
+                        spacing={2}
+                        sx={{
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
                         <Typography
-                        sx={{
-                            mb: 1.5,
+                          sx={{
                             fontSize: "0.9rem",
-                            fontWeight: 700,
-                        }}
+                            fontWeight: 800,
+                          }}
                         >
-                        Totales
+                          Total
                         </Typography>
 
-                        <Box
-                        sx={{
-                            p: 2,
-                            bgcolor: "#FAFAFA",
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: "5px",
-                        }}
+                        <Typography
+                          color="primary.main"
+                          sx={{
+                            fontSize: "1rem",
+                            fontWeight: 700,
+                          }}
                         >
-                        <SummaryRow
-                            label="Subtotal"
-                            value={ formatCurrency(subtotal) }
-                        />
-
-                        <SummaryRow
-                            label="Descuento"
-                            value={ `- ${formatCurrency(discountTotal)}` }
-                        />
-
-                        <SummaryRow
-                            label="Impuesto"
-                            value={ formatCurrency(taxTotal) }
-                        />
-
-                        <Box
-                            sx={{
-                            mt: 1.25,
-                            pt: 1.25,
-                            borderTop: "1px solid",
-                            borderColor: "divider",
-                            }}
-                        >
-                            <Stack 
-                                
-                                sx={{
-                                    direction: "row", 
-                                    justifyConent: "space-between", 
-                                    spacing: 2
-                                }}
-                            >
-                            <Typography sx={{ fontSize: "0.9rem", fontWeight: 800 }}>
-                                Total
-                            </Typography>
-
-                            <Typography
-                                color="primary.main"
-                                sx={{
-                                fontSize: "1rem",
-                                fontWeight: 700,
-                                }}
-                            >
-                                { formatCurrency(total) }
-                            </Typography>
-                            </Stack>
-                        </Box>
-                        </Box>
+                          {formatCurrency(total)}
+                        </Typography>
+                      </Stack>
                     </Box>
+                  </Box>
                 </Box>
+              </Box>
 
-
-                <TextField
-                    label="Notas"
-                    value={ values.notes }
-                    onChange={ (event) => updateValue("notes", event.target.value) }
-                    multiline
-                    minRows={3}
-                    fullWidth
-                    disabled={ isSubmitting }
-                />
+              <TextField
+                label="Notas"
+                value={values.notes}
+                onChange={(event) => {
+                  updateValue(
+                    "notes",
+                    event.target.value,
+                  );
+                }}
+                multiline
+                minRows={3}
+                fullWidth
+                disabled={isSubmitting}
+              />
             </Stack>
           )}
         </DialogContent>
 
-
         <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            flexShrink: 0,
+            bgcolor: "#FFFFFF",
+            borderTop: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={onClose}
+            disabled={isSubmitting}
             sx={{
-                px: 3,
-                py: 2,
-                flexShrink: 0,
-                bgcolor: "#FFFFFF",
-                borderTop: "1px solid",
-                borderColor: "divider",
+              borderRadius: "5px",
+              textTransform: "none",
+              fontWeight: 700,
             }}
-            >
-            <Button
-                type="button"
-                variant="outlined"
-                onClick={ onClose }
-                disabled={ isSubmitting }
-                sx={{
-                borderRadius: "5px",
-                textTransform: "none",
-                fontWeight: 700,
-                }}
-            >
-                Cancelar
-            </Button>
+          >
+            Cancelar
+          </Button>
 
-            <Button
-                type="submit"
-                variant="contained"
-                disabled={ isSubmitting || loading }
-                sx={{
-                borderRadius: "5px",
-                textTransform: "none",
-                fontWeight: 700,
-                minWidth: 130,
-                }}
-            >
-                {isSubmitting ? (
-                <CircularProgress size={20} color="inherit" />
-                ) : (
-                submitLabel
-                )}
-            </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting || loading}
+            sx={{
+              borderRadius: "5px",
+              textTransform: "none",
+              fontWeight: 700,
+              minWidth: 130,
+            }}
+          >
+            {isSubmitting ? (
+              <CircularProgress
+                size={20}
+                color="inherit"
+              />
+            ) : (
+              submitLabel
+            )}
+          </Button>
         </DialogActions>
       </Box>
     </Dialog>
   );
 }
 
-
 type SummaryRowProps = {
   label: string;
   value: string;
 };
 
-
-function SummaryRow({ label, value }: SummaryRowProps) {
+function SummaryRow({
+  label,
+  value,
+}: SummaryRowProps) {
   return (
     <Stack
-      
-      sx={{ 
+      direction="row"
+      spacing={2}
+      sx={{
         py: 0.4,
-        direction: "row",
         justifyContent: "space-between",
-        spacing: 2
-       }}
+      }}
     >
-      <Typography color="text.secondary" sx={{ fontSize: "0.8rem" }}>
-        { label }
+      <Typography
+        color="text.secondary"
+        sx={{
+          fontSize: "0.8rem",
+        }}
+      >
+        {label}
       </Typography>
 
-      <Typography sx={{ fontSize: "0.8rem", fontWeight: 700 }}>
-        { value }
+      <Typography
+        sx={{
+          fontSize: "0.8rem",
+          fontWeight: 700,
+        }}
+      >
+        {value}
       </Typography>
     </Stack>
   );
 }
 
-
 function getCurrentLocalDate() {
   const date = new Date();
 
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(
+    date.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate(),
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
