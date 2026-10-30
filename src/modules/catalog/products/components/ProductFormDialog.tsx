@@ -48,7 +48,7 @@ type ProductFormDialogProps = {
   open: boolean;
   title: string;
   submitLabel: string;
-  initialValues?: ProductFormValues; 
+  initialValues?: ProductFormValues;
   isEditing: boolean;
   branchName: string;
   isSubmitting: boolean;
@@ -59,8 +59,19 @@ type ProductFormDialogProps = {
   brands: BrandOption[];
   units: UnitOption[];
   hideInitialStock?: boolean;
+  createdCategory?: CategoryOption | null;
+  onCreateCategory?: () => void;
+  onCreateBrand?: () => void;
+  onCreateUnit?: (
+    target:
+      | "base_unit_id"
+      | "content_unit_id",
+  ) => void;
+
   onClose: () => void;
-  onSubmit: (values: ProductFormValues) => void;
+  onSubmit: (
+    values: ProductFormValues,
+  ) => void;
 };
 
 const emptyProductValues: ProductFormValues = {
@@ -100,8 +111,12 @@ export function ProductFormDialog({
   brands,
   units,
   hideInitialStock = false,
+  onCreateCategory,
+  onCreateBrand,
+  onCreateUnit,
   onClose,
   onSubmit,
+  createdCategory,
 }: ProductFormDialogProps) {
 
   const [barcodeScannerOpen, setBarcodeScannerOpen] = useState(false);
@@ -114,7 +129,18 @@ export function ProductFormDialog({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false); 
   const [imageSourceOpen, setImageSourceOpen] =  useState(false);
+  const [skuManuallyEdited, setSkuManuallyEdited] = useState(false);
 
+  useEffect(() => {
+    if (!createdCategory) {
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      category_id: createdCategory.id,
+    }));
+  }, [createdCategory]);
   useEffect(() => {
     if (!open) {
       setBarcodeScannerOpen(false);
@@ -133,6 +159,7 @@ export function ProductFormDialog({
 
     setValidationError(null);
     setBarcodeScannerOpen(false);
+    setSkuManuallyEdited(false);
   }, [open, initialValues]);
 
   const updateValue = <Key extends keyof ProductFormValues>(
@@ -355,6 +382,58 @@ export function ProductFormDialog({
 
     onClose();
   };
+
+
+  const generateSku = (name: string,) => {
+    const cleanName = name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase();
+
+    if (!cleanName) {
+      return "";
+    }
+
+    const prefix = cleanName
+      .slice(0, 3)
+      .padEnd(3, "X");
+
+    const suffix = Math.floor(
+      100 + Math.random() * 900,
+    );
+
+    return `${prefix}${suffix}`;
+  }; 
+
+  useEffect(() => {
+    if (
+      isEditing ||
+      skuManuallyEdited
+    ) {
+      return;
+    }
+
+    if (!values.name.trim()) {
+      setValues((current) => ({
+        ...current,
+        sku: "",
+      }));
+
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      sku: generateSku(
+        current.name,
+      ),
+    }));
+  }, [
+    values.name,
+    isEditing,
+    skuManuallyEdited,
+  ]);
 
   return (
     <>
@@ -610,11 +689,12 @@ export function ProductFormDialog({
                   label="SKU"
                   value={values.sku}
                   onChange={(event) => {
-                    updateValue(
-                      "sku",
-                      event.target.value.toUpperCase(),
-                    );
-                  }}
+                  setSkuManuallyEdited(true); 
+                  updateValue(
+                    "sku",
+                    event.target.value.toUpperCase(),
+                  );
+                }}
                   required
                   fullWidth
                   disabled={isSubmitting}
@@ -697,110 +777,193 @@ export function ProductFormDialog({
                   </MenuItem>
                 </TextField>
 
-                <TextField
-                  select
-                  label="Categoría"
-                  value={values.category_id}
-                  onChange={(event) => {
-                    updateValue(
-                      "category_id",
-                      event.target.value,
-                    );
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    alignItems: "center" 
                   }}
-                  fullWidth
-                  disabled={
-                    isSubmitting ||
-                    isLoadingOptions
-                  }
                 >
-                  <MenuItem value="">
-                    Sin categoría
-                  </MenuItem>
+                  <TextField
+                    select
+                    label="Categoría"
+                    value={values.category_id}
+                    onChange={(event) => {
+                      updateValue(
+                        "category_id",
+                        event.target.value,
+                      );
+                    }}
+                    fullWidth
+                    disabled={
+                      isSubmitting ||
+                      isLoadingOptions
+                    }
+                  >
+                    <MenuItem value="">
+                      Sin categoría
+                    </MenuItem>
 
-                  {categories.map(
-                    (category) => (
-                      <MenuItem
-                        key={category.id}
-                        value={category.id}
-                      >
-                        {category.name}
-                      </MenuItem>
-                    ),
-                  )}
-                </TextField>
-
-                <TextField
-                  select
-                  label="Marca"
-                  value={values.brand_id}
-                  onChange={(event) => {
-                    updateValue(
-                      "brand_id",
-                      event.target.value,
-                    );
-                  }}
-                  fullWidth
-                  disabled={
-                    isSubmitting ||
-                    isLoadingOptions
-                  }
-                >
-                  <MenuItem value="">
-                    Sin marca
-                  </MenuItem>
-
-                  {brands.map((brand) => (
+                  {[
+                    ...categories,
+                    ...(createdCategory &&
+                    !categories.some(
+                      (category) =>
+                        category.id === createdCategory.id,
+                    )
+                      ? [createdCategory]
+                      : []),
+                  ].map((category) => (
                     <MenuItem
-                      key={brand.id}
-                      value={brand.id}
+                      key={category.id}
+                      value={category.id}
                     >
-                      {brand.name}
+                      {category.name}
                     </MenuItem>
                   ))}
-                </TextField>
+                  </TextField>
+
+                  <IconButton
+                    type="button"
+                    onClick={onCreateCategory}
+                    disabled={isSubmitting}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      flexShrink: 0,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: "5px",
+                    }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Stack>
+
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    alignItems:"center" 
+                  }}
+                >
+                  <TextField
+                    select
+                    label="Marca"
+                    value={values.brand_id}
+                    onChange={(event) => {
+                      updateValue(
+                        "brand_id",
+                        event.target.value,
+                      );
+                    }}
+                    fullWidth
+                    disabled={
+                      isSubmitting ||
+                      isLoadingOptions
+                    }
+                  >
+                    <MenuItem value="">
+                      Sin marca
+                    </MenuItem>
+
+                    {brands.map((brand) => (
+                      <MenuItem
+                        key={brand.id}
+                        value={brand.id}
+                      >
+                        {brand.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <IconButton
+                    type="button"
+                    onClick={onCreateBrand}
+                    disabled={isSubmitting}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      flexShrink: 0,
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: "5px",
+                    }}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Stack>
 
                 <Box
                   sx={{
-                      gridColumn: "1 / -1",
-                      display: "grid",
-                      gridTemplateColumns: {
-                          xs: "1fr",
-                          md: "repeat(3, 1fr)",
-                      },
-                      gap: 2,
+                    gridColumn: "1 / -1",
+                    display: "grid",
+                    gridTemplateColumns: {
+                        xs: "1fr",
+                        md: "repeat(3, 1fr)",
+                    },
+                    gap: 2,
                   }}
-              >
-                  <TextField
+                >
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems:"center" 
+                    }}
+                  >
+                    <TextField
                       select
                       label="Unidad de inventario"
-                      value={ values.base_unit_id }
+                      value={values.base_unit_id}
                       onChange={(event) => {
-                          updateValue(
-                              "base_unit_id",
-                              event.target.value,
-                          );
+                        updateValue(
+                          "base_unit_id",
+                          event.target.value,
+                        );
                       }}
                       required
                       fullWidth
                       disabled={
-                          isSubmitting ||
-                          isLoadingOptions
+                        isSubmitting ||
+                        isLoadingOptions
                       }
                       sx={{
-                          "& .MuiOutlinedInput-root": {
-                              borderRadius: "5px",
-                          },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "5px",
+                        },
                       }}
-                  >
-                      { units.map((unit) => (
-                          <MenuItem
-                              key={ unit.id }
-                              value={ unit.id }
-                          >
-                              { unit.name } ({ unit.symbol })
-                          </MenuItem>
-                      )) }
-                  </TextField>
+                    >
+                      {units.map((unit) => (
+                        <MenuItem
+                          key={unit.id}
+                          value={unit.id}
+                        >
+                          {unit.name} ({unit.symbol})
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <IconButton
+                      type="button"
+                      onClick={() => {
+                        onCreateUnit?.(
+                          "base_unit_id",
+                        );
+                      }}
+                      disabled={isSubmitting}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        flexShrink: 0,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Stack>
 
                   <TextField
                       label="Presentación"
@@ -828,40 +991,68 @@ export function ProductFormDialog({
                       }}
                   />
 
-                  <TextField
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems:"center" 
+                    }}
+                  >
+                    <TextField
                       select
                       label="Unidad de presentación"
-                      value={ values.content_unit_id }
+                      value={values.content_unit_id}
                       onChange={(event) => {
-                          updateValue(
-                              "content_unit_id",
-                              event.target.value,
-                          );
+                        updateValue(
+                          "content_unit_id",
+                          event.target.value,
+                        );
                       }}
                       disabled={
-                          isSubmitting ||
-                          isLoadingOptions
+                        isSubmitting ||
+                        isLoadingOptions
                       }
                       fullWidth
                       sx={{
-                          "& .MuiOutlinedInput-root": {
-                              borderRadius: "5px",
-                          },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "5px",
+                        },
                       }}
-                  >
+                    >
                       <MenuItem value="">
-                          No aplica
+                        No aplica
                       </MenuItem>
 
-                      { units.map((unit) => (
-                          <MenuItem
-                              key={ unit.id }
-                              value={ unit.id }
-                          >
-                              { unit.name } ({ unit.symbol })
-                          </MenuItem>
-                      )) }
-                  </TextField>
+                      {units.map((unit) => (
+                        <MenuItem
+                          key={unit.id}
+                          value={unit.id}
+                        >
+                          {unit.name} ({unit.symbol})
+                        </MenuItem>
+                      ))}
+                    </TextField>
+
+                    <IconButton
+                      type="button"
+                      onClick={() => {
+                        onCreateUnit?.(
+                          "content_unit_id",
+                        );
+                      }}
+                      disabled={isSubmitting}
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        flexShrink: 0,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: "5px",
+                      }}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Stack>
                 </Box>
 
                 <Box

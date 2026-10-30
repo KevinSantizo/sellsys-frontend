@@ -356,7 +356,7 @@ export function BarcodeScannerInline({
           <Box
             sx={{
               width: "90%",
-              height: 90, 
+              height: 125, 
               border: success
                   ? "2px solid #2e7d32"
                   : "2px solid #FFFFFF", 

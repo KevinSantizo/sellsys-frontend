@@ -18,7 +18,10 @@ import {
   type GridPaginationModel,
 } from "@mui/x-data-grid";
 
- 
+import {
+  getCategories,
+} from "../../categories/services/categoryService";
+
 
 import {
   keepPreviousData,
@@ -57,6 +60,7 @@ import {
 } from "../services/productService";
 
 import type {
+  CategoryOption,
   Product,
   ProductDetail,
   ProductFormValues,
@@ -69,6 +73,9 @@ import { ProductsGridCard } from "../components/ProductsGridCard";
 import {
   useBranchStore,
 } from "../../../branches/store/branchStore";
+import { CategoryFormDialog } from "../../categories/components/CategoryFormDialog";
+import type { CategoryFormValues } from "../../categories/types/category";
+import { createCategory } from "../../categories/services/categoryService";
 
 
 type SaveProductVariables = {
@@ -123,6 +130,13 @@ export function ProductsPage() {
     useState<string | null>(null);
 
   const isEditing = editingProductId !== null;
+
+
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+
+  const [categoryFormError, setCategoryFormError] = useState<string | null>(null);
+
+  const [createdCategory, setCreatedCategory] = useState<CategoryOption | null>(null);
 
 
   /*
@@ -691,7 +705,67 @@ export function ProductsPage() {
     brandsQuery.isLoading ||
     unitsQuery.isLoading;
 
- 
+  const createCategoryMutation = useMutation({
+    mutationFn: (values: CategoryFormValues) => {
+      if (!selectedCompany) {
+        throw new Error(
+          "No hay una empresa seleccionada.",
+        );
+      }
+
+      return createCategory({
+        ...values,
+        company_id: selectedCompany.id,
+      });
+    },
+
+    onSuccess: async (category) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["categories"],
+      });
+
+      setCreatedCategory({
+        id: category.id,
+        name: category.name,
+        is_active: category.is_active ?? true,
+      });
+
+      setIsCategoryDialogOpen(false);
+      setCategoryFormError(null);
+    },
+
+    onError: () => {
+      setCategoryFormError(
+        "No fue posible crear la categoría.",
+      );
+    },
+  });
+
+  const categoryParentsQuery = useQuery({
+    queryKey: [
+      "categories",
+      "product-form-parents",
+      selectedCompany?.id,
+    ],
+
+    queryFn: async () => {
+      if (!selectedCompany) {
+        return [];
+      }
+
+      const response = await getCategories({
+        companyId: selectedCompany.id,
+        isActive: true,
+        ordering: "name",
+        page: 1,
+        pageSize: 100,
+      });
+
+      return response.results;
+    },
+
+    enabled: Boolean(selectedCompany?.id),
+  });
 
   return (
     <Stack spacing={2.5}>
@@ -875,6 +949,32 @@ export function ProductsPage() {
           }
 
           saveProductMutation.mutate({productId: editingProductId, values,});
+        }}
+        createdCategory={createdCategory}
+        onCreateCategory={() => {
+          setCategoryFormError(null);
+          setIsCategoryDialogOpen(true);
+        }}
+      />
+
+      <CategoryFormDialog
+        open={isCategoryDialogOpen}
+        title="Nueva categoría"
+        submitLabel="Guardar"
+        categories={categoryParentsQuery.data ?? []}
+        isSubmitting={createCategoryMutation.isPending}
+        error={categoryFormError}
+        onClose={() => {
+          if (createCategoryMutation.isPending) {
+            return;
+          }
+
+          setIsCategoryDialogOpen(false);
+          setCategoryFormError(null);
+        }}
+        onSubmit={(values) => {
+          setCategoryFormError(null);
+          createCategoryMutation.mutate(values);
         }}
       />
     </Stack>

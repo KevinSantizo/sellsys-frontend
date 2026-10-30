@@ -93,6 +93,8 @@ export function PurchasesPage() {
   const [purchaseItemIndex, setPurchaseItemIndex] = useState<number | null>(null);
   const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
 
+  
+
   useEffect(() => {
     setPaginationModel((current) => ({
       ...current,
@@ -715,6 +717,34 @@ export function PurchasesPage() {
           return;
         }
 
+        // Si solo hay una caja abierta, se selecciona automáticamente.
+        if (openCashSessions.length === 1) {
+          const cashSession = openCashSessions[0];
+
+          const result = await Swal.fire({
+            title: "¿Completar compra?",
+            text: `Se utilizará la caja ${cashSession.cash_register_name} (${cashSession.cash_register_code}) para registrar la salida de efectivo de ${purchase.purchase_number}.`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Sí, completar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#064A57",
+            reverseButtons: true,
+          });
+
+          if (!result.isConfirmed) {
+            return;
+          }
+
+          completePurchaseMutation.mutate({
+            purchase,
+            cashSessionId: cashSession.id,
+          });
+
+          return;
+        }
+
+        // Si hay más de una caja abierta, el usuario debe seleccionar.
         const cashSessionOptions = Object.fromEntries(
           openCashSessions.map((session) => [
             session.id,
@@ -765,25 +795,6 @@ export function PurchasesPage() {
         return;
       }
     }
-
-    const result = await Swal.fire({
-      title: "¿Completar compra?",
-      text: `Al completar ${purchase.purchase_number}, los productos ingresarán al inventario de ${selectedBranch?.name ?? "la sucursal seleccionada"}.`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Sí, completar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#064A57",
-      reverseButtons: true,
-    });
-
-    if (!result.isConfirmed) {
-      return;
-    }
-
-    completePurchaseMutation.mutate({
-      purchase,
-    });
   };
 
 
