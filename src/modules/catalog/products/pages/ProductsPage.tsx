@@ -60,6 +60,7 @@ import {
 } from "../services/productService";
 
 import type {
+  //BrandOption,
   CategoryOption,
   Product,
   ProductDetail,
@@ -93,6 +94,9 @@ export function ProductsPage() {
   const [ productTypeFilter, setProductTypeFilter,] = useState<ProductTypeFilter>( "ALL",);
 
   const selectedBranch =  useBranchStore( (state) => state.selectedBranch,);
+  //const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false); 
+  //const [brandFormError, setBrandFormError] = useState<string | null>(null); 
+  //const [createdBrand, setCreatedBrand] = useState<BrandOption | null>(null);
  
   useEffect(() => {
     setPaginationModel((current) => ({
