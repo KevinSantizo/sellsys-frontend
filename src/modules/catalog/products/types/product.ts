@@ -21,6 +21,7 @@ export type Product = {
   content_unit_symbol: string | null;
   image_url: string | null;
   image_public_id: string | null;
+  next_expiration_date: string | null;
 };
 
 export type GetProductsParams = {

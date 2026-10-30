@@ -164,3 +164,12 @@ export async function printSaleReceipt(
     }, 1000);
   };
 }
+
+export async function cancelSale(saleId: string) {
+  const response = await httpClient.post(
+    `sales/${saleId}/cancel/`,
+    {},
+  );
+
+  return response.data;
+}

@@ -1,11 +1,14 @@
-import {
-  DownloadRounded,
-} from "@mui/icons-material";
+import {DownloadRounded} from "@mui/icons-material";
 
 import {
   Alert,
   Box,
   Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Stack,
   Typography,
 } from "@mui/material";
@@ -16,7 +19,9 @@ import {
 
 import {
   keepPreviousData,
+  useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 import {
@@ -26,40 +31,21 @@ import {
   useState,
 } from "react";
 
-import {
-  Navigate,
-} from "react-router-dom";
-
-import {
-  useCompanyStore,
-} from "../../companies/store/companyStore";
-
-import {
-  useBranchStore,
-} from "../../branches/store/branchStore";
-
+import {Navigate} from "react-router-dom";
+import {useCompanyStore} from "../../companies/store/companyStore";
+import {useBranchStore} from "../../branches/store/branchStore";
 import {
   getSaleDetail,
   getSales,
   printSaleReceipt,
+  cancelSale,
 } from "../services/salesService";
 
-import type {
-  SaleListItem,
-} from "../types/sales.types";
+import type {SaleDetail, SaleListItem} from "../types/sales.types";
+import {showErrorAlert, showSuccessAlert,} from "../../../shared/alerts/appAlerts";
+import {SalesGridCard, type SaleStatusFilter} from "../components/SalesGridCard";
+import {SaleDetailDialog} from "../components/SaleDetailDialog";
 
-import {
-  showErrorAlert,
-} from "../../../shared/alerts/appAlerts";
-
-import {
-  SalesGridCard,
-  type SaleStatusFilter,
-} from "../components/SalesGridCard";
-
-import {
-  SaleDetailDialog,
-} from "../components/SaleDetailDialog";
 
 export function SalesHistoryPage() {
   const selectedCompany =
@@ -113,6 +99,41 @@ export function SalesHistoryPage() {
     isDownloadingReceipt,
     setIsDownloadingReceipt,
   ] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const [saleToCancel, setSaleToCancel] =
+  useState<SaleDetail | null>(null);
+
+  const cancelSaleMutation = useMutation({
+    mutationFn: (saleId: string) => {
+      return cancelSale(saleId);
+    },
+
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["sales-history"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["sale-detail"],
+      });
+
+      setSaleToCancel(null);
+
+      await showSuccessAlert({
+        title: "Venta cancelada",
+        text: "La venta fue cancelada correctamente y el inventario fue restaurado.",
+      });
+    },
+
+    onError: async () => {
+      await showErrorAlert({
+        title: "No se pudo cancelar la venta",
+        text: "Ocurrió un error al cancelar la venta.",
+      });
+    },
+  });
 
   /*
    * Debounce de búsqueda.
@@ -652,34 +673,127 @@ export function SalesHistoryPage() {
       {/* DETALLE */}
 
       <SaleDetailDialog
-        open={Boolean(
-          viewingSaleId,
-        )}
-        sale={
-          saleDetailQuery.data
-        }
-        loading={
-          saleDetailQuery.isLoading
-        }
-        error={
-          saleDetailQuery.isError
-        }
-        downloading={
-          isDownloadingReceipt
-        }
-        formatCurrency={
-          formatCurrency
-        }
-        formatDateTime={
-          formatDateTime
-        }
-        onClose={
-          handleCloseDetail
-        }
-        onPrintReceipt={
-          handlePrintReceipt
-        }
-      />
+        open={Boolean(viewingSaleId)}
+          sale={saleDetailQuery.data}
+          loading={saleDetailQuery.isLoading}
+          error={saleDetailQuery.isError}
+          downloading={isDownloadingReceipt}
+          cancelling={cancelSaleMutation.isPending}
+          formatCurrency={formatCurrency}
+          formatDateTime={formatDateTime}
+          onClose={handleCloseDetail}
+          onDownloadReceipt={handlePrintReceipt}
+          onCancel={(sale) => {
+            setSaleToCancel(sale);
+          }}
+        />
+
+        <Dialog
+          open={Boolean(saleToCancel)}
+          onClose={() => {
+            if (!cancelSaleMutation.isPending) {
+              setSaleToCancel(null);
+            }
+          }}
+          fullWidth
+          maxWidth="xs"
+          slotProps={{
+            paper: {
+              sx: {
+                borderRadius: "5px",
+              },
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              fontWeight: 800,
+            }}
+          >
+            Cancelar venta
+          </DialogTitle>
+
+          <DialogContent>
+            <Typography>
+              ¿Deseas cancelar la venta{" "}
+              <strong>
+                {saleToCancel?.sale_number}
+              </strong>
+              ?
+            </Typography>
+
+            <Typography
+              color="text.secondary"
+              sx={{
+                mt: 1,
+                fontSize: "0.85rem",
+              }}
+            >
+              Los productos serán devueltos al inventario
+              y a los lotes originales utilizados en la venta.
+            </Typography>
+          </DialogContent>
+
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2,
+            }}
+          >
+            <Button
+              type="button"
+              variant="outlined"
+              disabled={
+                cancelSaleMutation.isPending
+              }
+              onClick={() => {
+                setSaleToCancel(null);
+              }}
+              sx={{
+                borderRadius: "5px",
+                textTransform: "none",
+              }}
+            >
+              Volver
+            </Button>
+
+            <Button
+              type="button"
+              variant="contained"
+              color="error"
+              disabled={
+                cancelSaleMutation.isPending ||
+                !saleToCancel
+              }
+              onClick={() => {
+                if (!saleToCancel) {
+                  return;
+                }
+
+                cancelSaleMutation.mutate(
+                  saleToCancel.id,
+                );
+              }}
+              startIcon={
+                cancelSaleMutation.isPending ? (
+                  <CircularProgress
+                    size={18}
+                    color="inherit"
+                  />
+                ) : undefined
+              }
+              sx={{
+                borderRadius: "5px",
+                textTransform: "none",
+                fontWeight: 700,
+              }}
+            >
+              {cancelSaleMutation.isPending
+                ? "Cancelando..."
+                : "Sí, cancelar"}
+            </Button>
+          </DialogActions>
+        </Dialog>
     </Stack>
   );
 }

@@ -20,23 +20,19 @@ import {
 
 import type {
   SaleDetail,
+  SaleStatus,
 } from "../types/sales.types";
 
 type SaleDetailDialogProps = {
   open: boolean;
-
   sale?: SaleDetail;
-
   loading: boolean;
-
   error: boolean;
-
   downloading: boolean;
+  cancelling: boolean;
 
   formatCurrency: (
-    value:
-      | string
-      | number,
+    value: string | number,
   ) => string;
 
   formatDateTime: (
@@ -48,13 +44,17 @@ type SaleDetailDialogProps = {
 
   onClose: () => void;
 
-  onPrintReceipt: (
+  onDownloadReceipt: (
     sale: {
       id: string;
       sale_number: string;
-      status?: string;
+      status?: SaleStatus;
     },
   ) => Promise<void>;
+
+  onCancel: (
+    sale: SaleDetail,
+  ) => void;
 };
 
 export function SaleDetailDialog({
@@ -63,10 +63,12 @@ export function SaleDetailDialog({
   loading,
   error,
   downloading,
+  cancelling,
   formatCurrency,
   formatDateTime,
   onClose,
-  onPrintReceipt,
+  onDownloadReceipt,
+  onCancel,
 }: SaleDetailDialogProps) {
   return (
     <Dialog
@@ -627,7 +629,27 @@ export function SaleDetailDialog({
         >
           Cerrar
         </Button>
-
+        {sale?.status === "COMPLETED" && (
+          <Button
+            type="button"
+            variant="outlined"
+            color="error"
+            disabled={
+              downloading ||
+              cancelling
+            }
+            onClick={() => {
+              onCancel(sale);
+            }}
+            sx={{
+              borderRadius: "5px",
+              textTransform: "none",
+              fontWeight: 700,
+            }}
+          >
+            Cancelar venta
+          </Button>
+        )}
         <Button
           type="button"
           variant="contained"
@@ -652,7 +674,7 @@ export function SaleDetailDialog({
               return;
             }
 
-            void onPrintReceipt(
+            void onDownloadReceipt(
               sale,
             );
           }}

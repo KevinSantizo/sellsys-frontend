@@ -360,6 +360,95 @@ export function ProductsGridCard({
           ),
         },
         {
+          field: "next_expiration_date",
+          headerName: "Vencimiento",
+          minWidth: 150,
+          flex: 0.7,
+
+          renderCell: ({ row }) => {
+            if (!row.next_expiration_date) {
+              return (
+                <Typography
+                  sx={{
+                    fontSize: "0.82rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  —
+                </Typography>
+              );
+            }
+
+            const expirationDate = new Date(
+              `${row.next_expiration_date}T00:00:00`,
+            );
+
+            const today = new Date();
+
+            today.setHours(
+              0,
+              0,
+              0,
+              0,
+            );
+
+            const diffTime =
+              expirationDate.getTime()
+              - today.getTime();
+
+            const daysRemaining =
+              Math.ceil(
+                diffTime /
+                  (1000 * 60 * 60 * 24),
+              );
+
+            let color:
+              | "error.main"
+              | "warning.main"
+              | "success.main"
+              | "text.primary" =
+              "text.primary";
+
+            let label = expirationDate.toLocaleDateString(
+              "es-GT",
+              {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              },
+            );
+
+            if (daysRemaining < 0) {
+              color = "error.main";
+              label = `Vencido · ${label}`;
+            } else if (daysRemaining <= 7) {
+              color = "error.main";
+              label = `${daysRemaining} días · ${label}`;
+            } else if (daysRemaining <= 30) {
+              color = "warning.main";
+              label = `${daysRemaining} días · ${label}`;
+            } else {
+              color = "success.main";
+            }
+
+            return (
+              <Typography
+                sx={{
+                  fontSize: "0.8rem",
+                  fontWeight:
+                    daysRemaining <= 30
+                      ? 700
+                      : 500,
+                  color,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </Typography>
+            );
+          },
+        },
+        {
           field: "is_active",
           headerName: "Estado",
           width: 120,

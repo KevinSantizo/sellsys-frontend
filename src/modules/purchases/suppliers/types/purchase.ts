@@ -20,6 +20,8 @@ export type PurchaseItem = {
   subtotal: string;
   created_at: string;
   updated_at: string;
+  lot_number: string;
+  expiration_date: string | null;
 };
 
 export type Purchase = {
@@ -74,6 +76,8 @@ export type PurchaseItemFormValues = {
   quantity: string;
   unit_cost: string;
   sale_price: string;
+  lot_number: string;
+  expiration_date: string;
 };
 
 export type PurchaseFormValues = {
@@ -108,7 +112,7 @@ export type UpdatePurchasePayload = {
   discount_total: string;
   tax_total: string;
   notes: string;
-  items: PurchaseItemFormValues[];
+  items: PurchaseItemPayload[];
 };
 
 export type PurchaseStatusFilter =
@@ -118,3 +122,13 @@ export type PurchaseStatusFilter =
 export type PurchasePaymentMethodFilter =
   | "ALL"
   | PurchasePaymentMethod;
+
+
+export type PurchaseItemPayload = {
+  product_id: string;
+  quantity: string;
+  unit_cost: string;
+  sale_price: string;
+  lot_number: string;
+  expiration_date: string | null;
+};

@@ -297,6 +297,11 @@ export function PurchasesPage() {
 
           sale_price:
             product?.sale_price ?? "0.00",
+            lot_number:
+            item.lot_number ?? "",
+
+          expiration_date:
+            item.expiration_date ?? "",
         };
       }),
     };
@@ -396,7 +401,9 @@ export function PurchasesPage() {
           product_id: item.product_id,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
-          sale_price: item.sale_price
+          sale_price: item.sale_price,
+          lot_number: item.lot_number.trim(),
+          expiration_date: item.expiration_date,
         })),
       });
     },
@@ -454,7 +461,9 @@ export function PurchasesPage() {
           product_id: item.product_id,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
-          sale_price: item.sale_price
+          sale_price: item.sale_price,
+          lot_number: item.lot_number.trim(),
+          expiration_date: item.expiration_date,
         })),
       });
     },
