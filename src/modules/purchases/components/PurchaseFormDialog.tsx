@@ -63,6 +63,7 @@ const emptyPurchaseItem: PurchaseItemFormValues = {
   product_id: "",
   quantity: "1",
   unit_cost: "",
+  sale_price: "",
 };
 
 const emptyPurchaseValues: PurchaseFormValues = {
@@ -147,6 +148,7 @@ export function PurchaseFormDialog({
           ...item,
           product_id: createdProduct.id,
           unit_cost: createdProduct.cost_price ?? "0.00",
+          sale_price: createdProduct.sale_price ?? "0.00",
         };
       }),
     }));
@@ -207,6 +209,7 @@ export function PurchaseFormDialog({
           ...item,
           product_id: productId,
           unit_cost: product?.cost_price ?? "0.00",
+          sale_price: product?.sale_price ?? "0.00",
         };
       }),
     }));
@@ -317,7 +320,7 @@ export function PurchaseFormDialog({
 
       const quantity = Number(item.quantity);
       const unitCost = Number(item.unit_cost);
-
+      const salePrice = Number(item.sale_price);
       if (!Number.isFinite(quantity) || quantity <= 0) {
         setValidationError(
           "Todas las cantidades deben ser mayores a cero.",
@@ -329,6 +332,17 @@ export function PurchaseFormDialog({
       if (!Number.isFinite(unitCost) || unitCost < 0) {
         setValidationError(
           "Todos los costos unitarios deben ser válidos.",
+        );
+
+        return;
+      }
+
+      if (
+        !Number.isFinite(salePrice) ||
+        salePrice < 0
+      ) {
+        setValidationError(
+          "Todos los precios de venta deben ser válidos.",
         );
 
         return;
@@ -633,7 +647,7 @@ export function PurchaseFormDialog({
                             gridTemplateColumns: {
                               xs: "1fr",
                               sm: "minmax(0, 1fr) minmax(110px, 0.35fr)",
-                              md: "minmax(260px, 2fr) 120px 150px 150px 40px",
+                              md: "minmax(240px, 2fr) 110px 130px 130px 140px 40px",
                             },
                             gap: 1.25,
                             alignItems: "start",
@@ -722,6 +736,29 @@ export function PurchaseFormDialog({
                               updateItem(
                                 index,
                                 "unit_cost",
+                                event.target.value,
+                              );
+                            }}
+                            placeholder="0.00"
+                            required
+                            fullWidth
+                            disabled={isSubmitting}
+                            slotProps={{
+                              htmlInput: {
+                                min: 0,
+                                step: 0.01,
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Precio de venta"
+                            type="number"
+                            value={item.sale_price}
+                            onChange={(event) => {
+                              updateItem(
+                                index,
+                                "sale_price",
                                 event.target.value,
                               );
                             }}

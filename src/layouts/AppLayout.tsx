@@ -5,6 +5,7 @@ import {
   ChevronLeftRounded,
   DashboardRounded,
   Inventory2Rounded,
+  LightbulbOutlineRounded,
   LogoutRounded,
   MenuRounded,
   ScaleRounded,
@@ -117,7 +118,11 @@ import { getCompanies, } from "../modules/companies/services/companyService";
       path: "/expenses",
       icon: <ReceiptLongRounded />,
     },
-
+    {
+      label: "Sugerencias",
+      path: "/suggestions",
+      icon: <LightbulbOutlineRounded />,
+    },
   ];
 
   export function AppLayout() {

@@ -18,7 +18,7 @@ export function showSuccessAlert({
     text,
     target: document.body,
     position: "center",  
-    timer: 4000,
+    timer: 3000,
     timerProgressBar: true,  
     background: "#FFFFFF",
     color: "#1F2937", 
@@ -35,10 +35,10 @@ export function showSuccessAlert({
     },
 
     didOpen: () => {
-        Swal.showLoading();  
+      Swal.showLoading();  
     },
     willClose: () => {
-        clearInterval(timerInterval);
+      clearInterval(timerInterval);
     }
   });
 }

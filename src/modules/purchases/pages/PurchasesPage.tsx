@@ -262,26 +262,48 @@ export function PurchasesPage() {
   }, [purchaseProductsQuery.data]);
 
 
-  const purchaseInitialValues = useMemo<PurchaseFormValues | undefined>(() => {
+  const purchaseInitialValues =
+  useMemo<PurchaseFormValues | undefined>(() => {
     const purchase = purchaseDetailQuery.data;
 
-    if (!purchase) return undefined;
+    if (!purchase) {
+      return undefined;
+    }
 
     return {
       supplier_id: purchase.supplier_id,
-      supplier_invoice_number: purchase.supplier_invoice_number ?? "",
+      supplier_invoice_number:
+        purchase.supplier_invoice_number ?? "",
       purchase_date: purchase.purchase_date,
       payment_method: purchase.payment_method,
       discount_total: purchase.discount_total,
       tax_total: purchase.tax_total,
       notes: purchase.notes ?? "",
-      items: purchase.items.map((item) => ({
-        product_id: item.product_id,
-        quantity: formatQuantityInput(item.quantity),
-        unit_cost: item.unit_cost,
-      })),
+
+      items: purchase.items.map((item) => {
+        const product = purchaseProducts.find(
+          (productItem) =>
+            productItem.id === item.product_id,
+        );
+
+        return {
+          product_id: item.product_id,
+
+          quantity: formatQuantityInput(
+            item.quantity,
+          ),
+
+          unit_cost: item.unit_cost,
+
+          sale_price:
+            product?.sale_price ?? "0.00",
+        };
+      }),
     };
-  }, [purchaseDetailQuery.data]);
+  }, [
+    purchaseDetailQuery.data,
+    purchaseProducts,
+  ]);
 
   function formatQuantityInput(value: string) {
     const quantity = Number(value);
@@ -374,6 +396,7 @@ export function PurchasesPage() {
           product_id: item.product_id,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
+          sale_price: item.sale_price
         })),
       });
     },
@@ -431,6 +454,7 @@ export function PurchasesPage() {
           product_id: item.product_id,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
+          sale_price: item.sale_price
         })),
       });
     },

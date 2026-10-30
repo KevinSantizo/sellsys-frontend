@@ -28,6 +28,7 @@ import { ProfitabilityReportPage } from "../modules/reports/pages/ProfitabilityR
 import { CategoriesPage } from "../modules/catalog/categories/pages/CategoriesPage";
 import { BrandsPage } from "../modules/catalog/brands/pages/BrandsPage"; 
 import { UnitsOfMeasurePage } from "../modules/catalog/units/pages/UnitsOfMeasurePage";
+import { SuggestionsPage } from "../modules/suggestions/pages/SuggestionsPage.tsx";
 
 function PendingPage({
   title,
@@ -93,6 +94,7 @@ export function AppRoutes() {
           <Route path="/reports/cash" element={<CashReportPage />} />
           <Route path="/reports/inventory" element={<InventoryReportPage />} />
           <Route path="/reports/profitability" element={<ProfitabilityReportPage />} />
+          <Route path="/suggestions" element={<SuggestionsPage />} /> 
         </Route>
       </Route>
 

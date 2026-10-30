@@ -73,6 +73,7 @@ export type PurchaseItemFormValues = {
   product_id: string;
   quantity: string;
   unit_cost: string;
+  sale_price: string;
 };
 
 export type PurchaseFormValues = {
