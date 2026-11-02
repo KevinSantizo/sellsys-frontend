@@ -7,7 +7,7 @@ import {
   PointOfSaleRounded,
   ReceiptLongRounded,
   ShoppingCartCheckoutRounded,
-  TableChartRounded,
+  GridOnRounded,
 } from "@mui/icons-material";
 
 import {
@@ -302,9 +302,7 @@ export function SalesReportPage() {
                     color="inherit"
                   />
                 )
-                : (
-                  <TableChartRounded  />
-                )
+                : (<GridOnRounded/>)
             }
             sx={{
               borderRadius: "5px",

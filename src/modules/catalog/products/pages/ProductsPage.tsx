@@ -1,48 +1,38 @@
 import {
   AddRounded,
-  FileDownloadOutlined,
-  FileUploadOutlined,
+  PictureAsPdfRounded,
+  GridOnRounded,
 } from "@mui/icons-material";
-
 import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Paper,
   Stack,
   Typography,
 } from "@mui/material";
-
 import {
- 
   type GridPaginationModel,
 } from "@mui/x-data-grid";
-
 import {
   getCategories,
 } from "../../categories/services/categoryService";
-
-
 import {
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-
 import {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
-
 import { Navigate } from "react-router-dom";
-
 import { showSuccessAlert, showDeleteProductConfirmation, showErrorAlert,} from "../../../../shared/alerts/appAlerts";
-
 import { useCompanyStore } from "../../../companies/store/companyStore";
-
 import { ProductFormDialog } from "../components/ProductFormDialog";
 import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
 import {
@@ -50,7 +40,6 @@ import {
   getCategoryOptions,
   getUnitOptions,
 } from "../services/catalogReferenceService";
-
 import {
   createProduct,
   getProductDetail,
@@ -58,7 +47,6 @@ import {
   updateProduct,
   deleteProduct,
 } from "../services/productService";
-
 import type {
   BrandOption,
   //BrandOption,
@@ -69,12 +57,14 @@ import type {
   ProductStatusFilter,
   ProductTypeFilter,
 } from "../types/product";
-
 import { ProductsGridCard } from "../components/ProductsGridCard";
-
 import {
   useBranchStore,
 } from "../../../branches/store/branchStore";
+import {
+  downloadInventoryExcel,
+  downloadInventoryPdf,
+} from "../../../reports/services/reportsService";
 import { CategoryFormDialog } from "../../categories/components/CategoryFormDialog";
 import type { CategoryFormValues } from "../../categories/types/category";
 import { createCategory } from "../../categories/services/categoryService";
@@ -84,43 +74,36 @@ import { BrandFormDialog } from "../../brands/components/BrandFormDialog";
 import { UnitOfMeasureFormDialog } from "../../units/components/UnitOfMeasureFormDialog";
 import { createUnitOfMeasure } from "../../units/services/unitService";
 import type {UnitOfMeasureFormValues} from "../../units/types/units";
-
-
-
 type SaveProductVariables = {
   productId: string | null;
   values: ProductFormValues;
 };
-
 export function ProductsPage() {
   const queryClient = useQueryClient();
   const selectedCompany = useCompanyStore( (state) => state.selectedCompany, );
   const [search, setSearch] = useState("");
-  const [ statusFilter,  setStatusFilter, ] = useState<ProductStatusFilter>("ALL"); 
+  const [ statusFilter,  setStatusFilter, ] = useState<ProductStatusFilter>("ALL");
   const [ categoryFilter,  setCategoryFilter, ] = useState("ALL");
   const [ brandFilter, setBrandFilter, ] = useState("ALL");
   const [ productTypeFilter, setProductTypeFilter,] = useState<ProductTypeFilter>( "ALL",);
-
-  const selectedBranch =  useBranchStore( (state) => state.selectedBranch,);
-  const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false); 
-  const [brandFormError, setBrandFormError] = useState<string | null>(null); 
+  const selectedBranch = useBranchStore((state) => state.selectedBranch);
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false);
+  const [brandFormError, setBrandFormError] = useState<string | null>(null);
   const [createdBrand, setCreatedBrand] = useState<BrandOption | null>(null);
-
   type UnitTarget =
   | "base_unit_id"
   | "content_unit_id";
-
   type CreatedUnit = {
     id: string;
     name: string;
     symbol: string;
   };
-
-  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false); 
-  const [unitFormError, setUnitFormError] = useState<string | null>(null); 
-  const [unitTarget, setUnitTarget] = useState<UnitTarget | null>(null); 
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
+  const [unitFormError, setUnitFormError] = useState<string | null>(null);
+  const [unitTarget, setUnitTarget] = useState<UnitTarget | null>(null);
   const [createdUnit, setCreatedUnit] = useState<CreatedUnit | null>(null);
- 
   useEffect(() => {
     setPaginationModel((current) => ({
       ...current,
@@ -134,7 +117,6 @@ export function ProductsPage() {
     productTypeFilter,
   ]);
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
   const [
     paginationModel,
     setPaginationModel,
@@ -142,30 +124,20 @@ export function ProductsPage() {
     page: 0,
     pageSize: 10,
   });
-
   const [
     isProductDialogOpen,
     setIsProductDialogOpen,
   ] = useState(false);
-
   const [
     editingProductId,
     setEditingProductId,
   ] = useState<string | null>(null);
-
   const [formError, setFormError] =
     useState<string | null>(null);
-
   const isEditing = editingProductId !== null;
-
-
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-
   const [categoryFormError, setCategoryFormError] = useState<string | null>(null);
-
   const [createdCategory, setCreatedCategory] = useState<CategoryOption | null>(null);
-
-
   /*
    * Aplica la búsqueda después de 400 ms.
    * Al cambiar la búsqueda, regresa a la primera página.
@@ -173,18 +145,15 @@ export function ProductsPage() {
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       setDebouncedSearch(search.trim());
-
       setPaginationModel((current) => ({
         ...current,
         page: 0,
       }));
     }, 400);
-
     return () => {
       window.clearTimeout(timeoutId);
     };
   }, [search]);
-
   /*
    * Al cambiar de empresa, regresa a la primera página.
    */
@@ -194,7 +163,6 @@ export function ProductsPage() {
       page: 0,
     }));
   }, [selectedCompany?.id]);
-
   useEffect(() => {
     setPaginationModel(
       (current) => ({
@@ -203,7 +171,6 @@ export function ProductsPage() {
       }),
     );
   }, [selectedBranch?.id]);
-
   /*
    * Listado paginado de productos.
    */
@@ -226,20 +193,17 @@ export function ProductsPage() {
       paginationModel.page,
       paginationModel.pageSize,
     ],
-
     queryFn: () => {
       if (!selectedCompany) {
         throw new Error(
           "No existe una empresa seleccionada.",
         );
       }
-
       if (!selectedBranch) {
         throw new Error(
           "No existe una sucursal seleccionada.",
         );
       }
-
       return getProducts({
         companyId: selectedCompany.id,
         branchId: selectedBranch.id,
@@ -252,34 +216,27 @@ export function ProductsPage() {
         categoryId: categoryFilter === "ALL"
           ? undefined
           : categoryFilter,
-
         brandId: brandFilter === "ALL"
           ? undefined
           : brandFilter,
-
           productType: productTypeFilter === "ALL"
             ? undefined
             : productTypeFilter,
       });
     },
-
     enabled:
       Boolean(selectedCompany?.id) &&
       Boolean(selectedBranch?.id),
-
     /*
      * Mantiene los registros anteriores mientras
      * se solicita una nueva página.
      */
     placeholderData: keepPreviousData,
   });
-
   const products =
     productsResponse?.results ?? [];
-
   const totalProducts =
     productsResponse?.count ?? 0;
-
   /*
    * Opciones del formulario.
    */
@@ -288,40 +245,33 @@ export function ProductsPage() {
       "catalog-categories",
       selectedCompany?.id,
     ],
-
     queryFn: () =>
       getCategoryOptions(
         selectedCompany!.id,
       ),
-
     enabled: Boolean( selectedCompany?.id, ),
   });
-
   const brandsQuery = useQuery({
     queryKey: [
       "catalog-brands",
       selectedCompany?.id,
-    ], 
-    queryFn: () => getBrandOptions( selectedCompany!.id, ), 
+    ],
+    queryFn: () => getBrandOptions( selectedCompany!.id, ),
     enabled: Boolean(selectedCompany?.id),
   });
-
   const unitsQuery = useQuery({
     queryKey: [
       "catalog-units",
       selectedCompany?.id,
     ],
-
     queryFn: () =>
       getUnitOptions(
         selectedCompany!.id,
       ),
-
     enabled:
       Boolean(selectedCompany?.id) &&
       isProductDialogOpen,
   });
-
   /*
    * Detalle del producto que se está editando.
    */
@@ -330,17 +280,14 @@ export function ProductsPage() {
       "product-detail",
       editingProductId,
     ],
-
     queryFn: () =>
       getProductDetail(
         editingProductId!,
       ),
-
     enabled:
       isProductDialogOpen &&
       Boolean(editingProductId),
   });
-
   /*
    * Convierte el detalle del backend en los valores
    * que necesita ProductFormDialog.
@@ -350,11 +297,9 @@ export function ProductsPage() {
       () => {
         const product =
           productDetailQuery.data;
-
         if (!product) {
           return undefined;
         }
-
         return {
           name: product.name ?? "",
           description:
@@ -363,60 +308,47 @@ export function ProductsPage() {
           barcode: product.barcode ?? "",
           product_type:
             product.product_type,
-
           category_id:
             product.category?.id ??
             product.category_id ??
             "",
-
           brand_id:
             product.brand?.id ??
             product.brand_id ??
             "",
-
           base_unit_id:
             product.base_unit?.id ??
             product.base_unit_id ??
             "",
-
           package_quantity:
             product.package_quantity
               ? String(product.package_quantity)
               : "",
-
           package_unit_id:
             product.package_unit?.id ??
             product.package_unit_id ??
             "",
-
           content_quantity:
             product.content_quantity
               ? String(product.content_quantity)
               : "",
-
           content_unit_id:
             product.content_unit?.id ??
             product.content_unit_id ??
             "",
-
           cost_price:
             product.cost_price ?? "",
-
           sale_price:
             product.sale_price ?? "",
-
           track_inventory:
             product.track_inventory,
-
           is_active:
             product.is_active,
-
           initial_stock: "0",
         };
       },
       [productDetailQuery.data],
     );
-
   /*
    * Una sola mutación crea o actualiza productos.
    */
@@ -434,7 +366,6 @@ export function ProductsPage() {
           "No existe una empresa seleccionada.",
         );
       }
-
       const payload = {
         name: values.name.trim(),
         description:
@@ -448,72 +379,52 @@ export function ProductsPage() {
         base_unit_id: values.base_unit_id,
         cost_price: values.cost_price || "0.00",
         sale_price: values.sale_price,
-
         track_inventory:
           values.product_type === "SERVICE"
             ? false
             : values.track_inventory,
-
         is_active: values.is_active,
         image_url: values.image_url ?? null,
-
         image_public_id: values.image_public_id ?? null,
       };
-
-
       if (productId) {
         return updateProduct(
           productId,
           payload,
-          
         );
       }
-
         const branch = selectedBranch;
-
         if (!branch) {
           throw new Error(
             "No existe una sucursal seleccionada.",
           );
         }
-
       return createProduct({
         ...payload,
-
         company_id: selectedCompany.id,
-
         branch_id: selectedBranch.id || null,
-
         initial_stock: values.track_inventory
             ? values.initial_stock
             : "0",
-
         package_quantity: values.package_quantity
             ? Number(values.package_quantity)
             : null,
-
         package_unit_id: values.package_unit_id || null,
-
         content_quantity: values.content_quantity
             ? values.content_quantity
             : null,
-
         content_unit_id: values.content_unit_id || null,
     });
     },
-
     onSuccess: async (
       savedProduct,
       variables,
     ) => {
       const wasEditing =
         variables.productId !== null;
-
-        
       setFormError(null);
       setIsProductDialogOpen(false);
       setEditingProductId(null);
-      
       if (!wasEditing) {
         setPaginationModel(
           (current) => ({
@@ -522,15 +433,12 @@ export function ProductsPage() {
           }),
         );
       }
-
-
       await queryClient.invalidateQueries({
         queryKey: [
           "products",
           selectedCompany?.id,
         ],
       });
-
       if (variables.productId) {
         queryClient.removeQueries({
           queryKey: [
@@ -539,18 +447,15 @@ export function ProductsPage() {
           ],
         });
       }
-
       void showSuccessAlert({
         title: wasEditing
           ? "Producto actualizado correctamente"
           : "Producto guardado correctamente",
-
         text: wasEditing
           ? `Los cambios de "${savedProduct.name}" se guardaron correctamente.`
           : `"${savedProduct.name}" ya está disponible en el catálogo.`,
       });
     },
-
     onError: (
       error,
       variables,
@@ -559,7 +464,6 @@ export function ProductsPage() {
         variables.productId
           ? "No fue posible actualizar el producto."
           : "No fue posible crear el producto.";
-
       setFormError(
         getApiErrorMessage(
           error,
@@ -568,7 +472,6 @@ export function ProductsPage() {
       );
     },
   });
-
   const deleteProductMutation = useMutation<
   void,
   Error,
@@ -576,7 +479,6 @@ export function ProductsPage() {
 >({
   mutationFn: (product) =>
     deleteProduct(product.id),
-
   onSuccess: async (
     _data,
     deletedProduct,
@@ -584,7 +486,6 @@ export function ProductsPage() {
     const shouldGoToPreviousPage =
       products.length === 1 &&
       paginationModel.page > 0;
-
     if (shouldGoToPreviousPage) {
       setPaginationModel(
         (current) => ({
@@ -593,20 +494,17 @@ export function ProductsPage() {
         }),
       );
     }
-
     await queryClient.invalidateQueries({
       queryKey: [
         "products",
         selectedCompany?.id,
       ],
     });
-
     void showSuccessAlert({
       title: "Producto eliminado",
       text: `"${deletedProduct.name}" fue eliminado correctamente.`,
     });
   },
-
   onError: (error) => {
     void showErrorAlert({
       title: "No fue posible eliminar",
@@ -617,8 +515,6 @@ export function ProductsPage() {
     });
   },
 });
-
-
   const currencyFormatter =
     useMemo(() => {
       return new Intl.NumberFormat(
@@ -632,51 +528,41 @@ export function ProductsPage() {
         },
       );
     }, [selectedCompany?.currency]);
-
   const formatCurrency = useCallback(
     (value: string) => {
       const numberValue = Number(value);
-
       if (Number.isNaN(numberValue)) {
         return value;
       }
-
       return currencyFormatter.format(
         numberValue,
       );
     },
     [currencyFormatter],
   );
-
   const handleOpenCreate = () => {
     setEditingProductId(null);
     setFormError(null);
     setIsProductDialogOpen(true);
   };
-
-
   const hasActiveFilters =
     Boolean(search.trim()) ||
     statusFilter !== "ALL" ||
     categoryFilter !== "ALL" ||
     brandFilter !== "ALL" ||
     productTypeFilter !== "ALL";
-
   const handleClearFilters = () => {
     setSearch("");
     setDebouncedSearch("");
-
     setStatusFilter("ALL");
     setCategoryFilter("ALL");
     setBrandFilter("ALL");
     setProductTypeFilter("ALL");
-
     setPaginationModel((current) => ({
       ...current,
       page: 0,
     }));
   };
-
   const handleEditProduct = useCallback(
     (product: Product) => {
       setFormError(null);
@@ -685,7 +571,6 @@ export function ProductsPage() {
     },
     [],
   );
-
   const handleDeleteProduct = async (
     product: Product,
   ) => {
@@ -693,25 +578,91 @@ export function ProductsPage() {
       await showDeleteProductConfirmation({
         productName: product.name,
       });
-
     if (!confirmed) {
       return;
     }
-
     deleteProductMutation.mutate(product);
   };
-
   const handleCloseDialog = () => {
     if (saveProductMutation.isPending) {
       return;
     }
-
     setIsProductDialogOpen(false);
     setEditingProductId(null);
     setFormError(null);
   };
- 
-
+  const handleDownloadExcel = async () => {
+    if (!selectedCompany || !selectedBranch) {
+      return;
+    }
+    try {
+      setIsDownloadingExcel(true);
+      await downloadInventoryExcel({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        search: search.trim() || undefined,
+        isActive:
+          statusFilter === "ALL"
+            ? undefined
+            : statusFilter === "ACTIVE",
+        categoryId:
+          categoryFilter === "ALL"
+            ? undefined
+            : categoryFilter,
+        brandId:
+          brandFilter === "ALL"
+            ? undefined
+            : brandFilter,
+        productType:
+          productTypeFilter === "ALL"
+            ? undefined
+            : productTypeFilter,
+      });
+    } catch {
+      await showErrorAlert({
+        title: "No se pudo descargar el reporte",
+        text: "Ocurrió un error al generar el reporte de inventario en Excel.",
+      });
+    } finally {
+      setIsDownloadingExcel(false);
+    }
+  };
+  const handleDownloadPdf = async () => {
+    if (!selectedCompany || !selectedBranch) {
+      return;
+    }
+    try {
+      setIsDownloadingPdf(true);
+      await downloadInventoryPdf({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        search: search.trim() || undefined,
+        isActive:
+          statusFilter === "ALL"
+            ? undefined
+            : statusFilter === "ACTIVE",
+        categoryId:
+          categoryFilter === "ALL"
+            ? undefined
+            : categoryFilter,
+        brandId:
+          brandFilter === "ALL"
+            ? undefined
+            : brandFilter,
+        productType:
+          productTypeFilter === "ALL"
+            ? undefined
+            : productTypeFilter,
+      });
+    } catch {
+      await showErrorAlert({
+        title: "No se pudo descargar el reporte",
+        text: "Ocurrió un error al generar el reporte de inventario en PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
   if (!selectedCompany) {
     return (
       <Navigate
@@ -720,18 +671,15 @@ export function ProductsPage() {
       />
     );
   }
-
   const productDetailError =
     isEditing &&
     productDetailQuery.isError
       ? "No fue posible cargar la información del producto."
       : null;
-
   const isLoadingFormOptions =
     categoriesQuery.isLoading ||
     brandsQuery.isLoading ||
     unitsQuery.isLoading;
-
   const createUnitMutation = useMutation({
     mutationFn: (
       values: UnitOfMeasureFormValues,
@@ -741,7 +689,6 @@ export function ProductsPage() {
           "No hay una empresa seleccionada.",
         );
       }
-
       return createUnitOfMeasure({
         company_id: selectedCompany.id,
         name: values.name,
@@ -752,7 +699,6 @@ export function ProductsPage() {
         is_active: values.is_active,
       });
     },
-
     onSuccess: async (unit) => {
       await queryClient.invalidateQueries({
         queryKey: [
@@ -760,24 +706,20 @@ export function ProductsPage() {
           selectedCompany?.id,
         ],
       });
-
       setCreatedUnit({
         id: unit.id,
         name: unit.name,
         symbol: unit.symbol,
       });
-
       setIsUnitDialogOpen(false);
       setUnitFormError(null);
     },
-
     onError: () => {
       setUnitFormError(
         "No fue posible crear la unidad de medida.",
       );
     },
   });
-
   const createCategoryMutation = useMutation({
     mutationFn: (values: CategoryFormValues) => {
       if (!selectedCompany) {
@@ -785,35 +727,29 @@ export function ProductsPage() {
           "No hay una empresa seleccionada.",
         );
       }
-
       return createCategory({
         ...values,
         company_id: selectedCompany.id,
       });
     },
-
     onSuccess: async (category) => {
       await queryClient.invalidateQueries({
         queryKey: ["categories"],
       });
-
       setCreatedCategory({
         id: category.id,
         name: category.name,
         is_active: category.is_active ?? true,
       });
-
       setIsCategoryDialogOpen(false);
       setCategoryFormError(null);
     },
-
     onError: () => {
       setCategoryFormError(
         "No fue posible crear la categoría.",
       );
     },
   });
-
   const createBrandMutation = useMutation({
     mutationFn: (values: BrandFormValues) => {
       if (!selectedCompany) {
@@ -821,13 +757,11 @@ export function ProductsPage() {
           "No hay una empresa seleccionada.",
         );
       }
-
       return createBrand({
         ...values,
         company_id: selectedCompany.id,
       });
     },
-
     onSuccess: async (brand) => {
       await queryClient.invalidateQueries({
         queryKey: [
@@ -835,36 +769,30 @@ export function ProductsPage() {
           selectedCompany?.id,
         ],
       });
-
       setCreatedBrand({
         id: brand.id,
         name: brand.name,
         is_active: brand.is_active ?? true,
       });
-
       setIsBrandDialogOpen(false);
       setBrandFormError(null);
     },
-
     onError: () => {
       setBrandFormError(
         "No fue posible crear la marca.",
       );
     },
   });
-
   const categoryParentsQuery = useQuery({
     queryKey: [
       "categories",
       "product-form-parents",
       selectedCompany?.id,
     ],
-
     queryFn: async () => {
       if (!selectedCompany) {
         return [];
       }
-
       const response = await getCategories({
         companyId: selectedCompany.id,
         isActive: true,
@@ -872,13 +800,10 @@ export function ProductsPage() {
         page: 1,
         pageSize: 100,
       });
-
       return response.results;
     },
-
     enabled: Boolean(selectedCompany?.id),
   });
-
   return (
     <Stack spacing={2.5}>
       <Stack
@@ -910,7 +835,6 @@ export function ProductsPage() {
           >
             Productos
           </Typography>
-
           <Typography
             sx={{
               color: "text.secondary",
@@ -921,7 +845,6 @@ export function ProductsPage() {
             {selectedCompany.name}.
           </Typography>
         </Box>
-
         <Stack
           direction={{
             xs: "column",
@@ -932,33 +855,45 @@ export function ProductsPage() {
           <Button
             type="button"
             variant="outlined"
-            disabled
             startIcon={
-              <FileUploadOutlined />
+              isDownloadingExcel
+                ? <CircularProgress size={18} />
+                : <GridOnRounded />
+            }
+            onClick={handleDownloadExcel}
+            disabled={
+              !selectedBranch ||
+              isDownloadingExcel ||
+              isDownloadingPdf
             }
             sx={{
               borderRadius: "5px",
               bgcolor: "#FFFFFF",
             }}
           >
-            Importar
+            Excel
           </Button>
-
           <Button
             type="button"
             variant="outlined"
-            disabled
             startIcon={
-              <FileDownloadOutlined />
+              isDownloadingPdf
+                ? <CircularProgress size={18} />
+                : <PictureAsPdfRounded />
+            }
+            onClick={handleDownloadPdf}
+            disabled={
+              !selectedBranch ||
+              isDownloadingExcel ||
+              isDownloadingPdf
             }
             sx={{
               borderRadius: "5px",
               bgcolor: "#FFFFFF",
             }}
           >
-            Exportar
+            PDF
           </Button>
-
           <Button
             type="button"
             variant="contained"
@@ -972,14 +907,12 @@ export function ProductsPage() {
           </Button>
         </Stack>
       </Stack>
- 
       {isError && (
         <Alert severity="error">
           No fue posible cargar los
           productos.
         </Alert>
       )}
-
       {!isError && (
         <Paper
           variant="outlined"
@@ -1020,31 +953,25 @@ export function ProductsPage() {
           />
         </Paper>
       )}
-
       <ProductFormDialog
-        open={isProductDialogOpen} 
+        open={isProductDialogOpen}
         title={
           isEditing
             ? "Editar producto"
             : "Nuevo producto"
         }
-
         submitLabel={
           isEditing
             ? "Guardar cambios"
             : "Guardar producto"
         }
-
         isEditing={isEditing}
-
         branchName={ selectedBranch?.name ?? "Sucursal activa"}
-
-        initialValues={ 
+        initialValues={
           isEditing
             ? productInitialValues
             : undefined
         }
-
         isLoadingProduct={ isEditing && productDetailQuery.isLoading }
         isSubmitting={ saveProductMutation.isPending }
         isLoadingOptions={ isLoadingFormOptions || Boolean(productDetailError) }
@@ -1059,7 +986,6 @@ export function ProductsPage() {
             setFormError("No fue posible cargar la información del producto.",);
             return;
           }
-
           saveProductMutation.mutate({productId: editingProductId, values,});
         }}
         createdCategory={createdCategory}
@@ -1074,14 +1000,12 @@ export function ProductsPage() {
         }}
         createdUnit={createdUnit}
         createdUnitTarget={unitTarget}
-
         onCreateUnit={(target) => {
           setUnitTarget(target);
           setUnitFormError(null);
           setIsUnitDialogOpen(true);
         }}
       />
-
       <CategoryFormDialog
         open={isCategoryDialogOpen}
         title="Nueva categoría"
@@ -1093,7 +1017,6 @@ export function ProductsPage() {
           if (createCategoryMutation.isPending) {
             return;
           }
-
           setIsCategoryDialogOpen(false);
           setCategoryFormError(null);
         }}
@@ -1114,17 +1037,14 @@ export function ProductsPage() {
           if (createBrandMutation.isPending) {
             return;
           }
-
           setIsBrandDialogOpen(false);
           setBrandFormError(null);
         }}
         onSubmit={(values) => {
           setBrandFormError(null);
-
           createBrandMutation.mutate(values);
         }}
       />
-
       <UnitOfMeasureFormDialog
         open={isUnitDialogOpen}
         title="Nueva unidad de medida"
@@ -1138,7 +1058,6 @@ export function ProductsPage() {
           if (createUnitMutation.isPending) {
             return;
           }
-
           setIsUnitDialogOpen(false);
           setUnitFormError(null);
           setUnitTarget(null);
@@ -1151,4 +1070,3 @@ export function ProductsPage() {
     </Stack>
   );
 }
- 

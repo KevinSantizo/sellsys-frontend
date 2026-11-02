@@ -109,6 +109,8 @@ export async function getCashMovements(params: CashMovementsParams) {
       ordering: params.ordering,
       page: params.page ?? 1,
       page_size: params.pageSize ?? 10,
+      date_from: params.dateFrom || undefined,
+      date_to: params.dateTo || undefined,
     },
   });
 

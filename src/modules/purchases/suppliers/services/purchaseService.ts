@@ -19,6 +19,8 @@ type GetPurchasesParams = {
   ordering?: string;
   page?: number;
   pageSize?: number;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 export async function getPurchases({
@@ -31,6 +33,8 @@ export async function getPurchases({
   ordering = "-purchase_date",
   page = 1,
   pageSize = 10,
+  dateFrom,
+  dateTo
 }: GetPurchasesParams): Promise<PurchaseListResponse> {
   const response = await httpClient.get<PurchaseListResponse>(
     "/purchases/",
@@ -45,6 +49,8 @@ export async function getPurchases({
         ordering,
         page,
         page_size: pageSize,
+        date_from: dateFrom,
+        date_to: dateTo,
       },
     },
   );

@@ -115,7 +115,7 @@ export function ReportsPage() {
         appliedDateTo,
     ],
 
-        queryFn: () => {
+      queryFn: () => {
         if (!selectedCompany || !selectedBranch) {
             throw new Error("No existe una empresa o sucursal seleccionada.");
         }

@@ -1,14 +1,16 @@
 import {
   AddRounded,
+  PictureAsPdfRounded,
+  GridOnRounded,
 } from "@mui/icons-material";
-
 import {
   Box,
   Button,
+  CircularProgress,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
-
 import {
   closeCashSession,
   createCashRegister,
@@ -19,16 +21,15 @@ import {
   openCashSession,
   updateCashRegister,
 } from "../services/cashService";
-
 import { type GridPaginationModel,} from "@mui/x-data-grid";
 import { useEffect, useState,} from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CashRegistersGridCard } from "../components/CashRegistersGridCard";
 import type { CashRegister, CashMovementDirection, CashMovementType, CashRegisterFormValues, CashSession } from "../types/cash";
 import { useCompanyStore } from "../../companies/store/companyStore";
-import { useBranchStore } from "../../branches/store/branchStore"; 
+import { useBranchStore } from "../../branches/store/branchStore";
 import { CashRegisterFormDialog } from "../components/CashRegisterFormDialog";
-import { showSuccessAlert } from "../../../shared/alerts/appAlerts";
+import { showErrorAlert, showSuccessAlert } from "../../../shared/alerts/appAlerts";
 import { OpenCashSessionDialog } from "../components/OpenCashSessionDialog";
 import { OpenCashSessionCard } from "../components/OpenCashSessionCard";
 import { CloseCashSessionDialog } from "../components/CloseCashSessionDialog";
@@ -37,9 +38,19 @@ import { CashMovementsGridCard } from "../components/CashMovementsGridCard";
 import { CashSessionsHistoryGridCard } from "../components/CashSessionsHistoryGridCard";
 import { CashSessionDetailDialog } from "../components/CashSessionDetailDialog";
 import { getApiErrorMessage } from "../../../shared/utils/getApiErrorMessage";
+import {
+  downloadCashExcel,
+  downloadCashPdf,
+} from "../../reports/services/reportsService";
+
+function formatDate(value: Date): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export function CashPage() {
-
     const queryClient = useQueryClient();
     const [movementSearch, setMovementSearch] = useState("");
     const [debouncedMovementSearch, setDebouncedMovementSearch] = useState("");
@@ -57,6 +68,20 @@ export function CashPage() {
     const [formError, setFormError] = useState<string | null>(null);
     const selectedCompany = useCompanyStore((state) => state.selectedCompany);
     const selectedBranch = useBranchStore((state) => state.selectedBranch);
+    const today = new Date();
+    const firstDayOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1,
+    );
+    const [dateFrom, setDateFrom] = useState(formatDate(firstDayOfMonth));
+    const [dateTo, setDateTo] = useState(formatDate(today));
+    const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+    const validDates =
+        Boolean(dateFrom) &&
+        Boolean(dateTo) &&
+        dateFrom <= dateTo;
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [openingCashRegister, setOpeningCashRegister] = useState<CashRegister | null>(null);
@@ -65,17 +90,12 @@ export function CashPage() {
     const [sessionHistoryCashRegisterId, setSessionHistoryCashRegisterId] = useState("");
     const [sessionHistoryPaginationModel, setSessionHistoryPaginationModel] = useState({ page: 0, pageSize: 10, });
     const [detailCashSession, setDetailCashSession] = useState<CashSession | null>(null);
-
-
     const handleViewCashSessionDetail = (cashSession: CashSession) => {
         setDetailCashSession(cashSession);
     };
-
     const handleCloseCashSessionDetail = () => {
         setDetailCashSession(null);
     };
-
-
     const cashSessionHistoryQuery = useQuery({
         queryKey: [
             "cash-sessions",
@@ -97,11 +117,9 @@ export function CashPage() {
         }),
         enabled: Boolean(selectedCompany?.id && selectedBranch?.id),
         placeholderData: keepPreviousData,
-    }); 
-
+    });
     const cashSessionHistory = cashSessionHistoryQuery.data?.results ?? [];
     const totalCashSessionHistory = cashSessionHistoryQuery.data?.count ?? 0;
-
     const handleSessionHistoryCashRegisterChange = (value: string) => {
         setSessionHistoryCashRegisterId(value);
         setSessionHistoryPaginationModel((current) => ({
@@ -109,7 +127,6 @@ export function CashPage() {
             page: 0,
         }));
     };
-
     const handleClearSessionHistoryFilters = () => {
         setSessionHistoryCashRegisterId("");
         setSessionHistoryPaginationModel((current) => ({
@@ -117,8 +134,6 @@ export function CashPage() {
             page: 0,
         }));
     };
-
-
     const cashRegistersFilterQuery = useQuery({
         queryKey: [
             "cash-registers",
@@ -135,9 +150,7 @@ export function CashPage() {
         enabled: Boolean(selectedCompany?.id && selectedBranch?.id),
         placeholderData: keepPreviousData,
     });
-
     const cashRegistersForFilters = cashRegistersFilterQuery.data?.results ?? [];
-
     useEffect(() => {
         const timeout = window.setTimeout(() => {
             setDebouncedMovementSearch(movementSearch);
@@ -146,13 +159,19 @@ export function CashPage() {
             page: 0,
             }));
         }, 400);
-
         return () => {
             window.clearTimeout(timeout);
         };
     }, [movementSearch]);
-
-
+    useEffect(() => {
+        setMovementPaginationModel((current) => ({
+            ...current,
+            page: 0,
+        }));
+    }, [
+        dateFrom,
+        dateTo,
+    ]);
     const cashMovementsQuery = useQuery({
         queryKey: [
             "cash-movements",
@@ -162,6 +181,8 @@ export function CashPage() {
             movementType,
             movementDirection,
             movementCashRegisterId,
+            dateFrom,
+            dateTo,
             movementPaginationModel.page,
             movementPaginationModel.pageSize,
         ],
@@ -172,6 +193,8 @@ export function CashPage() {
             movementType: movementType || undefined,
             direction: movementDirection || undefined,
             search: debouncedMovementSearch || undefined,
+            dateFrom,
+            dateTo,
             ordering: "-created_at",
             page: movementPaginationModel.page + 1,
             pageSize: movementPaginationModel.pageSize,
@@ -179,11 +202,8 @@ export function CashPage() {
         enabled: Boolean(selectedCompany?.id && selectedBranch?.id),
         placeholderData: keepPreviousData,
     });
-
-
     const cashMovements = cashMovementsQuery.data?.results ?? [];
     const totalCashMovements = cashMovementsQuery.data?.count ?? 0;
-
     const handleMovementTypeChange = (value: CashMovementType | "") => {
         setMovementType(value);
         setMovementPaginationModel((current) => ({
@@ -191,7 +211,6 @@ export function CashPage() {
             page: 0,
         }));
     };
-
     const handleMovementDirectionChange = (value: CashMovementDirection | "") => {
         setMovementDirection(value);
         setMovementPaginationModel((current) => ({
@@ -199,7 +218,6 @@ export function CashPage() {
             page: 0,
         }));
     };
-
     const handleMovementCashRegisterChange = (value: string) => {
         setMovementCashRegisterId(value);
         setMovementPaginationModel((current) => ({
@@ -207,20 +225,17 @@ export function CashPage() {
             page: 0,
         }));
     };
-
     const handleClearMovementFilters = () => {
         setMovementSearch("");
         setDebouncedMovementSearch("");
         setMovementType("");
         setMovementDirection("");
         setMovementCashRegisterId("");
-
         setMovementPaginationModel((current) => ({
             ...current,
             page: 0,
         }));
     };
-
     const cashRegisterInitialValues: CashRegisterFormValues | undefined = editingCashRegister
     ? {
         name: editingCashRegister.name,
@@ -228,15 +243,12 @@ export function CashPage() {
         is_active: editingCashRegister.is_active,
         }
     : undefined;
-
     useEffect(() => {
         const timeout = window.setTimeout(() => {
         setDebouncedSearch(search);
         }, 400);
-
         return () => window.clearTimeout(timeout);
     }, [search]);
-
     useEffect(() => {
         setPaginationModel((current) => ({
         ...current,
@@ -247,7 +259,6 @@ export function CashPage() {
         selectedBranch?.id,
         debouncedSearch,
     ]);
-
     const cashRegistersQuery = useQuery({
         queryKey: [
             "cash-registers",
@@ -260,7 +271,7 @@ export function CashPage() {
         queryFn: () => getCashRegisters({
             companyId: selectedCompany!.id,
             branchId: selectedBranch!.id,
-            search: debouncedSearch || undefined, 
+            search: debouncedSearch || undefined,
             page: paginationModel.page + 1,
             pageSize: paginationModel.pageSize,
         }),
@@ -270,8 +281,6 @@ export function CashPage() {
         ),
         placeholderData: keepPreviousData,
     });
-
-
     const openCashSessionsQuery = useQuery({
         queryKey: [
             "cash-sessions",
@@ -292,12 +301,9 @@ export function CashPage() {
             selectedBranch?.id
         ),
     });
-
     const openCashSessions = openCashSessionsQuery.data?.results ?? [];
     const cashRegisters = cashRegistersQuery.data?.results ?? [];
     const totalCashRegisters = cashRegistersQuery.data?.count ?? 0;
- 
- 
     const closeCashSessionMutation = useMutation({
         mutationFn: ({ cashSessionId, countedAmount }: {
             cashSessionId: string;
@@ -308,7 +314,6 @@ export function CashPage() {
             notes: "Cierre de caja",
             });
         },
-
         onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["cash-sessions"] }),
@@ -316,13 +321,10 @@ export function CashPage() {
                 queryClient.invalidateQueries({ queryKey: ["cash-registers"] }),
                 queryClient.invalidateQueries({ queryKey: ["cash-movements"] }),
             ]);
-
             setClosingCashSession(null);
             setCloseSessionError(null);
-
             await showSuccessAlert({title: "Caja cerrada correctamente."});
         },
-
         onError: (error) => {
             setCloseSessionError(
                 getApiErrorMessage(
@@ -331,17 +333,14 @@ export function CashPage() {
                 ),
             );
         },
-    }); 
-
+    });
     const handleCloseManualMovementDialog = () => {
         if (manualCashMovementMutation.isPending) {
             return;
         }
-
         setManualMovementError(null);
         setManualMovementSession(null);
     };
-
     const handleSubmitManualMovement = (values: {
         amount: string;
         reference: string;
@@ -350,9 +349,7 @@ export function CashPage() {
         if (!manualMovementSession) {
             return;
         }
-
         setManualMovementError(null);
-
         manualCashMovementMutation.mutate({
             cashSessionId: manualMovementSession.id,
             direction: manualMovementDirection,
@@ -361,13 +358,11 @@ export function CashPage() {
             notes: values.notes,
         });
     };
-
     const openCashSessionMutation = useMutation({
         mutationFn: ({ openingAmount, notes }: { openingAmount: string; notes: string }) => {
             if (!selectedCompany || !selectedBranch || !openingCashRegister) {
             throw new Error("No hay empresa, sucursal o caja seleccionada.");
             }
-
             return openCashSession({
             company_id: selectedCompany.id,
             branch_id: selectedBranch.id,
@@ -376,15 +371,13 @@ export function CashPage() {
             notes,
             });
         },
-        onSuccess: async () => { 
+        onSuccess: async () => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["cash-sessions"] }),
                 queryClient.invalidateQueries({ queryKey: ["cash-registers"] }),
             ]);
-
             setOpeningCashRegister(null);
             setOpenSessionError(null);
-
             await showSuccessAlert({title: "Caja abierta correctamente."});
         },
         onError: (error) => {
@@ -396,13 +389,11 @@ export function CashPage() {
             );
         },
     });
-
     const createCashRegisterMutation = useMutation({
         mutationFn: (values: CashRegisterFormValues) => {
             if (!selectedCompany || !selectedBranch) {
                 throw new Error("No hay empresa o sucursal seleccionada.");
             }
-
             return createCashRegister({
                 company_id: selectedCompany.id,
                 branch_id: selectedBranch.id,
@@ -413,11 +404,9 @@ export function CashPage() {
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["cash-registers"] });
-
             setIsCashRegisterDialogOpen(false);
             setEditingCashRegister(null);
             setFormError(null);
-
             await showSuccessAlert({title: "Caja creada correctamente."});
         },
         onError: (error) => {
@@ -429,7 +418,6 @@ export function CashPage() {
             );
         },
     });
-
     const updateCashRegisterMutation = useMutation({
         mutationFn: ({ id, values }: { id: string; values: CashRegisterFormValues }) => {
             return updateCashRegister(id, {
@@ -438,15 +426,15 @@ export function CashPage() {
             is_active: values.is_active,
             });
         },
+
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["cash-registers"] });
-
             setIsCashRegisterDialogOpen(false);
             setEditingCashRegister(null);
             setFormError(null);
-
             await showSuccessAlert({title: "Caja actualizada correctamente."});
         },
+
         onError: (error) => {
             setFormError(
                 getApiErrorMessage(
@@ -456,7 +444,6 @@ export function CashPage() {
             );
         },
     });
-
     const manualCashMovementMutation = useMutation({
         mutationFn: ({
             cashSessionId,
@@ -479,16 +466,13 @@ export function CashPage() {
             notes,
             });
         },
-
         onSuccess: async () => {
             await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["cash-session-summary"] }),
             queryClient.invalidateQueries({ queryKey: ["cash-movements"] }),
             ]);
-
             setManualMovementError(null);
             setManualMovementSession(null);
-
             await showSuccessAlert(
                 {
                     title: manualMovementDirection === "IN"
@@ -497,7 +481,6 @@ export function CashPage() {
                 },
             );
         },
-
         onError: (error) => {
             setManualMovementError(
                 getApiErrorMessage(
@@ -507,119 +490,150 @@ export function CashPage() {
             );
         },
     });
-
     const formatCurrency = (value: string | number) => {
         const amount = Number(value);
-
         return new Intl.NumberFormat("es-GT", {
             style: "currency",
             currency: selectedCompany?.currency ?? "GTQ",
             minimumFractionDigits: 2,
         }).format(Number.isFinite(amount) ? amount : 0);
     };
-
-
     const handleManualEntry = (cashSession: CashSession) => {
         setManualMovementError(null);
         setManualMovementDirection("IN");
         setManualMovementSession(cashSession);
     };
-
     const handleManualExit = (cashSession: CashSession) => {
         setManualMovementError(null);
         setManualMovementDirection("OUT");
         setManualMovementSession(cashSession);
     };
-
     const handleCloseSession = (cashSession: CashSession) => {
         setCloseSessionError(null);
         setClosingCashSession(cashSession);
     };
-
     const handleCloseCashSessionDialog = () => {
         if (closeCashSessionMutation.isPending) {
             return;
         }
-
         setCloseSessionError(null);
         setClosingCashSession(null);
     };
-
     const handleSubmitCloseCashSession = (countedAmount: string) => {
         if (!closingCashSession) {
             return;
         }
-
         setCloseSessionError(null);
-
         closeCashSessionMutation.mutate({
             cashSessionId: closingCashSession.id,
             countedAmount,
         });
     };
-
     const handleOpenCashSession = (cashRegister: CashRegister) => {
         setOpeningCashRegister(cashRegister);
         setOpenSessionError(null);
     };
-
     const handleCloseOpenCashSessionDialog = () => {
         if (openCashSessionMutation.isPending) return;
-
         setOpeningCashRegister(null);
         setOpenSessionError(null);
     };
-
     const handleSubmitOpenCashSession = (values: { opening_amount: string }) => {
         setOpenSessionError(null);
-
         openCashSessionMutation.mutate({
             openingAmount: values.opening_amount,
             notes: "Apertura de caja",
         });
     };
-
     const handleCreateCashRegister = () => {
         setEditingCashRegister(null);
         setFormError(null);
         setIsCashRegisterDialogOpen(true);
     };
-
     const handleEditCashRegister = (cashRegister: CashRegister) => {
         setEditingCashRegister(cashRegister);
         setFormError(null);
         setIsCashRegisterDialogOpen(true);
     };
-
     const handleCloseCashRegisterDialog = () => {
         if (createCashRegisterMutation.isPending || updateCashRegisterMutation.isPending) return;
-
         setIsCashRegisterDialogOpen(false);
         setEditingCashRegister(null);
         setFormError(null);
     };
-
     const handleSubmitCashRegister = (values: CashRegisterFormValues) => {
         setFormError(null);
-
         if (editingCashRegister) {
             updateCashRegisterMutation.mutate({
             id: editingCashRegister.id,
             values,
             });
-
             return;
         }
-
         createCashRegisterMutation.mutate(values);
     };
-
     const isCashRegisterSubmitting = createCashRegisterMutation.isPending || updateCashRegisterMutation.isPending;
-
+    const handleDownloadExcel = async () => {
+        if (
+            !selectedCompany ||
+            !selectedBranch ||
+            !validDates
+        ) {
+            return;
+        }
+        try {
+            setIsDownloadingExcel(true);
+            await downloadCashExcel({
+                companyId: selectedCompany.id,
+                branchId: selectedBranch.id,
+                dateFrom,
+                dateTo,
+                cashRegisterId: movementCashRegisterId || undefined,
+                movementType: movementType || undefined,
+                direction: movementDirection || undefined,
+                search: debouncedMovementSearch || undefined,
+            });
+        } catch {
+            await showErrorAlert({
+                title: "No se pudo descargar el reporte",
+                text: "Ocurrió un error al generar el reporte de movimientos de caja en Excel.",
+            });
+        } finally {
+            setIsDownloadingExcel(false);
+        }
+    };
+    const handleDownloadPdf = async () => {
+        if (
+            !selectedCompany ||
+            !selectedBranch ||
+            !validDates
+        ) {
+            return;
+        }
+        try {
+            setIsDownloadingPdf(true);
+            await downloadCashPdf({
+                companyId: selectedCompany.id,
+                branchId: selectedBranch.id,
+                dateFrom,
+                dateTo,
+                cashRegisterId: movementCashRegisterId || undefined,
+                movementType: movementType || undefined,
+                direction: movementDirection || undefined,
+                search: debouncedMovementSearch || undefined,
+            });
+        } catch {
+            await showErrorAlert({
+                title: "No se pudo descargar el reporte",
+                text: "Ocurrió un error al generar el reporte de movimientos de caja en PDF.",
+            });
+        } finally {
+            setIsDownloadingPdf(false);
+        }
+    };
     const handleRefresh = () => {
         cashRegistersQuery.refetch();
     };
-
     return (
         <Box>
             <Box
@@ -651,7 +665,6 @@ export function CashPage() {
                     >
                         Cajas
                     </Typography>
-
                     <Typography
                         color="text.secondary"
                         sx={{
@@ -662,7 +675,6 @@ export function CashPage() {
                         Administra las cajas disponibles de la sucursal seleccionada.
                     </Typography>
                 </Box>
-
                 <Stack
                     direction="row"
                     spacing={ 1 }
@@ -670,7 +682,6 @@ export function CashPage() {
                         flexWrap: "wrap",
                     }}
                 >
-                    
                     <Box
                         sx={{
                             display: "flex",
@@ -685,46 +696,117 @@ export function CashPage() {
                             },
                         }}
                         >
-                        <Box
+                        <TextField
+                            type="date"
+                            label="Desde"
+                            value={ dateFrom }
+                            onChange={(event) => {
+                                setDateFrom(event.target.value);
+                            }}
+                            size="small"
+                            slotProps={{
+                                inputLabel: {
+                                    shrink: true,
+                                },
+                            }}
                             sx={{
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: 1,
-                            width: {
-                                xs: "100%",
-                                sm: "auto",
-                            },
+                                minWidth: {
+                                    xs: "100%",
+                                    sm: 155,
+                                },
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "5px",
+                                    bgcolor: "#FFFFFF",
+                                },
+                            }}
+                        />
+                        <TextField
+                            type="date"
+                            label="Hasta"
+                            value={ dateTo }
+                            onChange={(event) => {
+                                setDateTo(event.target.value);
+                            }}
+                            size="small"
+                            error={ Boolean(
+                                dateFrom &&
+                                dateTo &&
+                                dateFrom > dateTo
+                            ) }
+                            slotProps={{
+                                inputLabel: {
+                                    shrink: true,
+                                },
+                            }}
+                            sx={{
+                                minWidth: {
+                                    xs: "100%",
+                                    sm: 155,
+                                },
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "5px",
+                                    bgcolor: "#FFFFFF",
+                                },
+                            }}
+                        />
+                        <Button
+                            type="button"
+                            variant="outlined"
+                            startIcon={
+                                isDownloadingExcel
+                                ? <CircularProgress size={18} color="inherit" />
+                                : <GridOnRounded />
+                            }
+                            disabled={
+                                !selectedCompany ||
+                                !selectedBranch ||
+                                !validDates ||
+                                isDownloadingExcel ||
+                                isDownloadingPdf
+                            }
+                            onClick={() => {
+                                void handleDownloadExcel();
+                            }}
+                            sx={{
+                                borderRadius: "5px",
+                                bgcolor: "#FFFFFF",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                minHeight: 40,
+                                whiteSpace: "nowrap",
                             }}
                         >
-                            <Button
+                            {isDownloadingExcel ? "Generando..." : "Excel"}
+                        </Button>
+                        <Button
+                            type="button"
                             variant="outlined"
-                            disabled
+                            startIcon={
+                                isDownloadingPdf
+                                ? <CircularProgress size={18} color="inherit" />
+                                : <PictureAsPdfRounded />
+                            }
+                            disabled={
+                                !selectedCompany ||
+                                !selectedBranch ||
+                                !validDates ||
+                                isDownloadingExcel ||
+                                isDownloadingPdf
+                            }
+                            onClick={() => {
+                                void handleDownloadPdf();
+                            }}
                             sx={{
                                 borderRadius: "5px",
-                                flex: {
-                                xs: 1,
-                                sm: "initial",
-                                },
+                                bgcolor: "#FFFFFF",
+                                textTransform: "none",
+                                fontWeight: 700,
+                                minHeight: 40,
+                                whiteSpace: "nowrap",
                             }}
-                            >
-                            Importar
-                            </Button>
-
-                            <Button
-                            variant="outlined"
-                            disabled
-                            sx={{
-                                borderRadius: "5px",
-                                flex: {
-                                xs: 1,
-                                sm: "initial",
-                                },
-                            }}
-                            >
-                            Exportar
-                            </Button>
-                        </Box>
-
+                        >
+                            {isDownloadingPdf ? "Generando..." : "PDF"}
+                        </Button>
                         <Button
                             variant="contained"
                             startIcon={ <AddRounded /> }
@@ -743,7 +825,6 @@ export function CashPage() {
                     </Box>
                 </Stack>
             </Box>
-
             {openCashSessions.length > 0 && (
                 <Box sx={{ mb: 3 }}>
                     <Typography
@@ -755,7 +836,6 @@ export function CashPage() {
                     >
                     Cajas abiertas
                     </Typography>
-
                     <Box
                     sx={{
                         display: "grid",
@@ -780,9 +860,7 @@ export function CashPage() {
                     ))}
                     </Box>
                 </Box>
-                
             )}
-
             <Box sx={{ mt: 3 }}>
                 <CashMovementsGridCard
                     cashMovements={ cashMovements }
@@ -822,8 +900,6 @@ export function CashPage() {
                     onOpenSession={ handleOpenCashSession }
                 />
             </Box>
-            
-
             <CashRegisterFormDialog
                 open={ isCashRegisterDialogOpen }
                 title={ editingCashRegister ? "Editar caja" : "Nueva caja" }
@@ -835,7 +911,6 @@ export function CashPage() {
                 onClose={ handleCloseCashRegisterDialog }
                 onSubmit={ handleSubmitCashRegister }
             />
-
             <OpenCashSessionDialog
                 open={ Boolean(openingCashRegister) }
                 cashRegister={ openingCashRegister }
@@ -844,7 +919,6 @@ export function CashPage() {
                 onClose={ handleCloseOpenCashSessionDialog }
                 onSubmit={ handleSubmitOpenCashSession }
             />
-
             {closingCashSession && (
                 <CloseCashSessionDialog
                     open={ true }
@@ -856,7 +930,6 @@ export function CashPage() {
                     onSubmit={ handleSubmitCloseCashSession }
                 />
             )}
-
             {manualMovementSession && (
                 <ManualCashMovementDialog
                     open={ true }
@@ -868,7 +941,6 @@ export function CashPage() {
                     onSubmit={ handleSubmitManualMovement }
                 />
             )}
-
             <Box sx={{ mt: 3 }}>
                 <CashSessionsHistoryGridCard
                     cashSessions={ cashSessionHistory }

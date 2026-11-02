@@ -74,8 +74,13 @@ import { getCompanies, } from "../modules/companies/services/companyService";
     },
     {
       label: "Reportes",
-      path: "reports/sales",
+      path: "/reports/sales",
       icon: <PictureAsPdfRounded  />,
+    },
+    {
+      label: "Rentabilidad",
+      path: "/reports/profitability",
+      icon: <AttachMoney />,
     },
     {
       label: "Productos",

@@ -3,9 +3,11 @@ import {
   ArrowForwardRounded,
   AssessmentRounded,
   FilterAltOffRounded,
+  GridOnRounded,
   Inventory2Rounded,
   PaymentsRounded,
   PercentRounded,
+  PictureAsPdfRounded,
   ReceiptLongRounded,
   TrendingUpRounded,
 } from "@mui/icons-material";
@@ -33,7 +35,11 @@ import { useState, type ReactNode } from "react";
 
 import { useBranchStore } from "../../branches/store/branchStore";
 import { useCompanyStore } from "../../companies/store/companyStore";
-import { getProfitabilityReport } from "../services/reportsService";
+import {
+  downloadProfitabilityExcel,
+  downloadProfitabilityPdf,
+  getProfitabilityReport,
+} from "../services/reportsService";
 
 
 function formatDate(value: Date): string {
@@ -96,6 +102,9 @@ export function ProfitabilityReportPage() {
 
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const validDates = Boolean(dateFrom) && Boolean(dateTo) && dateFrom <= dateTo;
 
@@ -139,6 +148,7 @@ export function ProfitabilityReportPage() {
       return;
     }
 
+    setDownloadError(null);
     setPage(1);
     setAppliedDateFrom(dateFrom);
     setAppliedDateTo(dateTo);
@@ -157,6 +167,50 @@ export function ProfitabilityReportPage() {
     setPage(1);
   };
 
+  const handleDownloadExcel = async () => {
+    if (!selectedCompany?.id || !selectedBranch?.id || !appliedDateFrom || !appliedDateTo) {
+      return;
+    }
+
+    setDownloadError(null);
+    setIsDownloadingExcel(true);
+
+    try {
+      await downloadProfitabilityExcel({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        dateFrom: appliedDateFrom,
+        dateTo: appliedDateTo,
+      });
+    } catch {
+      setDownloadError("No fue posible descargar el reporte de rentabilidad en Excel.");
+    } finally {
+      setIsDownloadingExcel(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!selectedCompany?.id || !selectedBranch?.id || !appliedDateFrom || !appliedDateTo) {
+      return;
+    }
+
+    setDownloadError(null);
+    setIsDownloadingPdf(true);
+
+    try {
+      await downloadProfitabilityPdf({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        dateFrom: appliedDateFrom,
+        dateTo: appliedDateTo,
+      });
+    } catch {
+      setDownloadError("No fue posible descargar el reporte de rentabilidad en PDF.");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   const report = profitabilityReportQuery.data;
   const rows = report?.results ?? [];
   const totalRows = report?.count ?? 0;
@@ -166,6 +220,13 @@ export function ProfitabilityReportPage() {
   const endIndex = Math.min(startIndex + rows.length, totalRows);
 
   const isFetching = profitabilityReportQuery.isFetching;
+  const isDownloading = isDownloadingExcel || isDownloadingPdf;
+  const canExport =
+    Boolean(selectedCompany?.id) &&
+    Boolean(selectedBranch?.id) &&
+    Boolean(appliedDateFrom) &&
+    Boolean(appliedDateTo) &&
+    appliedDateFrom <= appliedDateTo;
 
   return (
     <Box sx={{ display: "grid", gap: 3 }}>
@@ -192,7 +253,7 @@ export function ProfitabilityReportPage() {
             gridTemplateColumns: {
               xs: "minmax(0, 1fr)",
               md: "repeat(2, minmax(0, 1fr))",
-              xl: "repeat(5, minmax(0, 1fr))",
+              xl: "repeat(6, minmax(0, 1fr))",
             },
             gap: 2,
             alignItems: "center",
@@ -259,12 +320,23 @@ export function ProfitabilityReportPage() {
             }}
           />
 
-          <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 1,
+              gridColumn: {
+                xs: "span 1",
+                md: "span 2",
+                xl: "span 2",
+              },
+            }}
+          >
             <Button
               type="button"
               variant="contained"
               fullWidth
-              disabled={ !validDates || !selectedCompany || !selectedBranch || isFetching }
+              disabled={ !validDates || !selectedCompany || !selectedBranch || isFetching || isDownloading }
               onClick={ handleGenerate }
               startIcon={
                 isFetching
@@ -285,7 +357,7 @@ export function ProfitabilityReportPage() {
               type="button"
               variant="outlined"
               onClick={ handleClearFilters }
-              disabled={ isFetching }
+              disabled={ isFetching || isDownloading }
               startIcon={ <FilterAltOffRounded /> }
               sx={{
                 minWidth: 100,
@@ -298,6 +370,48 @@ export function ProfitabilityReportPage() {
             >
               Limpiar
             </Button>
+
+            <Button
+              type="button"
+              variant="outlined" 
+              fullWidth
+              disabled={ !canExport || isDownloading }
+              onClick={ handleDownloadExcel }
+              startIcon={
+                isDownloadingExcel
+                  ? <CircularProgress size={ 18 } color="inherit" />
+                  : <GridOnRounded />
+              }
+              sx={{
+                minHeight: 56,
+                borderRadius: "5px",
+                fontWeight: 700,
+                textTransform: "none",
+              }}
+            >
+              { isDownloadingExcel ? "Descargando..." : "Excel" }
+            </Button>
+
+            <Button
+              type="button"
+              variant="outlined"
+              fullWidth
+              disabled={ !canExport || isDownloading }
+              onClick={ handleDownloadPdf }
+              startIcon={
+                isDownloadingPdf
+                  ? <CircularProgress size={ 18 } color="inherit" />
+                  : <PictureAsPdfRounded />
+              }
+              sx={{
+                minHeight: 56,
+                borderRadius: "5px",
+                fontWeight: 700,
+                textTransform: "none",
+              }}
+            >
+              { isDownloadingPdf ? "Descargando..." : "PDF" }
+            </Button>
           </Box>
         </Box>
       </Paper>
@@ -305,6 +419,12 @@ export function ProfitabilityReportPage() {
       {profitabilityReportQuery.isError && (
         <Alert severity="error">
           No fue posible cargar el reporte de rentabilidad.
+        </Alert>
+      )}
+
+      {downloadError && (
+        <Alert severity="error">
+          { downloadError }
         </Alert>
       )}
 

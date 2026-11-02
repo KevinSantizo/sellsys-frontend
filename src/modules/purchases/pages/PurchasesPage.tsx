@@ -1,14 +1,16 @@
 import {
-  AddRounded,
-  FileDownloadRounded,
-  FileUploadRounded,
+  AddRounded, 
+  PictureAsPdfRounded,
+  GridOnRounded,
 } from "@mui/icons-material";
 
 import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 
@@ -71,9 +73,49 @@ import { createCategory, getCategories } from "../../catalog/categories/services
 import type { BrandFormValues } from "../../catalog/brands/types/brand";
 import { createBrand } from "../../catalog/brands/services/brandService";
 import axios from "axios";
+ 
+import { downloadPurchasesExcel,  downloadPurchasesPdf } from "../../reports/services/reportsService";
+ 
+
+function formatDate(value: Date): string {
+  const year = value.getFullYear();
+
+  const month = String(
+    value.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    value.getDate(),
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 
 export function PurchasesPage() {
   const queryClient = useQueryClient(); 
+
+  const [
+    isDownloadingExcel,
+    setIsDownloadingExcel,
+  ] = useState(false);
+
+  const [
+    isDownloadingPdf,
+    setIsDownloadingPdf,
+  ] = useState(false);
+
+  const today = new Date();
+
+  const firstDayOfMonth = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    1,
+  );
+
+  const [dateFrom, setDateFrom] = useState(formatDate(firstDayOfMonth));
+  const [dateTo, setDateTo] = useState(formatDate(today));
+  const validDates = Boolean(dateFrom) && Boolean(dateTo) && dateFrom <= dateTo;
 
   const [statusFilter, setStatusFilter] = useState<PurchaseStatusFilter>("ALL");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<PurchasePaymentMethodFilter>("ALL");
@@ -135,7 +177,86 @@ export function PurchasesPage() {
     };
     const [createdUnit, setCreatedUnit] = useState<CreatedUnit | null>(null);
 
+    const handleDownloadExcel =
+  async () => {
+    if (
+      !selectedCompany ||
+      !selectedBranch ||
+      !validDates
+    ) {
+      return;
+    }
 
+    try {
+      setIsDownloadingExcel(
+        true,
+      );
+
+      await downloadPurchasesExcel(
+        {
+          companyId:
+            selectedCompany.id,
+
+          branchId:
+            selectedBranch.id,
+
+          dateFrom,
+          dateTo,
+        },
+      );
+    } catch {
+      await showErrorAlert({
+        title:
+          "No se pudo descargar el reporte",
+
+        text:
+          "Ocurrió un error al generar el reporte de compras en Excel.",
+      });
+    } finally {
+      setIsDownloadingExcel(
+        false,
+      );
+    }
+  };
+
+  const handleDownloadPdf =
+  async () => {
+    if (
+      !selectedCompany ||
+      !selectedBranch ||
+      !validDates
+    ) {
+      return;
+    }
+
+    try {
+      setIsDownloadingPdf(true);
+
+      await downloadPurchasesPdf(
+        {
+          companyId:
+            selectedCompany.id,
+
+          branchId:
+            selectedBranch.id,
+
+          dateFrom,
+          dateTo,
+        },
+      );
+    } catch {
+      await showErrorAlert({
+        title:
+          "No se pudo descargar el reporte",
+
+        text:
+          "Ocurrió un error al generar el reporte de compras en PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+    
   useEffect(() => {
     setPaginationModel((current) => ({
       ...current,
@@ -146,6 +267,8 @@ export function PurchasesPage() {
     selectedBranch?.id,
     statusFilter,
     paymentMethodFilter,
+    dateFrom,
+    dateTo,
   ]);
 
   const purchaseViewQuery = useQuery({
@@ -858,6 +981,8 @@ export function PurchasesPage() {
       paymentMethodFilter,
       paginationModel.page,
       paginationModel.pageSize,
+      dateFrom,
+      dateTo,
     ],
 
     queryFn: () => getPurchases({
@@ -866,6 +991,8 @@ export function PurchasesPage() {
       search: debouncedSearch || undefined,
       status: statusFilter === "ALL" ? undefined : statusFilter,
       paymentMethod: paymentMethodFilter === "ALL" ? undefined : paymentMethodFilter,
+      dateFrom,
+      dateTo,
       ordering: "-purchase_date",
       page: paginationModel.page + 1,
       pageSize: paginationModel.pageSize,
@@ -875,18 +1002,25 @@ export function PurchasesPage() {
     placeholderData: keepPreviousData,
   });
 
-  const hasActiveFilters = statusFilter !== "ALL" || paymentMethodFilter !== "ALL";
+  const defaultDateFrom = formatDate(firstDayOfMonth);
+
+  const defaultDateTo = formatDate(today);
+
+  const hasActiveFilters = statusFilter !== "ALL" || paymentMethodFilter !== "ALL" || dateFrom !== defaultDateFrom || dateTo !== defaultDateTo;
   const purchases = purchasesQuery.data?.results ?? [];
   const totalPurchases = purchasesQuery.data?.count ?? 0;
 
   const handleClearFilters = () => {
-    setStatusFilter("ALL");
-    setPaymentMethodFilter("ALL");
-
-    setPaginationModel((current) => ({
-      ...current,
-      page: 0,
-    }));
+    setStatusFilter("ALL"); 
+    setPaymentMethodFilter( "ALL", ); 
+    setDateFrom( defaultDateFrom, ); 
+    setDateTo( defaultDateTo, ); 
+    setPaginationModel(
+      (current) => ({
+        ...current,
+        page: 0,
+      }),
+    );
   };
 
   const currencyFormatter = useMemo(() => {
@@ -1130,32 +1264,137 @@ export function PurchasesPage() {
           }}
           spacing={1}
         >
+          <TextField
+            type="date"
+            label="Desde"
+            value={dateFrom}
+            onChange={(event) => {
+              setDateFrom(
+                event.target.value,
+              );
+            }}
+            size="small"
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            sx={{
+              minWidth: {
+                xs: "100%",
+                sm: 155,
+              },
+
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "5px",
+              },
+            }}
+          />
+
+          <TextField
+            type="date"
+            label="Hasta"
+            value={dateTo}
+            onChange={(event) => {
+              setDateTo(
+                event.target.value,
+              );
+            }}
+            size="small"
+            error={
+              Boolean(
+                dateFrom &&
+                  dateTo &&
+                  dateFrom > dateTo,
+              )
+            }
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            sx={{
+              minWidth: {
+                xs: "100%",
+                sm: 155,
+              },
+
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "5px",
+              },
+            }}
+          />
+
           <Button
+            type="button"
             variant="outlined"
-            startIcon={<FileUploadRounded />}
-            disabled
+            startIcon={
+              isDownloadingExcel ? (
+                <CircularProgress
+                  size={18}
+                  color="inherit"
+                />
+              ) : (
+                <GridOnRounded />
+              )
+            }
+            disabled={
+              !selectedCompany ||
+              !selectedBranch ||
+              !validDates ||
+              isDownloadingExcel ||
+              isDownloadingPdf
+            }
+            onClick={() => {
+              void handleDownloadExcel();
+            }}
             sx={{
               borderRadius: "5px",
               textTransform: "none",
               fontWeight: 700,
               minHeight: 40,
+              whiteSpace: "nowrap",
             }}
           >
-            Importar
+            {isDownloadingExcel
+              ? "Generando..."
+              : "Excel"}
           </Button>
 
           <Button
+            type="button"
             variant="outlined"
-            startIcon={<FileDownloadRounded />}
-            disabled
+            startIcon={
+              isDownloadingPdf ? (
+                <CircularProgress
+                  size={18}
+                  color="inherit"
+                />
+              ) : (
+                <PictureAsPdfRounded />
+              )
+            }
+            disabled={
+              !selectedCompany ||
+              !selectedBranch ||
+              !validDates ||
+              isDownloadingExcel ||
+              isDownloadingPdf
+            }
+            onClick={() => {
+              void handleDownloadPdf();
+            }}
             sx={{
               borderRadius: "5px",
               textTransform: "none",
               fontWeight: 700,
               minHeight: 40,
+              whiteSpace: "nowrap",
             }}
           >
-            Exportar
+            {isDownloadingPdf
+              ? "Generando..."
+              : "PDF"}
           </Button>
 
           <Button

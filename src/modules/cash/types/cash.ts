@@ -141,6 +141,8 @@ export type CashMovementsParams = {
   ordering?: string;
   page?: number;
   pageSize?: number;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 export type CashRegisterListResponse = {
