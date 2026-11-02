@@ -162,3 +162,80 @@ export async function getProfitabilityReport(params: ProfitabilityReportParams):
 
   return response.data;
 }
+
+type SalesExportParams = {
+  companyId: string;
+  branchId: string;
+  dateFrom: string;
+  dateTo: string;
+};
+
+async function downloadReportFile(
+  url: string,
+  params: SalesExportParams,
+  filename: string,
+) {
+  const response = await httpClient.get(
+    url,
+    {
+      params: {
+        company_id: params.companyId,
+        branch_id: params.branchId,
+        date_from: params.dateFrom,
+        date_to: params.dateTo,
+      },
+      responseType: "blob",
+    },
+  );
+
+  const contentType =
+    response.headers["content-type"];
+
+  const blob = new Blob(
+    [response.data],
+    {
+      type:
+        typeof contentType === "string"
+          ? contentType
+          : "application/octet-stream",
+    },
+  );
+
+  const objectUrl =
+    window.URL.createObjectURL(blob);
+
+  const link =
+    document.createElement("a");
+
+  link.href = objectUrl;
+  link.download = filename;
+
+  document.body.appendChild(link);
+
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(
+    objectUrl,
+  );
+}
+
+export async function downloadSalesExcel(
+  params: SalesExportParams,
+) {
+  return downloadReportFile(
+    "reports/sales/export/excel/",
+    params,
+    `ventas_${params.dateFrom}_${params.dateTo}.xlsx`,
+  );
+}
+
+export async function downloadSalesPdf(
+  params: SalesExportParams,
+) {
+  return downloadReportFile(
+    "reports/sales/export/pdf/",
+    params,
+    `ventas_${params.dateFrom}_${params.dateTo}.pdf`,
+  );
+}

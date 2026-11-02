@@ -14,6 +14,7 @@ import {
   FormControlLabel,
   IconButton,
   MenuItem,
+  Snackbar,
   Stack,
   TextField,
   Tooltip,
@@ -60,6 +61,7 @@ type ProductFormDialogProps = {
   units: UnitOption[];
   hideInitialStock?: boolean;
   createdCategory?: CategoryOption | null;
+  createdBrand?: BrandOption | null;
   onCreateCategory?: () => void;
   onCreateBrand?: () => void;
   onCreateUnit?: (
@@ -72,6 +74,17 @@ type ProductFormDialogProps = {
   onSubmit: (
     values: ProductFormValues,
   ) => void;
+
+  createdUnit?: {
+    id: string;
+    name: string;
+    symbol: string;
+  } | null;
+
+  createdUnitTarget?:
+    | "base_unit_id"
+    | "content_unit_id"
+    | null;
 };
 
 const emptyProductValues: ProductFormValues = {
@@ -117,19 +130,90 @@ export function ProductFormDialog({
   onClose,
   onSubmit,
   createdCategory,
+  createdBrand,
+  createdUnit,
+  createdUnitTarget,
 }: ProductFormDialogProps) {
 
   const [barcodeScannerOpen, setBarcodeScannerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [values, setValues] = useState<ProductFormValues>( emptyProductValues, );
-  const [validationError, setValidationError] = useState<string | null>(null);
-
+  const [validationError, setValidationError] = useState<string | null>(null); 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false); 
   const [imageSourceOpen, setImageSourceOpen] =  useState(false);
   const [skuManuallyEdited, setSkuManuallyEdited] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false); 
+  const visibleError = validationError ?? submitError;
+
+  const showValidationError = ( message: string ) => {
+    setValidationError(message);
+
+    if (isMobile) {
+      setSnackbarOpen(false);
+
+      window.setTimeout(() => {
+        setSnackbarOpen(true);
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      !createdUnit ||
+      !createdUnitTarget
+    ) {
+      return;
+    }
+
+    if (
+      createdUnitTarget ===
+      "base_unit_id"
+    ) {
+      setValues((current) => ({
+        ...current,
+        base_unit_id: createdUnit.id,
+      }));
+
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      content_unit_id: createdUnit.id,
+    }));
+  }, [
+    createdUnit,
+    createdUnitTarget,
+  ]);
+
+  useEffect(() => {
+    if ( !isMobile || !submitError ) {
+      return;
+    }
+
+    setSnackbarOpen(false);
+    const timeout = window.setTimeout(() => {
+      setSnackbarOpen(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [ submitError, isMobile ]);
+
+  useEffect(() => {
+    if (!createdBrand) {
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      brand_id: createdBrand.id,
+    }));
+  }, [createdBrand]);
 
   useEffect(() => {
     if (!createdCategory) {
@@ -141,9 +225,11 @@ export function ProductFormDialog({
       category_id: createdCategory.id,
     }));
   }, [createdCategory]);
+
   useEffect(() => {
     if (!open) {
       setBarcodeScannerOpen(false);
+      setSnackbarOpen(false);
       return;
     }
 
@@ -158,8 +244,8 @@ export function ProductFormDialog({
     );
 
     setValidationError(null);
+    setSnackbarOpen(false);
     setBarcodeScannerOpen(false);
-    setSkuManuallyEdited(false);
   }, [open, initialValues]);
 
   const updateValue = <Key extends keyof ProductFormValues>(
@@ -178,11 +264,8 @@ export function ProductFormDialog({
     setValues((current) => ({
       ...current,
       product_type: productType,
-      track_inventory:
-        productType === "PRODUCT",
-
-      initial_stock:
-      productType === "PRODUCT"
+      track_inventory: productType === "PRODUCT", 
+      initial_stock: productType === "PRODUCT"
         ? current.initial_stock
         : "0",
     }));
@@ -196,7 +279,7 @@ export function ProductFormDialog({
     }
 
     if (!file.type.startsWith("image/")) {
-      setValidationError(
+      showValidationError(
         "Debes seleccionar un archivo de imagen válido.",
       );
 
@@ -274,7 +357,7 @@ export function ProductFormDialog({
     }
 
     if (!values.name.trim()) {
-      setValidationError(
+      showValidationError(
         "Debes ingresar el nombre del producto.",
       );
 
@@ -282,7 +365,7 @@ export function ProductFormDialog({
     }
 
     if (!values.sku.trim()) {
-      setValidationError(
+      showValidationError(
         "Debes ingresar el SKU.",
       );
 
@@ -290,7 +373,7 @@ export function ProductFormDialog({
     }
 
     if (!values.base_unit_id) {
-      setValidationError(
+      showValidationError(
         "Debes seleccionar una unidad de medida.",
       );
 
@@ -301,7 +384,7 @@ export function ProductFormDialog({
       values.cost_price &&
       Number(values.cost_price) < 0
     ) {
-      setValidationError(
+      showValidationError(
         "El costo no puede ser negativo.",
       );
 
@@ -313,7 +396,7 @@ export function ProductFormDialog({
       Number.isNaN(Number(values.sale_price)) ||
       Number(values.sale_price) < 0
     ) {
-      setValidationError(
+      showValidationError(
         "Debes ingresar un precio de venta válido.",
       );
 
@@ -335,7 +418,7 @@ export function ProductFormDialog({
         !Number.isFinite(initialStock) ||
         initialStock < 0
       ) {
-        setValidationError(
+        showValidationError(
           "Debes ingresar un stock inicial válido.",
         );
 
@@ -354,7 +437,7 @@ export function ProductFormDialog({
         imageUrl = uploadedImage.image_url; 
         imagePublicId = uploadedImage.image_public_id;
         } catch {
-          setValidationError(
+          showValidationError(
             "No se pudo subir la imagen del producto.",
           );
 
@@ -492,11 +575,14 @@ export function ProductFormDialog({
             </Box>
           ) : (
             <Stack spacing={2.5}>
-              {(validationError ||
-                submitError) && (
-                <Alert severity="error">
-                  {validationError ||
-                    submitError}
+              {!isMobile && visibleError && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    borderRadius: "12px",
+                  }}
+                >
+                  {visibleError}
                 </Alert>
               )}
               <Box>
@@ -823,21 +909,20 @@ export function ProductFormDialog({
                   ))}
                   </TextField>
 
-                  <IconButton
+                  <Button
                     type="button"
                     onClick={onCreateCategory}
                     disabled={isSubmitting}
                     sx={{
                       width: 48,
-                      height: 48,
+                      height: 53,
                       flexShrink: 0,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: "1px solid", 
                       borderRadius: "5px",
                     }}
                   >
                     <AddIcon />
-                  </IconButton>
+                  </Button>
                 </Stack>
 
                 <Stack
@@ -867,7 +952,16 @@ export function ProductFormDialog({
                       Sin marca
                     </MenuItem>
 
-                    {brands.map((brand) => (
+                    {[
+                      ...brands,
+                      ...(createdBrand &&
+                      !brands.some(
+                        (brand) =>
+                          brand.id === createdBrand.id,
+                      )
+                        ? [createdBrand]
+                        : []),
+                    ].map((brand) => (
                       <MenuItem
                         key={brand.id}
                         value={brand.id}
@@ -877,21 +971,20 @@ export function ProductFormDialog({
                     ))}
                   </TextField>
 
-                  <IconButton
+                  <Button
                     type="button"
                     onClick={onCreateBrand}
                     disabled={isSubmitting}
                     sx={{
                       width: 48,
-                      height: 48,
+                      height: 53,
                       flexShrink: 0,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: "1px solid", 
                       borderRadius: "5px",
                     }}
                   >
                     <AddIcon />
-                  </IconButton>
+                  </Button>
                 </Stack>
 
                 <Box
@@ -944,7 +1037,7 @@ export function ProductFormDialog({
                       ))}
                     </TextField>
 
-                    <IconButton
+                    <Button
                       type="button"
                       onClick={() => {
                         onCreateUnit?.(
@@ -954,19 +1047,18 @@ export function ProductFormDialog({
                       disabled={isSubmitting}
                       sx={{
                         width: 48,
-                        height: 48,
+                        height: 53,
                         flexShrink: 0,
-                        border: "1px solid",
-                        borderColor: "divider",
+                        border: "1px solid", 
                         borderRadius: "5px",
                       }}
                     >
                       <AddIcon />
-                    </IconButton>
+                    </Button>
                   </Stack>
 
                   <TextField
-                      label="Presentación"
+                      label="Presentación *"
                       type="number"
                       value={ values.content_quantity }
                       onChange={(event) => {
@@ -1033,7 +1125,7 @@ export function ProductFormDialog({
                       ))}
                     </TextField>
 
-                    <IconButton
+                    <Button
                       type="button"
                       onClick={() => {
                         onCreateUnit?.(
@@ -1043,15 +1135,14 @@ export function ProductFormDialog({
                       disabled={isSubmitting}
                       sx={{
                         width: 48,
-                        height: 48,
+                        height: 53,
                         flexShrink: 0,
-                        border: "1px solid",
-                        borderColor: "divider",
+                        border: "1px solid", 
                         borderRadius: "5px",
                       }}
                     >
                       <AddIcon />
-                    </IconButton>
+                    </Button>
                   </Stack>
                 </Box>
 
@@ -1305,6 +1396,43 @@ export function ProductFormDialog({
         </DialogActions>
       </Box>
     </Dialog>
+
+    <Snackbar
+      open={
+        isMobile &&
+        snackbarOpen &&
+        Boolean(visibleError)
+      }
+      autoHideDuration={4500}
+      onClose={(_, reason) => {
+        if (reason === "clickaway") {
+          return;
+        }
+
+        setSnackbarOpen(false);
+      }}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "center",
+      }}
+      sx={{
+        mt: 2,
+      }}
+    >
+      <Alert
+        severity="error"
+        variant="filled"
+        onClose={() => {
+          setSnackbarOpen(false);
+        }}
+        sx={{
+          width: "90%",
+          borderRadius: "12px",
+        }}
+      >
+        {visibleError}
+      </Alert>
+    </Snackbar>
     <Drawer
       anchor="bottom"
       open={

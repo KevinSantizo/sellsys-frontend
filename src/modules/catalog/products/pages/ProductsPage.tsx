@@ -60,6 +60,7 @@ import {
 } from "../services/productService";
 
 import type {
+  BrandOption,
   //BrandOption,
   CategoryOption,
   Product,
@@ -77,6 +78,13 @@ import {
 import { CategoryFormDialog } from "../../categories/components/CategoryFormDialog";
 import type { CategoryFormValues } from "../../categories/types/category";
 import { createCategory } from "../../categories/services/categoryService";
+import type { BrandFormValues } from "../../brands/types/brand";
+import { createBrand } from "../../brands/services/brandService";
+import { BrandFormDialog } from "../../brands/components/BrandFormDialog";
+import { UnitOfMeasureFormDialog } from "../../units/components/UnitOfMeasureFormDialog";
+import { createUnitOfMeasure } from "../../units/services/unitService";
+import type {UnitOfMeasureFormValues} from "../../units/types/units";
+
 
 
 type SaveProductVariables = {
@@ -94,9 +102,24 @@ export function ProductsPage() {
   const [ productTypeFilter, setProductTypeFilter,] = useState<ProductTypeFilter>( "ALL",);
 
   const selectedBranch =  useBranchStore( (state) => state.selectedBranch,);
-  //const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false); 
-  //const [brandFormError, setBrandFormError] = useState<string | null>(null); 
-  //const [createdBrand, setCreatedBrand] = useState<BrandOption | null>(null);
+  const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false); 
+  const [brandFormError, setBrandFormError] = useState<string | null>(null); 
+  const [createdBrand, setCreatedBrand] = useState<BrandOption | null>(null);
+
+  type UnitTarget =
+  | "base_unit_id"
+  | "content_unit_id";
+
+  type CreatedUnit = {
+    id: string;
+    name: string;
+    symbol: string;
+  };
+
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false); 
+  const [unitFormError, setUnitFormError] = useState<string | null>(null); 
+  const [unitTarget, setUnitTarget] = useState<UnitTarget | null>(null); 
+  const [createdUnit, setCreatedUnit] = useState<CreatedUnit | null>(null);
  
   useEffect(() => {
     setPaginationModel((current) => ({
@@ -709,6 +732,52 @@ export function ProductsPage() {
     brandsQuery.isLoading ||
     unitsQuery.isLoading;
 
+  const createUnitMutation = useMutation({
+    mutationFn: (
+      values: UnitOfMeasureFormValues,
+    ) => {
+      if (!selectedCompany) {
+        throw new Error(
+          "No hay una empresa seleccionada.",
+        );
+      }
+
+      return createUnitOfMeasure({
+        company_id: selectedCompany.id,
+        name: values.name,
+        symbol: values.symbol,
+        unit_type: values.unit_type,
+        allows_decimal:
+          values.allows_decimal,
+        is_active: values.is_active,
+      });
+    },
+
+    onSuccess: async (unit) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "catalog-units",
+          selectedCompany?.id,
+        ],
+      });
+
+      setCreatedUnit({
+        id: unit.id,
+        name: unit.name,
+        symbol: unit.symbol,
+      });
+
+      setIsUnitDialogOpen(false);
+      setUnitFormError(null);
+    },
+
+    onError: () => {
+      setUnitFormError(
+        "No fue posible crear la unidad de medida.",
+      );
+    },
+  });
+
   const createCategoryMutation = useMutation({
     mutationFn: (values: CategoryFormValues) => {
       if (!selectedCompany) {
@@ -741,6 +810,45 @@ export function ProductsPage() {
     onError: () => {
       setCategoryFormError(
         "No fue posible crear la categoría.",
+      );
+    },
+  });
+
+  const createBrandMutation = useMutation({
+    mutationFn: (values: BrandFormValues) => {
+      if (!selectedCompany) {
+        throw new Error(
+          "No hay una empresa seleccionada.",
+        );
+      }
+
+      return createBrand({
+        ...values,
+        company_id: selectedCompany.id,
+      });
+    },
+
+    onSuccess: async (brand) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "catalog-brands",
+          selectedCompany?.id,
+        ],
+      });
+
+      setCreatedBrand({
+        id: brand.id,
+        name: brand.name,
+        is_active: brand.is_active ?? true,
+      });
+
+      setIsBrandDialogOpen(false);
+      setBrandFormError(null);
+    },
+
+    onError: () => {
+      setBrandFormError(
+        "No fue posible crear la marca.",
       );
     },
   });
@@ -959,6 +1067,19 @@ export function ProductsPage() {
           setCategoryFormError(null);
           setIsCategoryDialogOpen(true);
         }}
+        createdBrand={createdBrand}
+        onCreateBrand={() => {
+          setBrandFormError(null);
+          setIsBrandDialogOpen(true);
+        }}
+        createdUnit={createdUnit}
+        createdUnitTarget={unitTarget}
+
+        onCreateUnit={(target) => {
+          setUnitTarget(target);
+          setUnitFormError(null);
+          setIsUnitDialogOpen(true);
+        }}
       />
 
       <CategoryFormDialog
@@ -979,6 +1100,52 @@ export function ProductsPage() {
         onSubmit={(values) => {
           setCategoryFormError(null);
           createCategoryMutation.mutate(values);
+        }}
+      />
+      <BrandFormDialog
+        open={isBrandDialogOpen}
+        title="Nueva marca"
+        submitLabel="Guardar"
+        isSubmitting={
+          createBrandMutation.isPending
+        }
+        error={brandFormError}
+        onClose={() => {
+          if (createBrandMutation.isPending) {
+            return;
+          }
+
+          setIsBrandDialogOpen(false);
+          setBrandFormError(null);
+        }}
+        onSubmit={(values) => {
+          setBrandFormError(null);
+
+          createBrandMutation.mutate(values);
+        }}
+      />
+
+      <UnitOfMeasureFormDialog
+        open={isUnitDialogOpen}
+        title="Nueva unidad de medida"
+        submitLabel="Guardar"
+        initialValues={undefined}
+        isSubmitting={
+          createUnitMutation.isPending
+        }
+        error={unitFormError}
+        onClose={() => {
+          if (createUnitMutation.isPending) {
+            return;
+          }
+
+          setIsUnitDialogOpen(false);
+          setUnitFormError(null);
+          setUnitTarget(null);
+        }}
+        onSubmit={(values) => {
+          setUnitFormError(null);
+          createUnitMutation.mutate(values);
         }}
       />
     </Stack>

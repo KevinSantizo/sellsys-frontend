@@ -13,7 +13,8 @@ import {
   SwapHorizRounded,
   PointOfSaleRounded,
   LocalShippingRounded, 
-  ReceiptLongRounded,
+  ReceiptLongRounded, 
+  PictureAsPdfRounded 
   } from "@mui/icons-material";
 
 import {
@@ -70,6 +71,11 @@ import { getCompanies, } from "../modules/companies/services/companyService";
       label: "Ventas",
       path: "/sales",
       icon: <AttachMoney />,
+    },
+    {
+      label: "Reportes",
+      path: "reports/sales",
+      icon: <PictureAsPdfRounded  />,
     },
     {
       label: "Productos",

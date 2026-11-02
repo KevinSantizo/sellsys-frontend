@@ -2,10 +2,12 @@ import {
   ArrowBackRounded,
   ArrowForwardRounded,
   AssessmentRounded,
-  FilterAltOffRounded,
+  AttachMoney,
+  FilterAltOffRounded, 
   PointOfSaleRounded,
   ReceiptLongRounded,
   ShoppingCartCheckoutRounded,
+  TableChartRounded,
 } from "@mui/icons-material";
 
 import {
@@ -16,6 +18,7 @@ import {
   MenuItem,
   Pagination,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -34,6 +37,9 @@ import { useBranchStore } from "../../branches/store/branchStore";
 import { useCompanyStore } from "../../companies/store/companyStore";
 
 import { getSalesReport } from "../services/reportsService";
+import {PictureAsPdfOutlined,} from "@mui/icons-material";
+import { downloadSalesExcel, downloadSalesPdf } from "../services/reportsService";
+import { showErrorAlert } from "../../../shared/alerts/appAlerts";
 
 
 function formatDate(value: Date): string {
@@ -93,6 +99,66 @@ export function SalesReportPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const validDates = Boolean(dateFrom) && Boolean(dateTo) && dateFrom <= dateTo;
+
+  const [ isDownloadingExcel, setIsDownloadingExcel ] = useState(false);
+
+  const [ isDownloadingPdf, setIsDownloadingPdf,] = useState(false);
+
+  const handleDownloadExcel = async () => {
+    if (
+      !selectedCompany ||
+      !selectedBranch
+    ) {
+      return;
+    }
+
+    try {
+      setIsDownloadingExcel(true);
+
+      await downloadSalesExcel({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        dateFrom: appliedDateFrom,
+        dateTo: appliedDateTo,
+      });
+    } catch {
+      await showErrorAlert({
+        title: "No se pudo descargar el reporte",
+        text: "Ocurrió un error al generar el reporte de ventas en Excel.",
+      });
+    } finally {
+      setIsDownloadingExcel(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (
+      !selectedCompany ||
+      !selectedBranch
+    ) {
+      return;
+    }
+
+    try {
+      setIsDownloadingPdf(true);
+
+      await downloadSalesPdf({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        dateFrom: appliedDateFrom,
+        dateTo: appliedDateTo,
+      });
+    } catch {
+      await showErrorAlert({
+        title:
+          "No se pudo descargar el reporte",
+        text:
+          "Ocurrió un error al generar el reporte de ventas en PDF.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
 
   const canLoadReport =
     Boolean(selectedCompany?.id) &&
@@ -171,25 +237,122 @@ export function SalesReportPage() {
         gap: 3,
       }}
     >
-      <Box>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-          }}
-        >
-          Reporte de ventas
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: {
+            xs: "column",
+            sm: "row",
+          },
+          justifyContent: "space-between",
+          alignItems: {
+            xs: "stretch",
+            sm: "center",
+          },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+            }}
+          >
+            Reporte de ventas
+          </Typography>
 
-        <Typography
-          variant="body2"
+          <Typography
+            variant="body2"
+            sx={{
+              mt: 0.5,
+              color: "text.secondary",
+            }}
+          >
+            Consulta las ventas completadas de la sucursal en un período específico.
+          </Typography>
+        </Box>
+
+        <Box
           sx={{
-            mt: 0.5,
-            color: "text.secondary",
+            display: "flex",
+            flexDirection: {
+              xs: "column",
+              sm: "row",
+            },
+            gap: 1,
           }}
         >
-          Consulta las ventas completadas de la sucursal en un período específico.
-        </Typography>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={handleDownloadExcel}
+            disabled={
+              isDownloadingExcel ||
+              isDownloadingPdf ||
+              !selectedCompany ||
+              !selectedBranch ||
+              !report
+            }
+            startIcon={
+              isDownloadingExcel
+                ? (
+                  <CircularProgress
+                    size={18}
+                    color="inherit"
+                  />
+                )
+                : (
+                  <TableChartRounded  />
+                )
+            }
+            sx={{
+              borderRadius: "5px",
+              textTransform: "none",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isDownloadingExcel
+              ? "Descargando..."
+              : "Excel"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={handleDownloadPdf}
+            disabled={
+              isDownloadingExcel ||
+              isDownloadingPdf ||
+              !selectedCompany ||
+              !selectedBranch ||
+              !report
+            }
+            startIcon={
+              isDownloadingPdf
+                ? (
+                  <CircularProgress
+                    size={18}
+                    color="inherit"
+                  />
+                )
+                : (
+                  <PictureAsPdfOutlined />
+                )
+            }
+            sx={{
+              borderRadius: "5px",
+              textTransform: "none",
+              fontWeight: 700,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isDownloadingPdf
+              ? "Descargando..."
+              : "PDF"}
+          </Button>
+        </Box>
       </Box>
 
       {!selectedCompany || !selectedBranch ? (
@@ -518,19 +681,24 @@ export function SalesReportPage() {
                             textAlign: "center",
                           }}
                         >
-                          <Typography sx={{ fontWeight: 700 }}>
-                            No hay ventas
-                          </Typography>
-
-                          <Typography
-                            variant="body2"
+                        <Stack 
                             sx={{
-                              mt: 0.5,
-                              color: "text.secondary",
+                              height: "100%", 
+                              alignItems: "center",
+                              justifyContent: "center",
+                              spacing: 0.6,
                             }}
                           >
-                            No existen ventas completadas para el período seleccionado.
-                          </Typography>
+                            <AttachMoney sx={{ fontSize: 32, color: "text.disabled" }} />
+
+                            <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+                              Ventas
+                            </Typography>
+
+                            <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
+                              No existen ventas completadas para el período seleccionado.
+                            </Typography>
+                          </Stack>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -790,3 +958,4 @@ function ReportMetricCard({
     </Paper>
   );
 }
+

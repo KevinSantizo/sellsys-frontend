@@ -14,10 +14,14 @@ import {
   DialogTitle,
   IconButton,
   MenuItem,
+  Snackbar,
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 
 import {
   useEffect,
@@ -57,6 +61,9 @@ type PurchaseFormDialogProps = {
 
   onClose: () => void;
   onSubmit: (values: PurchaseFormValues) => void;
+  createdSupplier?: Supplier | null;
+
+  onCreateSupplier: () => void;
 };
 
 const emptyPurchaseItem: PurchaseItemFormValues = {
@@ -100,14 +107,51 @@ export function PurchaseFormDialog({
   onProductConsumed,
   onClose,
   onSubmit,
+  createdSupplier,
+  onCreateSupplier,
 }: PurchaseFormDialogProps) {
-  const [values, setValues] = useState<PurchaseFormValues>(
-    emptyPurchaseValues,
-  );
 
-  const [validationError, setValidationError] = useState<string | null>(
-    null,
-  );
+  const theme = useTheme();
+  const isMobile = useMediaQuery( theme.breakpoints.down("sm"),);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [values, setValues] = useState<PurchaseFormValues>( emptyPurchaseValues, );
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const visibleError = validationError ?? submitError;
+
+  const showValidationError = ( message: string ) => {
+    setValidationError(message);
+
+    if (isMobile) {
+      setSnackbarOpen(false);
+
+      window.setTimeout(() => {
+        setSnackbarOpen(true);
+      }, 0);
+    }
+  };
+
+
+  useEffect(() => {
+    if (!isMobile || !visibleError) {
+      return;
+    }
+
+    setSnackbarOpen(true);
+  }, [
+    visibleError,
+    isMobile,
+  ]);
+
+  useEffect(() => {
+    if (!createdSupplier) {
+      return;
+    }
+
+    setValues((current) => ({
+      ...current,
+      supplier_id: createdSupplier.id,
+    }));
+  }, [createdSupplier]);
 
   useEffect(() => {
     if (!open) {
@@ -272,7 +316,7 @@ export function PurchaseFormDialog({
     }
 
     if (!values.supplier_id) {
-      setValidationError(
+      showValidationError(
         "Debes seleccionar un proveedor.",
       );
 
@@ -280,7 +324,7 @@ export function PurchaseFormDialog({
     }
 
     if (!values.purchase_date) {
-      setValidationError(
+      showValidationError(
         "Debes seleccionar la fecha de la compra.",
       );
 
@@ -288,7 +332,7 @@ export function PurchaseFormDialog({
     }
 
     if (values.items.length === 0) {
-      setValidationError(
+      showValidationError(
         "La compra debe contener al menos un producto.",
       );
 
@@ -299,7 +343,7 @@ export function PurchaseFormDialog({
 
     for (const item of values.items) {
       if (!item.product_id) {
-        setValidationError(
+        showValidationError(
           "Debes seleccionar un producto en todas las líneas.",
         );
 
@@ -311,7 +355,7 @@ export function PurchaseFormDialog({
           (productItem) => productItem.id === item.product_id,
         );
 
-        setValidationError(
+        showValidationError(
           `El producto "${product?.name ?? "seleccionado"}" está repetido en la compra.`,
         );
 
@@ -324,7 +368,7 @@ export function PurchaseFormDialog({
       const unitCost = Number(item.unit_cost);
       const salePrice = Number(item.sale_price);
       if (!Number.isFinite(quantity) || quantity <= 0) {
-        setValidationError(
+        showValidationError(
           "Todas las cantidades deben ser mayores a cero.",
         );
 
@@ -332,7 +376,7 @@ export function PurchaseFormDialog({
       }
 
       if (!Number.isFinite(unitCost) || unitCost < 0) {
-        setValidationError(
+        showValidationError(
           "Todos los costos unitarios deben ser válidos.",
         );
 
@@ -343,7 +387,7 @@ export function PurchaseFormDialog({
         !Number.isFinite(salePrice) ||
         salePrice < 0
       ) {
-        setValidationError(
+        showValidationError(
           "Todos los precios de venta deben ser válidos.",
         );
 
@@ -352,7 +396,7 @@ export function PurchaseFormDialog({
     }
 
     if (discountTotal < 0) {
-      setValidationError(
+      showValidationError(
         "El descuento no puede ser negativo.",
       );
 
@@ -360,7 +404,7 @@ export function PurchaseFormDialog({
     }
 
     if (discountTotal > subtotal) {
-      setValidationError(
+      showValidationError(
         "El descuento no puede ser mayor al subtotal.",
       );
 
@@ -368,7 +412,7 @@ export function PurchaseFormDialog({
     }
 
     if (taxTotal < 0) {
-      setValidationError(
+      showValidationError(
         "El impuesto no puede ser negativo.",
       );
 
@@ -446,9 +490,14 @@ export function PurchaseFormDialog({
             </Stack>
           ) : (
             <Stack spacing={3}>
-              {(validationError || submitError) && (
-                <Alert severity="error">
-                  {validationError || submitError}
+              {!isMobile && visibleError && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    borderRadius: "12px",
+                  }}
+                >
+                  {visibleError}
                 </Alert>
               )}
 
@@ -473,6 +522,13 @@ export function PurchaseFormDialog({
                     gap: 2,
                   }}
                 >
+                <Stack
+                  direction="row"
+                  spacing={1} 
+                  sx={{
+                    alignItems:"center"
+                  }}
+                >
                   <TextField
                     select
                     label="Proveedor"
@@ -487,7 +543,16 @@ export function PurchaseFormDialog({
                     fullWidth
                     disabled={isSubmitting}
                   >
-                    {suppliers.map((supplier) => (
+                    {[
+                      ...suppliers,
+                      ...(createdSupplier &&
+                      !suppliers.some(
+                        (supplier) =>
+                          supplier.id === createdSupplier.id,
+                      )
+                        ? [createdSupplier]
+                        : []),
+                    ].map((supplier) => (
                       <MenuItem
                         key={supplier.id}
                         value={supplier.id}
@@ -496,6 +561,22 @@ export function PurchaseFormDialog({
                       </MenuItem>
                     ))}
                   </TextField>
+
+                  <Button
+                    type="button"
+                    onClick={onCreateSupplier}
+                    disabled={isSubmitting}
+                    sx={{
+                      width: 48,
+                      height: 53,
+                      flexShrink: 0,
+                      border: "1px solid", 
+                      borderRadius: "5px",
+                    }}
+                  >
+                    <AddRounded />
+                  </Button>
+                </Stack>
 
                   <TextField
                     label="Factura del proveedor"
@@ -660,45 +741,69 @@ export function PurchaseFormDialog({
                               gridTemplateColumns: {
                                 xs: "1fr",
                                 sm: "repeat(2, minmax(0, 1fr))",
-                                 md: "minmax(240px, 2fr) minmax(100px, 0.65fr) minmax(130px, 0.85fr) minmax(130px, 0.85fr) 56px",
+                                 md: "minmax(240px, 2fr) minmax(100px, 0.65fr) minmax(140px, 0.85fr) minmax(145px, 0.85fr) 56px",
                               },
                               gap: 1.25,
                               alignItems: "center",
                             }}
                           > 
                             {/* PRODUCTO */}
-                            <TextField
-                              select
-                              label="Producto"
-                              value={item.product_id}
-                              onChange={(event) => {
-                                handleProductChange(
-                                  index,
-                                  event.target.value,
-                                );
+                            <Stack 
+                              direction="row"
+                              spacing={1}
+                              sx={{
+                                alignItems: "center" 
                               }}
-                              required
-                              fullWidth
-                              disabled={isSubmitting}
                             >
-                              {products.map((product) => (
-                                <MenuItem
-                                  key={product.id}
-                                  value={product.id}
-                                  disabled={values.items.some(
-                                    (
-                                      purchaseItem,
-                                      purchaseItemIndex,
-                                    ) =>
-                                      purchaseItemIndex !== index &&
-                                      purchaseItem.product_id === product.id,
-                                  )}
-                                >
-                                  {product.name} - {product.sku}
-                                </MenuItem>
-                              ))}
-                            </TextField>
+                              <TextField
+                                select
+                                label="Producto"
+                                value={item.product_id}
+                                onChange={(event) => {
+                                  handleProductChange(
+                                    index,
+                                    event.target.value,
+                                  );
+                                }}
+                                required
+                                fullWidth
+                                disabled={isSubmitting}
+                              >
+                                {products.map((product) => (
+                                  <MenuItem
+                                    key={product.id}
+                                    value={product.id}
+                                    disabled={values.items.some(
+                                      (
+                                        purchaseItem,
+                                        purchaseItemIndex,
+                                      ) =>
+                                        purchaseItemIndex !== index &&
+                                        purchaseItem.product_id === product.id,
+                                    )}
+                                  >
+                                    {product.name} - {product.sku}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  onCreateProduct(index);
+                                }} 
+                                sx={{
+                                  width: 48,
+                                  height: 53,
+                                  flexShrink: 0,
+                                  border: "1px solid", 
+                                  borderRadius: "5px",
+                                }}
+                              >
+                                <AddIcon />
+                              </Button>
 
+                            </Stack>
+                           
                             {/* CANTIDAD */}
                             <TextField
                               label="Cantidad"
@@ -793,26 +898,7 @@ export function PurchaseFormDialog({
                                 }}
                               />
                             </IconButton>
-                          </Box>
-
-                          <Button
-                            type="button"
-                            size="small"
-                            startIcon={<AddRounded />}
-                            onClick={() => {
-                              onCreateProduct(index);
-                            }}
-                            disabled={isSubmitting}
-                            sx={{
-                              alignSelf: "flex-start",
-                              minWidth: 0,
-                              px: 0.5,
-                              textTransform: "none",
-                              fontWeight: 700,
-                            }}
-                          >
-                            Crear nuevo producto
-                          </Button>
+                          </Box> 
                            
                           {/* SEGUNDA FILA */}
                           <Box
@@ -848,7 +934,7 @@ export function PurchaseFormDialog({
 
                             {/* VENCIMIENTO */}
                             <TextField
-                              label="Vencimiento"
+                              label="Vencimiento *"
                               type="date"
                               value={item.expiration_date}
                               onChange={(event) => {
@@ -1110,7 +1196,44 @@ export function PurchaseFormDialog({
           </Button>
         </DialogActions>
       </Box>
+      <Snackbar
+        open={
+          isMobile &&
+          snackbarOpen &&
+          Boolean(visibleError)
+        }
+        autoHideDuration={4500}
+        onClose={(_, reason) => {
+          if (reason === "clickaway") {
+            return;
+          }
+
+          setSnackbarOpen(false);
+        }}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "center",
+        }}
+        sx={{
+          mt: 2,
+        }}
+      >
+        <Alert
+          severity="error"
+          variant="filled"
+          onClose={() => {
+            setSnackbarOpen(false);
+          }}
+          sx={{
+            width: "90%",
+            borderRadius: "12px",
+          }}
+        >
+          {visibleError}
+        </Alert>
+      </Snackbar>
     </Dialog>
+    
   );
 }
 

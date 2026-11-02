@@ -602,33 +602,56 @@ export function SaleDetailDialog({
 
       <DialogActions
         sx={{
-          px: 3,
-          py: 2,
+          borderTop: "1px solid",
+          borderColor: "divider",
 
-          borderTop:
-            "1px solid",
+          display: "flex",
 
-          borderColor:
-            "divider",
+          flexDirection: {
+            xs: "column",
+            sm: "row",
+          },
+
+          alignItems: {
+            xs: "stretch",
+            sm: "center",
+          },
+
+          justifyContent: {
+            xs: "stretch",
+            sm: "flex-end",
+          },
+
+          gap: 1,
+
+          p: 2,
+
+          "& > :not(style) ~ :not(style)": {
+            marginLeft: 0,
+          },
         }}
       >
         <Button
           type="button"
           variant="outlined"
           onClick={onClose}
-          disabled={
-            downloading
-          }
+          disabled={downloading}
           sx={{
-            borderRadius:
-              "5px",
-
-            textTransform:
-              "none",
+            width: {
+              xs: "100%",
+              sm: "auto",
+            },
+            minHeight: {
+              xs: 48,
+              sm: "auto",
+            },
+            borderRadius: "5px",
+            textTransform: "none",
           }}
         >
           Cerrar
         </Button>
+
         {sale?.status === "COMPLETED" && (
           <Button
             type="button"
@@ -642,6 +665,14 @@ export function SaleDetailDialog({
               onCancel(sale);
             }}
             sx={{
+              width: {
+                xs: "100%",
+                sm: "auto",
+              },
+              minHeight: {
+                xs: 48,
+                sm: "auto",
+              },
               borderRadius: "5px",
               textTransform: "none",
               fontWeight: 700,
@@ -650,6 +681,7 @@ export function SaleDetailDialog({
             Cancelar venta
           </Button>
         )}
+
         <Button
           type="button"
           variant="contained"
@@ -666,8 +698,7 @@ export function SaleDetailDialog({
           disabled={
             downloading ||
             !sale ||
-            sale.status !==
-              "COMPLETED"
+            sale.status !== "COMPLETED"
           }
           onClick={() => {
             if (!sale) {
@@ -679,16 +710,20 @@ export function SaleDetailDialog({
             );
           }}
           sx={{
-            borderRadius:
-              "5px",
-
-            textTransform:
-              "none",
-
+            width: {
+              xs: "100%",
+              sm: "auto",
+            },
+            minHeight: {
+              xs: 48,
+              sm: "auto",
+            },
+            borderRadius: "5px",
+            textTransform: "none",
             fontWeight: 700,
           }}
         >
-          Imprimir recibo
+          Imprimir comprobante
         </Button>
       </DialogActions>
     </Dialog>

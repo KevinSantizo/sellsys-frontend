@@ -11,10 +11,13 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  Snackbar,
   Stack,
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 
 import {
@@ -75,18 +78,41 @@ export function SupplierFormDialog({
   onClose,
   onSubmit,
 }: SupplierFormDialogProps) {
-  const [values, setValues] =
-    useState<SupplierFormValues>(
-      emptySupplierValues,
-    );
 
-  const [
-    validationError,
-    setValidationError,
-  ] = useState<string | null>(
-    null,
-  );
+  const [values, setValues] = useState<SupplierFormValues>( emptySupplierValues, );
+  const [validationError, setValidationError,] = useState<string | null>(null,);
+  const theme = useTheme();
+  const isMobile = useMediaQuery( theme.breakpoints.down("sm"),);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const visibleError = validationError ?? submitError;
 
+  const showValidationError = (  message: string, ) => {
+    setValidationError(message); 
+    if (isMobile) {
+      setSnackbarOpen(false);
+
+      window.setTimeout(() => {
+        setSnackbarOpen(true);
+      }, 0);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) {
+      setSnackbarOpen(false);
+      return;
+    }
+
+    setValues({
+      ...(initialValues ?? emptySupplierValues),
+    });
+
+    setValidationError(null);
+    setSnackbarOpen(false);
+  }, [
+    open,
+    initialValues,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -137,7 +163,7 @@ export function SupplierFormDialog({
 
 
     if (!values.name.trim()) {
-      setValidationError(
+      showValidationError(
         "Debes ingresar el nombre del proveedor.",
       );
 
@@ -151,7 +177,7 @@ export function SupplierFormDialog({
         values.email.trim(),
       )
     ) {
-      setValidationError(
+      showValidationError(
         "Debes ingresar un correo electrónico válido.",
       );
 
@@ -234,11 +260,14 @@ export function SupplierFormDialog({
             </Box>
           ) : (
             <Stack spacing={2.5}>
-              {(validationError ||
-                submitError) && (
-                <Alert severity="error">
-                  {validationError ||
-                    submitError}
+              {!isMobile && visibleError && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    borderRadius: "12px",
+                  }}
+                >
+                  {visibleError}
                 </Alert>
               )}
 
@@ -503,6 +532,43 @@ export function SupplierFormDialog({
           </Button>
         </DialogActions>
       </Box>
+
+      <Snackbar
+        open={
+          isMobile &&
+          snackbarOpen &&
+          Boolean(visibleError)
+        }
+        autoHideDuration={4500}
+        onClose={(_, reason) => {
+          if (reason === "clickaway") {
+            return;
+          }
+
+          setSnackbarOpen(false);
+        }}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "center",
+        }}
+        sx={{
+          mt: 2,
+        }}
+      >
+        <Alert
+          severity="error"
+          variant="filled"
+          onClose={() => {
+            setSnackbarOpen(false);
+          }}
+          sx={{
+            width: "90%",
+            borderRadius: "12px",
+          }}
+        >
+          {visibleError}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 }

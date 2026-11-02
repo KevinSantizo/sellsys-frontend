@@ -40,7 +40,7 @@ import type {
   PurchaseStatusFilter, 
 } from "../suppliers/types/purchase";  
 import { PurchaseFormDialog } from "../components/PurchaseFormDialog";  
-import { getSuppliers } from "../suppliers/services/supplierService"; 
+import { createSupplier, getSuppliers } from "../suppliers/services/supplierService"; 
 import { createProduct, getProducts } from "../../catalog/products/services/productService";
 import { PurchaseDetailDialog } from "../components/PurchaseDetailDialog";
 import { getCashSessions } from "../../cash/services/cashService";
@@ -58,10 +58,19 @@ import {
   getUnitOptions,
 } from "../../catalog/products/services/catalogReferenceService";
 
-import type {
-  Product,
-  ProductFormValues,
-} from "../../catalog/products/types/product";
+import type { BrandOption, CategoryOption, Product, ProductFormValues, } from "../../catalog/products/types/product";
+import { SupplierFormDialog } from "../suppliers/components/SupplierFormDialog";
+import type { Supplier, SupplierFormValues, } from "../suppliers/types/supplier";
+import { CategoryFormDialog } from "../../catalog/categories/components/CategoryFormDialog";
+import { BrandFormDialog } from "../../catalog/brands/components/BrandFormDialog";
+import { UnitOfMeasureFormDialog } from "../../catalog/units/components/UnitOfMeasureFormDialog";
+import type { UnitOfMeasureFormValues } from "../../catalog/units/types/units";
+import { createUnitOfMeasure } from "../../catalog/units/services/unitService";
+import type { CategoryFormValues } from "../../catalog/categories/types/category";
+import { createCategory, getCategories } from "../../catalog/categories/services/categoryService";
+import type { BrandFormValues } from "../../catalog/brands/types/brand";
+import { createBrand } from "../../catalog/brands/services/brandService";
+import axios from "axios";
 
 export function PurchasesPage() {
   const queryClient = useQueryClient(); 
@@ -92,8 +101,40 @@ export function PurchasesPage() {
   const [createProductError, setCreateProductError] = useState<string | null>(null);
   const [purchaseItemIndex, setPurchaseItemIndex] = useState<number | null>(null);
   const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
+  const [ isSupplierDialogOpen,  setIsSupplierDialogOpen, ] = useState(false);
+  const [ createSupplierError, setCreateSupplierError, ] = useState<string | null>(null);
+  const [createdSupplier, setCreatedSupplier,] = useState<Supplier | null>(null);
 
-  
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+
+  const [categoryFormError, setCategoryFormError] = useState<string | null>(null);
+
+  const [createdCategory, setCreatedCategory] = useState<CategoryOption | null>(null);
+
+
+  const [isBrandDialogOpen, setIsBrandDialogOpen] = useState(false);
+
+  const [brandFormError, setBrandFormError] = useState<string | null>(null);
+
+  const [createdBrand, setCreatedBrand] = useState<BrandOption | null>(null); 
+
+  const [isUnitDialogOpen, setIsUnitDialogOpen] = useState(false);
+
+  const [unitFormError, setUnitFormError] = useState<string | null>(null);
+
+  const [unitTarget, setUnitTarget] =
+    useState<
+      | "base_unit_id"
+      | "content_unit_id"
+      | null
+    >(null);
+  type CreatedUnit = {
+      id: string;
+      name: string;
+      symbol: string;
+    };
+    const [createdUnit, setCreatedUnit] = useState<CreatedUnit | null>(null);
+
 
   useEffect(() => {
     setPaginationModel((current) => ({
@@ -193,6 +234,54 @@ export function PurchasesPage() {
       ],
       queryFn: () => getUnitOptions(selectedCompany!.id),
       enabled: Boolean(selectedCompany?.id) && isProductDialogOpen,
+    });
+
+    const createSupplierMutation = useMutation({
+      mutationFn: (
+        values: SupplierFormValues,
+      ) => {
+        if (!selectedCompany) {
+          throw new Error(
+            "No existe una empresa seleccionada.",
+          );
+        }
+
+        return createSupplier({
+          company_id: selectedCompany.id,
+          name: values.name.trim(),
+          tax_id: values.tax_id.trim(),
+          contact_name:
+            values.contact_name.trim(),
+          phone: values.phone.trim(),
+          email: values.email.trim(),
+          address: values.address.trim(),
+          notes: values.notes.trim(),
+          is_active: values.is_active,
+        });
+      },
+
+      onSuccess: async (supplier) => {
+        await queryClient.invalidateQueries({
+          queryKey: [
+            "purchase-suppliers",
+            selectedCompany?.id,
+          ],
+        });
+
+        setCreatedSupplier(supplier);
+
+        setIsSupplierDialogOpen(false);
+        setCreateSupplierError(null);
+      },
+
+      onError: (error) => {
+        setCreateSupplierError(
+          getApiErrorMessage(
+            error,
+            "No fue posible crear el proveedor.",
+          ),
+        );
+      },
     });
 
     const createProductMutation = useMutation({
@@ -591,6 +680,172 @@ export function PurchasesPage() {
     selectedBranch?.id,
   ]);
 
+  const createUnitMutation = useMutation({
+      mutationFn: (
+        values: UnitOfMeasureFormValues,
+      ) => {
+        if (!selectedCompany) {
+          throw new Error(
+            "No hay una empresa seleccionada.",
+          );
+        }
+  
+        return createUnitOfMeasure({
+          company_id: selectedCompany.id,
+          name: values.name,
+          symbol: values.symbol,
+          unit_type: values.unit_type,
+          allows_decimal:
+            values.allows_decimal,
+          is_active: values.is_active,
+        });
+      },
+  
+      onSuccess: async (unit) => {
+        await queryClient.invalidateQueries({
+          queryKey: [
+            "catalog-units",
+            selectedCompany?.id,
+          ],
+        });
+  
+        setCreatedUnit({
+          id: unit.id,
+          name: unit.name,
+          symbol: unit.symbol,
+        });
+  
+        setIsUnitDialogOpen(false);
+        setUnitFormError(null);
+      },
+  
+      onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const nonFieldErrors =
+          error.response?.data?.non_field_errors;
+
+        if (
+          Array.isArray(nonFieldErrors) &&
+          nonFieldErrors.some((message) =>
+            String(message).includes(
+              "company_id, symbol",
+            ),
+          )
+        ) {
+          setUnitFormError(
+            "Ya existe una unidad de medida con ese símbolo.",
+          );
+
+          return;
+        }
+      }
+
+      setUnitFormError(
+        "No fue posible crear la unidad de medida.",
+      );
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (values: CategoryFormValues) => {
+      if (!selectedCompany) {
+        throw new Error(
+          "No hay una empresa seleccionada.",
+        );
+      }
+
+      return createCategory({
+        ...values,
+        company_id: selectedCompany.id,
+      });
+    },
+
+    onSuccess: async (category) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["categories"],
+      });
+
+      setCreatedCategory({
+        id: category.id,
+        name: category.name,
+        is_active: category.is_active ?? true,
+      });
+
+      setIsCategoryDialogOpen(false);
+      setCategoryFormError(null);
+    },
+
+    onError: () => {
+      setCategoryFormError(
+        "No fue posible crear la categoría.",
+      );
+    },
+  });
+
+  const createBrandMutation = useMutation({
+    mutationFn: (values: BrandFormValues) => {
+      if (!selectedCompany) {
+        throw new Error(
+          "No hay una empresa seleccionada.",
+        );
+      }
+
+      return createBrand({
+        ...values,
+        company_id: selectedCompany.id,
+      });
+    },
+
+    onSuccess: async (brand) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          "catalog-brands",
+          selectedCompany?.id,
+        ],
+      });
+
+      setCreatedBrand({
+        id: brand.id,
+        name: brand.name,
+        is_active: brand.is_active ?? true,
+      });
+
+      setIsBrandDialogOpen(false);
+      setBrandFormError(null);
+    },
+
+    onError: () => {
+      setBrandFormError(
+        "No fue posible crear la marca.",
+      );
+    },
+  });
+
+  const categoryParentsQuery = useQuery({
+    queryKey: [
+      "categories",
+      "product-form-parents",
+      selectedCompany?.id,
+    ],
+
+    queryFn: async () => {
+      if (!selectedCompany) {
+        return [];
+      }
+
+      const response = await getCategories({
+        companyId: selectedCompany.id,
+        isActive: true,
+        ordering: "name",
+        page: 1,
+        pageSize: 100,
+      });
+
+      return response.results;
+    },
+
+    enabled: Boolean(selectedCompany?.id),
+  });
 
   const purchasesQuery = useQuery({
 
@@ -1034,6 +1289,36 @@ export function PurchasesPage() {
             values,
           );
         }}
+
+        createdSupplier={createdSupplier} 
+        onCreateSupplier={() => {
+          setCreateSupplierError(null);
+          setIsSupplierDialogOpen(true);
+        }} 
+      />
+
+      <SupplierFormDialog
+        open={isSupplierDialogOpen}
+        title="Nuevo proveedor"
+        submitLabel="Guardar proveedor"
+        isSubmitting={
+          createSupplierMutation.isPending
+        }
+        isLoadingSupplier={false}
+        submitError={createSupplierError}
+        onClose={() => {
+          if (createSupplierMutation.isPending) {
+            return;
+          }
+
+          setIsSupplierDialogOpen(false);
+          setCreateSupplierError(null);
+        }}
+        onSubmit={(values) => {
+          setCreateSupplierError(null);
+
+          createSupplierMutation.mutate(values);
+        }}
       />
 
       <ProductFormDialog
@@ -1055,6 +1340,7 @@ export function PurchasesPage() {
         }
         isLoadingProduct={false}
         submitError={createProductError}
+
         categories={
           categoriesQuery.data ?? []
         }
@@ -1064,26 +1350,33 @@ export function PurchasesPage() {
         units={
           unitsQuery.data ?? []
         }
-        hideInitialStock
-        initialValues={{
-          name: "",
-          description: "",
-          sku: "",
-          barcode: "",
-          product_type: "PRODUCT",
-          category_id: "",
-          brand_id: "",
-          base_unit_id: "",
-          cost_price: "",
-          sale_price: "",
-          track_inventory: true,
-          is_active: true,
-          initial_stock: "0",
-          package_quantity: "",
-          package_unit_id: "",
-          content_quantity: "",
-          content_unit_id: "",
+
+        createdCategory={createdCategory}
+        createdBrand={createdBrand}
+        createdUnit={createdUnit}
+        createdUnitTarget={unitTarget}
+
+        onCreateCategory={() => {
+          setCreatedCategory(null);
+          setCategoryFormError(null);
+          setIsCategoryDialogOpen(true);
         }}
+
+        onCreateBrand={() => {
+          setCreatedBrand(null);
+          setBrandFormError(null);
+          setIsBrandDialogOpen(true);
+        }}
+
+        onCreateUnit={(target) => {
+          setCreatedUnit(null);
+          setUnitTarget(target);
+          setUnitFormError(null);
+          setIsUnitDialogOpen(true);
+        }}
+
+        hideInitialStock
+
         onClose={() => {
           if (createProductMutation.isPending) {
             return;
@@ -1092,13 +1385,84 @@ export function PurchasesPage() {
           setIsProductDialogOpen(false);
           setCreateProductError(null);
           setPurchaseItemIndex(null);
+
+          setCreatedCategory(null);
+          setCreatedBrand(null);
+          setCreatedUnit(null);
+          setUnitTarget(null);
         }}
+
         onSubmit={(values) => {
           setCreateProductError(null);
 
-          createProductMutation.mutate(
-            values,
-          );
+          createProductMutation.mutate(values);
+        }}
+      />
+
+      <CategoryFormDialog
+        open={isCategoryDialogOpen}
+        title="Nueva categoría"
+        submitLabel="Guardar"
+        categories={categoryParentsQuery.data ?? []}
+        isSubmitting={createCategoryMutation.isPending}
+        error={categoryFormError}
+        onClose={() => {
+          if (createCategoryMutation.isPending) {
+            return;
+          }
+
+          setIsCategoryDialogOpen(false);
+          setCategoryFormError(null);
+        }}
+        onSubmit={(values) => {
+          setCategoryFormError(null);
+          createCategoryMutation.mutate(values);
+        }}
+      />
+      <BrandFormDialog
+        open={isBrandDialogOpen}
+        title="Nueva marca"
+        submitLabel="Guardar"
+        isSubmitting={
+          createBrandMutation.isPending
+        }
+        error={brandFormError}
+        onClose={() => {
+          if (createBrandMutation.isPending) {
+            return;
+          }
+
+          setIsBrandDialogOpen(false);
+          setBrandFormError(null);
+        }}
+        onSubmit={(values) => {
+          setBrandFormError(null);
+
+          createBrandMutation.mutate(values);
+        }}
+      />
+
+      <UnitOfMeasureFormDialog
+        open={isUnitDialogOpen}
+        title="Nueva unidad de medida"
+        submitLabel="Guardar"
+        initialValues={undefined}
+        isSubmitting={
+          createUnitMutation.isPending
+        }
+        error={unitFormError}
+        onClose={() => {
+          if (createUnitMutation.isPending) {
+            return;
+          }
+
+          setIsUnitDialogOpen(false);
+          setUnitFormError(null);
+          setUnitTarget(null);
+        }}
+        onSubmit={(values) => {
+          setUnitFormError(null);
+          createUnitMutation.mutate(values);
         }}
       />
 
