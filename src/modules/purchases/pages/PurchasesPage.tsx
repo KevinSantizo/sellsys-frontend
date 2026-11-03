@@ -431,8 +431,7 @@ export function PurchasesPage() {
           cost_price: values.cost_price || "0.00",
           sale_price: values.sale_price,
           track_inventory: true,
-          is_active: true,
-          initial_stock: "0",
+          is_active: true, 
           package_quantity: values.package_quantity
             ? Number(values.package_quantity)
             : null,
@@ -441,6 +440,9 @@ export function PurchasesPage() {
           content_unit_id: values.content_unit_id || null,
           image_url: values.image_url ?? null,
           image_public_id: values.image_public_id ?? null,
+          initial_stock: values.track_inventory ? values.initial_stock : "0",
+          initial_lot_number: values.track_inventory ? values.initial_lot_number.trim() || null : null,
+          initial_expiration_date: values.track_inventory ? values.initial_expiration_date || null : null,
         });
       },
 
