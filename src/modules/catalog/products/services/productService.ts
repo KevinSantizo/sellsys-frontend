@@ -18,24 +18,25 @@ export async function getProducts({
   categoryId,
   brandId,
   productType,
+  expirationStatus,
 }: GetProductsParams): Promise<PaginatedProductsResponse> {
-  const response =
-    await httpClient.get<PaginatedProductsResponse>(
-      "catalog/products/",
-      {
-        params: {
-          company_id: companyId,
-          branch_id: branchId,
-          search: search || undefined,
-          page,
-          page_size: pageSize,
-          is_active: isActive,
-          category: categoryId || undefined,
-          brand: brandId || undefined,
-          product_type: productType || undefined,
-        },
+  const response = await httpClient.get<PaginatedProductsResponse>(
+    "catalog/products/",
+    {
+      params: {
+        company_id: companyId,
+        branch_id: branchId,
+        search: search || undefined,
+        page,
+        page_size: pageSize,
+        is_active: isActive,
+        category: categoryId || undefined,
+        brand: brandId || undefined,
+        product_type: productType || undefined,
+        expiration_status: expirationStatus || undefined,
       },
-    );
+    },
+  );
 
   return response.data;
 }
@@ -43,11 +44,10 @@ export async function getProducts({
 export async function createProduct(
   payload: CreateProductPayload,
 ): Promise<ProductDetail> {
-  const response =
-    await httpClient.post<ProductDetail>(
-      "catalog/products/",
-      payload,
-    );
+  const response = await httpClient.post<ProductDetail>(
+    "catalog/products/",
+    payload,
+  );
 
   return response.data;
 }
@@ -55,10 +55,9 @@ export async function createProduct(
 export async function getProductDetail(
   productId: string,
 ): Promise<ProductDetail> {
-  const response =
-    await httpClient.get<ProductDetail>(
-      `catalog/products/${productId}/`,
-    );
+  const response = await httpClient.get<ProductDetail>(
+    `catalog/products/${productId}/`,
+  );
 
   return response.data;
 }
@@ -67,21 +66,16 @@ export async function updateProduct(
   productId: string,
   payload: UpdateProductPayload,
 ): Promise<ProductDetail> {
-  const response =
-    await httpClient.patch<ProductDetail>(
-      `catalog/products/${productId}/`,
-      payload,
-    );
+  const response = await httpClient.patch<ProductDetail>(
+    `catalog/products/${productId}/`,
+    payload,
+  );
 
   return response.data;
 }
 
-export async function deleteProduct(
-  productId: string,
-): Promise<void> {
-  await httpClient.delete(
-    `catalog/products/${productId}/`,
-  );
+export async function deleteProduct(productId: string): Promise<void> {
+  await httpClient.delete(`catalog/products/${productId}/`);
 }
 
 export type UploadProductImageResponse = {
@@ -96,16 +90,15 @@ export async function uploadProductImage(
 
   formData.append("image", file);
 
-  const response =
-    await httpClient.post<UploadProductImageResponse>(
-      "catalog/products/upload-image/",
-      formData,
-      {
-        headers: {
-          "Content-Type": undefined,
-        },
+  const response = await httpClient.post<UploadProductImageResponse>(
+    "catalog/products/upload-image/",
+    formData,
+    {
+      headers: {
+        "Content-Type": undefined,
       },
-    );
+    },
+  );
 
   return response.data;
 }

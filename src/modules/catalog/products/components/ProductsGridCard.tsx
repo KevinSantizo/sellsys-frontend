@@ -9,7 +9,6 @@ import {
   CleaningServicesOutlined,
   DeleteOutlineRounded,
 } from "@mui/icons-material";
-
 import {
   Box,
   Button,
@@ -25,88 +24,75 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-
 import {
   DataGrid,
   GridActionsCellItem,
   type GridColDef,
   type GridPaginationModel,
 } from "@mui/x-data-grid";
-
 import { esES } from "@mui/x-data-grid/locales"; 
 import {
   useMemo,
 } from "react";
-
 import type {
   BrandOption,
   CategoryOption,
   Product,
+  ProductExpirationStatus,
   ProductStatusFilter,
   ProductTypeFilter,
 } from "../types/product";
-
+type ExpirationFilter = "ALL" | ProductExpirationStatus;
 type ProductsGridCardProps = {
   products: Product[];
   totalProducts: number;
   loading: boolean;
   search: string;
-
   statusFilter:
     ProductStatusFilter;
-
   categoryFilter: string;
   categories: CategoryOption[];
-
   brandFilter: string;
   brands: BrandOption[];
-
   productTypeFilter:
     ProductTypeFilter;
-
+  expirationFilter: ExpirationFilter;
+  upcomingExpirationCount: number;
+  expiredExpirationCount: number;
   paginationModel:
     GridPaginationModel;
-
   onSearchChange: (
     value: string,
   ) => void;
-
   onStatusFilterChange: (
     value: ProductStatusFilter,
   ) => void;
-
   onCategoryFilterChange: (
     value: string,
   ) => void;
-
   onBrandFilterChange: (
     value: string,
   ) => void;
-
   onProductTypeFilterChange: (
     value: ProductTypeFilter,
   ) => void;
-
+  onExpirationFilterChange: (
+    value: ExpirationFilter,
+  ) => void;
   onPaginationModelChange: (
     model: GridPaginationModel,
   ) => void;
-
   onRefresh: () => void;
   onEdit: (product: Product) => void;
-
   formatCurrency: (
     value: string,
   ) => string;
-
   hasActiveFilters: boolean;
-
   onClearFilters: () => void;
-
   onDelete: (
     product: Product,
   ) => void;
 };
-
 export function ProductsGridCard({
   products,
   totalProducts,
@@ -118,6 +104,9 @@ export function ProductsGridCard({
  // brandFilter,
  // brands,
   productTypeFilter,
+  expirationFilter,
+  upcomingExpirationCount,
+  expiredExpirationCount,
   paginationModel,
   hasActiveFilters,
   onSearchChange,
@@ -125,6 +114,7 @@ export function ProductsGridCard({
   onCategoryFilterChange,
  // onBrandFilterChange,
   onProductTypeFilterChange,
+  onExpirationFilterChange,
   onPaginationModelChange,
   onClearFilters,
   onRefresh,
@@ -173,7 +163,6 @@ export function ProductsGridCard({
                       height: "100%",
                       objectFit: "contain",
                       bgcolor: "background.paper",
-                      
                     }}
                   />
                 ) : (
@@ -184,7 +173,6 @@ export function ProductsGridCard({
                   />
                 )}
               </Box>
-
               <Box
                 sx={{
                   minWidth: 0,
@@ -210,7 +198,6 @@ export function ProductsGridCard({
                       })} ${row.content_unit_symbol}`
                     : " "}
                 </Typography>
-
                 <Typography
                   variant="body2"
                   sx={{
@@ -270,7 +257,6 @@ export function ProductsGridCard({
           align: "center",
           headerAlign: "center",
           sortable: false,
-
           renderCell: ({ row }) => {
             if (!row.track_inventory) {
               return (
@@ -287,13 +273,10 @@ export function ProductsGridCard({
                 />
               );
             }
-
             const stock = Number(
               row.current_stock ?? 0,
             );
-
             const hasStock = stock > 0;
-
             return (
               <Chip
                 label={`${stock.toLocaleString("es-GT", {
@@ -313,7 +296,6 @@ export function ProductsGridCard({
             );
           },
         },
-
         {
           field: "cost_price",
           headerName: "Precio costo",
@@ -336,7 +318,6 @@ export function ProductsGridCard({
             </Typography>
           ),
         },
-
         {
           field: "sale_price",
           headerName: "Precio",
@@ -364,7 +345,6 @@ export function ProductsGridCard({
           headerName: "Vencimiento",
           minWidth: 150,
           flex: 0.7,
-
           renderCell: ({ row }) => {
             if (!row.next_expiration_date) {
               return (
@@ -378,37 +358,30 @@ export function ProductsGridCard({
                 </Typography>
               );
             }
-
             const expirationDate = new Date(
               `${row.next_expiration_date}T00:00:00`,
             );
-
             const today = new Date();
-
             today.setHours(
               0,
               0,
               0,
               0,
             );
-
             const diffTime =
               expirationDate.getTime()
               - today.getTime();
-
             const daysRemaining =
               Math.ceil(
                 diffTime /
                   (1000 * 60 * 60 * 24),
               );
-
             let color:
               | "error.main"
               | "warning.main"
               | "success.main"
               | "text.primary" =
               "text.primary";
-
             let label = expirationDate.toLocaleDateString(
               "es-GT",
               {
@@ -417,7 +390,6 @@ export function ProductsGridCard({
                 year: "numeric",
               },
             );
-
             if (daysRemaining < 0) {
               color = "error.main";
               label = `Vencido · ${label}`;
@@ -430,7 +402,6 @@ export function ProductsGridCard({
             } else {
               color = "success.main";
             }
-
             return (
               <Typography
                 sx={{
@@ -494,7 +465,6 @@ export function ProductsGridCard({
                 onEdit(row);
               }}
             />,
-
             <GridActionsCellItem
               key="delete"
               icon={
@@ -529,7 +499,6 @@ export function ProductsGridCard({
         onDelete,
       ]
     );
-
   const totalPages = Math.max(
     1,
     Math.ceil(
@@ -537,14 +506,12 @@ export function ProductsGridCard({
         paginationModel.pageSize,
     ),
   );
-
   const firstVisibleProduct =
     totalProducts === 0
       ? 0
       : paginationModel.page *
           paginationModel.pageSize +
         1;
-
   const lastVisibleProduct =
     totalProducts === 0
       ? 0
@@ -554,11 +521,9 @@ export function ProductsGridCard({
             1,
           totalProducts,
         );
-
   const noRowsMessage = search.trim()
     ? "No se encontraron productos con esa búsqueda."
     : "Todavía no hay productos registrados.";
-
   return (
     <Paper
       variant="outlined"
@@ -580,12 +545,10 @@ export function ProductsGridCard({
             xs: 2,
             sm: 2,
           },
-
           py: {
             xs: 2,
             sm: 1.5,
           },
-
           borderBottom: "1px solid",
           borderColor: "divider",
         }}
@@ -606,7 +569,6 @@ export function ProductsGridCard({
               xs: "100%",
               sm: 360,
             },
-
             "& .MuiOutlinedInput-root": {
               borderRadius: "15px",
               bgcolor: "#FFFFFF",
@@ -625,7 +587,6 @@ export function ProductsGridCard({
                   />
                 </InputAdornment>
               ),
-
               endAdornment:
                 search ? (
                   <InputAdornment position="end">
@@ -644,23 +605,19 @@ export function ProductsGridCard({
             },
           }}
         />
-
         {/* FILTROS */}
         <Box
           sx={{
             display: "grid",
-
             gridTemplateColumns: {
               xs: "1fr",
               sm: "repeat(3, minmax(0, 1fr))",
               lg: "150px 190px 160px auto",
             },
-
             gap: {
               xs: 1.5,
               sm: 1,
             },
-
             alignItems: "center",
           }}
         >
@@ -687,16 +644,13 @@ export function ProductsGridCard({
             <MenuItem value="ALL">
               Todos
             </MenuItem>
-
             <MenuItem value="ACTIVE">
               Activos
             </MenuItem>
-
             <MenuItem value="INACTIVE">
               Inactivos
             </MenuItem>
           </TextField>
-
           {/* CATEGORÍA */}
           <TextField
             select
@@ -720,7 +674,6 @@ export function ProductsGridCard({
             <MenuItem value="ALL">
               Todas
             </MenuItem>
-
             {categories.map(
               (category) => (
                 <MenuItem
@@ -732,7 +685,6 @@ export function ProductsGridCard({
               ),
             )}
           </TextField>
-
           {/* TIPO */}
           <TextField
             select
@@ -757,41 +709,135 @@ export function ProductsGridCard({
             <MenuItem value="ALL">
               Todos
             </MenuItem>
-
             <MenuItem value="PRODUCT">
               Productos
             </MenuItem>
-
             <MenuItem value="SERVICE">
               Servicios
             </MenuItem>
           </TextField>
-
           {/* ACCIONES */}
           <Stack
-            direction="row"
+            direction={{
+              xs: "column",
+              sm: "row",
+            }}
             spacing={1}
             sx={{
               width: {
                 xs: "100%",
                 lg: "auto",
               },
-
               gridColumn: {
                 xs: "1",
                 sm: "1 / -1",
                 lg: "auto",
               },
-
-              justifyContent: {
-                xs: "flex-end",
-                sm: "flex-end",
+              justifyContent: "flex-end",
+              alignItems: {
+                xs: "stretch",
+                sm: "center",
               },
-
-              alignItems: "center",
             }}
           >
-          {/* LIMPIAR */}
+          {/* VENCIMIENTO */}
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              spacing={1}
+              sx={{
+                width: {
+                  xs: "100%",
+                  sm: "auto",
+                },
+              }}
+            >
+            <Button
+              type="button"
+              size="small"
+              variant={
+                expirationFilter === "ALL"
+                  ? "contained"
+                  : "outlined"
+              }
+              onClick={() => {
+                onExpirationFilterChange("ALL");
+              }}
+              disabled={loading}
+              sx={{
+                minWidth: 58,
+                width: {
+                  xs: "100%",
+                  sm: "auto",
+                },
+                borderRadius: "8px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Todos
+            </Button>
+            <Button
+              type="button"
+              size="small"
+              color="warning"
+              variant={
+                expirationFilter === "UPCOMING"
+                  ? "contained"
+                  : "outlined"
+              }
+              onClick={() => {
+                onExpirationFilterChange("UPCOMING");
+              }}
+              disabled={loading}
+              sx={{
+                width: {
+                  xs: "100%",
+                  sm: "auto",
+                },
+                borderRadius: "8px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Próximos a vencer ({upcomingExpirationCount})
+            </Button>
+            <Button
+              type="button"
+              size="small"
+              color="error"
+              variant={
+                expirationFilter === "EXPIRED"
+                  ? "contained"
+                  : "outlined"
+              }
+              onClick={() => {
+                onExpirationFilterChange("EXPIRED");
+              }}
+              disabled={loading}
+              sx={{
+                width: {
+                  xs: "100%",
+                  sm: "auto",
+                },
+                borderRadius: "8px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Vencidos ({expiredExpirationCount})
+            </Button>
+            </Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                justifyContent: {
+                  xs: "flex-end",
+                  sm: "initial",
+                },
+              }}
+            >
+            {/* LIMPIAR */}
             <Tooltip title="Limpiar filtros">
               <span>
                 <IconButton
@@ -804,12 +850,9 @@ export function ProductsGridCard({
                   sx={{
                     width: 40,
                     height: 40,
-
                     border: "1px solid",
                     borderColor: "divider",
-
                     borderRadius: "10px",
-
                     bgcolor: "#FFFFFF",
                   }}
                 >
@@ -817,7 +860,6 @@ export function ProductsGridCard({
                 </IconButton>
               </span>
             </Tooltip>
-
             {/* ACTUALIZAR */}
             <Tooltip title="Actualizar productos">
               <span>
@@ -828,12 +870,9 @@ export function ProductsGridCard({
                   sx={{
                     width: 40,
                     height: 40,
-
                     border: "1px solid",
                     borderColor: "divider",
-
                     borderRadius: "10px",
-
                     bgcolor: "#FFFFFF",
                   }}
                 >
@@ -847,10 +886,10 @@ export function ProductsGridCard({
                 </IconButton>
               </span>
             </Tooltip>
+            </Stack>
           </Stack>
         </Box>
       </Stack>
-
       <DataGrid
         autoHeight
         rows={products}
@@ -879,10 +918,8 @@ export function ProductsGridCard({
         localeText={{
           ...esES.components.MuiDataGrid
             .defaultProps.localeText,
-
           noRowsLabel:
             noRowsMessage,
-
           noResultsOverlayLabel:
             noRowsMessage,
         }}
@@ -891,7 +928,6 @@ export function ProductsGridCard({
         }}
         sx={{
           border: 0,
-
           "& .MuiDataGrid-columnHeaders":
             {
               bgcolor: "#F7F8F6",
@@ -900,35 +936,29 @@ export function ProductsGridCard({
               borderColor:
                 "divider",
             },
-
           "& .MuiDataGrid-columnHeaderTitle":
             {
               fontSize: "0.78rem",
               fontWeight: 700,
             },
-
           "& .MuiDataGrid-cell": {
             display: "flex",
             alignItems: "center",
             borderColor: "divider",
             fontSize: "0.82rem",
           },
-
           "& .MuiDataGrid-row:hover":
             {
               bgcolor:
                 "action.hover",
             },
-
           "& .MuiDataGrid-columnSeparator":
             {
               display: "none",
             },
-
           "& .MuiCheckbox-root": {
             p: 0.75,
           },
-
           "& .MuiDataGrid-overlay":
             {
               minHeight: 180,
@@ -938,7 +968,6 @@ export function ProductsGridCard({
             },
         }}
       />
-
       <Stack
         direction={{
           xs: "column",
@@ -976,7 +1005,6 @@ export function ProductsGridCard({
             {lastVisibleProduct} de{" "}
             {totalProducts}
           </Typography>
-
           <TextField
             select
             size="small"
@@ -993,7 +1021,6 @@ export function ProductsGridCard({
             }}
             sx={{
               width: 76,
-
               "& .MuiOutlinedInput-root":
                 {
                   height: 34,
@@ -1013,7 +1040,6 @@ export function ProductsGridCard({
             )}
           </TextField>
         </Stack>
-
         <Stack
           direction="row"
           spacing={0.75}
@@ -1051,7 +1077,6 @@ export function ProductsGridCard({
           >
             Anterior
           </Button>
-
           <Pagination
             count={totalPages}
             page={
@@ -1078,7 +1103,6 @@ export function ProductsGridCard({
                 xs: "none",
                 sm: "block",
               },
-
               "& .MuiPaginationItem-root":
                 {
                   border:
@@ -1088,7 +1112,6 @@ export function ProductsGridCard({
                   borderRadius:
                     "5px",
                 },
-
               "& .Mui-selected": {
                 color:
                   "primary.main",
@@ -1099,7 +1122,6 @@ export function ProductsGridCard({
               },
             }}
           />
-
           <Button
             type="button"
             variant="outlined"
@@ -1131,8 +1153,6 @@ export function ProductsGridCard({
     </Paper>
   );
 }
-
-
 function EmptyProducts() {
   return (
     <Stack 
@@ -1145,11 +1165,9 @@ function EmptyProducts() {
       }}
     >
       <Inventory2Rounded sx={{ fontSize: 32, color: "text.disabled" }} />
-
       <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
         No hay productos
       </Typography>
-
       <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>
         No se encontraron productos para mostrar.
       </Typography>

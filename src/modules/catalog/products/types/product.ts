@@ -1,5 +1,7 @@
 export type ProductType = "PRODUCT" | "SERVICE";
 
+export type ProductExpirationStatus = "UPCOMING" | "EXPIRED";
+
 export type Product = {
   id: string;
   company_name: string;
@@ -34,6 +36,7 @@ export type GetProductsParams = {
   categoryId?: string;
   brandId?: string;
   productType?: ProductType;
+  expirationStatus?: ProductExpirationStatus;
 };
 
 export type ProductFormValues = {
@@ -54,6 +57,8 @@ export type ProductFormValues = {
   track_inventory: boolean;
   is_active: boolean;
   initial_stock: string;
+  initial_lot_number: string;
+  initial_expiration_date: string;
   image_url?: string | null;
   image_public_id?: string | null;
 };
@@ -94,6 +99,8 @@ export type CreateProductPayload = {
   is_active: boolean;
 
   initial_stock: string;
+  initial_lot_number: string | null;
+  initial_expiration_date: string | null;
   image_url?: string | null;
   image_public_id?: string | null;
 };
@@ -130,6 +137,9 @@ export type UnitReference = {
 
 export type ProductDetail = Product & {
   description: string;
+
+  initial_lot_number: string | null;
+  initial_expiration_date: string | null;
 
   category: CatalogReference | null;
   brand: CatalogReference | null;

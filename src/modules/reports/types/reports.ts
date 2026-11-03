@@ -230,6 +230,58 @@ export type InventoryReportParams = {
   pageSize: number;
 };
 
+export type ExpiringProductsReportStatus =
+  | "UPCOMING"
+  | "EXPIRED";
+
+export type ExpiringProductsReportRowStatus =
+  | "UPCOMING"
+  | "TODAY"
+  | "EXPIRED";
+
+export type ExpiringProductsReportSummary = {
+  products: number;
+  lots: number;
+  total_units: string;
+};
+
+export type ExpiringProductsReportRow = {
+  lot_id: string;
+  product_id: string;
+  name: string;
+  sku: string;
+  barcode: string | null;
+  branch_id: string;
+  branch_name: string;
+  lot_number: string;
+  quantity_available: string;
+  expiration_date: string;
+  days_remaining: number;
+  status: ExpiringProductsReportRowStatus;
+};
+
+export type ExpiringProductsReportResponse = {
+  company_id: string;
+  branch_id: string;
+  status: ExpiringProductsReportStatus;
+  days: number;
+  summary: ExpiringProductsReportSummary;
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: ExpiringProductsReportRow[];
+};
+
+export type ExpiringProductsReportParams = {
+  companyId: string;
+  branchId: string;
+  status?: ExpiringProductsReportStatus;
+  days?: number;
+  search?: string;
+  page: number;
+  pageSize: number;
+};
+
 export type ProfitabilityReportSummary = {
   revenue: string;
   cost_of_sales: string | null;

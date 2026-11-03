@@ -3,6 +3,8 @@ import { httpClient } from "../../../api/httpClient";
 import type {
   CashReportParams,
   CashReportResponse,
+  ExpiringProductsReportParams,
+  ExpiringProductsReportResponse,
   ExpensesReportParams,
   ExpensesReportResponse,
   InventoryReportParams,
@@ -140,6 +142,27 @@ export async function getInventoryReport(
   return response.data;
 }
 
+export async function getExpiringProductsReport(
+  params: ExpiringProductsReportParams,
+): Promise<ExpiringProductsReportResponse> {
+  const response = await httpClient.get<ExpiringProductsReportResponse>(
+    "/reports/expiring-products/",
+    {
+      params: {
+        company_id: params.companyId,
+        branch_id: params.branchId,
+        status: params.status,
+        days: params.days,
+        search: params.search || undefined,
+        page: params.page,
+        page_size: params.pageSize,
+      },
+    },
+  );
+
+  return response.data;
+}
+
 export async function getProfitabilityReport(
   params: ProfitabilityReportParams,
 ): Promise<ProfitabilityReportResponse> {
@@ -182,6 +205,7 @@ type InventoryExportParams = {
   categoryId?: string;
   brandId?: string;
   productType?: string;
+  expirationStatus?: "UPCOMING" | "EXPIRED";
 };
 
 async function downloadReportFile(
@@ -330,6 +354,7 @@ async function downloadInventoryReportFile(
       category_id: params.categoryId,
       brand_id: params.brandId,
       product_type: params.productType,
+      expiration_status: params.expirationStatus,
     },
     responseType: "blob",
   });
