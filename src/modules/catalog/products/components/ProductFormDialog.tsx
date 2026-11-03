@@ -359,44 +359,27 @@ export function ProductFormDialog({
          );
          return;
       }
+      if (!hideInitialStock && !isEditing && values.product_type === "PRODUCT" && values.track_inventory) {
+         const initialStock = Number(values.initial_stock);
       if (
-         !hideInitialStock &&
-         !isEditing &&
-         values.product_type === "PRODUCT" &&
-         values.track_inventory
+         values.initial_stock === "" ||
+         !Number.isFinite(initialStock) ||
+         initialStock < 0
       ) {
-         const initialStock = Number(
-            values.initial_stock,
+         showValidationError("Debes ingresar un stock inicial válido.");
+         return;
+      }
+
+      if (
+         (values.initial_lot_number.trim() ||
+            values.initial_expiration_date) &&
+         initialStock <= 0
+      ) {
+         showValidationError(
+            "Para registrar un lote o vencimiento debes indicar un stock inicial mayor que cero.",
          );
-         if (
-            values.initial_stock === "" ||
-            !Number.isFinite(initialStock) ||
-            initialStock < 0
-         ) {
-            showValidationError(
-               "Debes ingresar un stock inicial válido.",
-            );
-            return;
-         }
-         if (
-            initialStock > 0 &&
-            !values.initial_expiration_date
-         ) {
-            showValidationError(
-               "Debes indicar la fecha de vencimiento del stock inicial.",
-            );
-            return;
-         }
-         if (
-           (values.initial_lot_number.trim() ||
-             values.initial_expiration_date) &&
-           initialStock <= 0
-         ) {
-           showValidationError(
-             "Para registrar un lote o vencimiento debes indicar un stock inicial mayor que cero.",
-           );
-           return;
-         }
+         return;
+      }
       }
       let imageUrl = values.image_url ?? null;
       let imagePublicId = values.image_public_id ?? null;
@@ -1196,7 +1179,7 @@ export function ProductFormDialog({
                                             }
                                             fullWidth
                                             disabled={ isSubmitting || isEditing }
-                                            required={!isEditing}
+                                             
                                             slotProps={{
                                               inputLabel: {
                                                 shrink: true,
@@ -1596,8 +1579,7 @@ function CheckboxLabelWithInfo({
                component="span"
                tabIndex={0}
                aria-label={`Información sobre ${label}`}
-               sx=
-                  {{
+               sx= {{
                      position: "absolute",
                      top: -2,
                      right: 0,
@@ -1606,13 +1588,13 @@ function CheckboxLabelWithInfo({
                      outline: "none",
                      transition: "color 150ms ease, transform 150ms ease",
                      "&:hover": {
-                           color: "info.dark",
-                           transform: "scale(1.1)",
+                        color: "info.dark",
+                        transform: "scale(1.1)",
                      },
                      "&:focus-visible": {
-                           color: "info.dark",
+                        color: "info.dark",
                      },
-               }}
+                  }}
             >
                <InfoOutlined
                   sx={{

@@ -232,7 +232,7 @@ export function ProductsGridCard({
         {
           field: "product_type_display",
           headerName: "Tipo",
-          width: 125,
+          width: 100,
           renderCell: ({ row }) => (
             <Chip
               label={
@@ -253,7 +253,7 @@ export function ProductsGridCard({
           headerName: "Stock",
           description:
             "Existencia disponible en la sucursal activa",
-          width: 125,
+          width: 100,
           align: "center",
           headerAlign: "center",
           sortable: false,
@@ -321,7 +321,7 @@ export function ProductsGridCard({
         {
           field: "sale_price",
           headerName: "Precio",
-          width: 140,
+          width: 120,
           align: "right",
           headerAlign: "right",
           renderCell: ({ row }) => (
@@ -343,7 +343,7 @@ export function ProductsGridCard({
         {
           field: "next_expiration_date",
           headerName: "Vencimiento",
-          minWidth: 150,
+          minWidth: 175,
           flex: 0.7,
           renderCell: ({ row }) => {
             if (!row.next_expiration_date) {
@@ -354,7 +354,7 @@ export function ProductsGridCard({
                     color: "text.secondary",
                   }}
                 >
-                  —
+                Sin fecha de vencimiento     
                 </Typography>
               );
             }

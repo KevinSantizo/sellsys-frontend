@@ -934,7 +934,7 @@ export function PurchaseFormDialog({
 
                             {/* VENCIMIENTO */}
                             <TextField
-                              label="Vencimiento *"
+                              label="Vencimiento"
                               type="date"
                               value={item.expiration_date}
                               onChange={(event) => {
