@@ -675,7 +675,7 @@ export function SaleDetailDialog({
               },
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Cancelar venta
@@ -720,7 +720,7 @@ export function SaleDetailDialog({
             },
             borderRadius: "5px",
             textTransform: "none",
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           Imprimir comprobante

@@ -287,7 +287,7 @@ export function BrandsPage() {
                 xs: "1.65rem",
                 sm: "1.85rem",
               },
-              fontWeight: 700,
+              fontWeight: 600,
               mb: 0.4,
             }}
           >

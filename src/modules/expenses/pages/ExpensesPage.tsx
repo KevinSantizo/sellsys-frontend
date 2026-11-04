@@ -1615,7 +1615,7 @@ export function ExpensesPage() {
 
                         },
 
-                        fontWeight: 700,
+                        fontWeight: 600,
 
                         mb: 0.4,
 
@@ -1766,7 +1766,7 @@ export function ExpensesPage() {
                         borderRadius: "5px",
                         bgcolor: "#FFFFFF",
                         textTransform: "none",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         minHeight: 40,
                         whiteSpace: "nowrap",
                     }}
@@ -1801,7 +1801,7 @@ export function ExpensesPage() {
                         borderRadius: "5px",
                         bgcolor: "#FFFFFF",
                         textTransform: "none",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         minHeight: 40,
                         whiteSpace: "nowrap",
                     }}

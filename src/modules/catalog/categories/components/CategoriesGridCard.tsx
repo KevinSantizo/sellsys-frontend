@@ -55,7 +55,7 @@ export function CategoriesGridCard({
       minWidth: 220,
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontSize: "0.84rem", fontWeight: 700 }}>
+        <Typography sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
           { params.row.name }
         </Typography>
       ),
@@ -84,7 +84,7 @@ export function CategoriesGridCard({
           sx={{ 
             borderRadius: "14px",
             fontSize: "0.72rem",
-            fontWeight: 700,
+            fontWeight: 600,
             bgcolor: params.row.is_active
               ? "success.main"
               : "action.disabledBackground",
@@ -193,7 +193,7 @@ export function CategoriesGridCard({
 
           "& .MuiDataGrid-columnHeaderTitle": {
             fontSize: "0.78rem",
-            fontWeight: 700,
+            fontWeight: 600,
           },
 
           "& .MuiDataGrid-cell": {
@@ -251,7 +251,7 @@ export function CategoriesGridCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resultado{" "}
@@ -391,7 +391,7 @@ function EmptyCategories() {
     >
       <CategoryRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay categorías
       </Typography>
 

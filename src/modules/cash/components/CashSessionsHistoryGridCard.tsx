@@ -203,7 +203,7 @@ export function CashSessionsHistoryGridCard({
               width: "100%",
               textAlign: "right",
               fontSize: "0.86rem",
-              fontWeight: 700,
+              fontWeight: 600,
               color:
                 difference === 0
                   ? "text.primary"
@@ -238,7 +238,7 @@ export function CashSessionsHistoryGridCard({
                 size="small"
                 sx={{
                 borderRadius: "14px",
-                fontWeight: 700,
+                fontWeight: 600,
                 }}
             />
             </Box>
@@ -292,7 +292,7 @@ export function CashSessionsHistoryGridCard({
         <Typography
           sx={{
             fontSize: "1rem",
-            fontWeight: 700,
+            fontWeight: 600,
             mb: 1.5,
           }}
         >
@@ -380,7 +380,7 @@ export function CashSessionsHistoryGridCard({
             },
 
             "& .MuiDataGrid-columnHeaderTitle": {
-                fontWeight: 700,
+                fontWeight: 600,
                 fontSize: "0.8rem",
             },
 
@@ -408,7 +408,7 @@ export function CashSessionsHistoryGridCard({
         }}
       >
         <Stack direction="row" spacing={ 1.25 } sx={{ alignItems: "center" }}>
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
             Resultado { firstVisible }-{ lastVisible } de { totalCashSessions }
           </Typography>
 
@@ -556,7 +556,7 @@ function DateTimeValue({ value }: DateTimeValueProps) {
         justifyContent: "center",
       }}
     >
-      <Typography sx={{ fontSize: "0.84rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
         { date.toLocaleDateString("es-GT") }
       </Typography>
 
@@ -583,7 +583,7 @@ function AmountValue({ value }: AmountValueProps) {
         width: "100%",
         textAlign: "right",
         fontSize: "0.86rem",
-        fontWeight: 700,
+        fontWeight: 600,
       }}
     >
       { value }
@@ -605,7 +605,7 @@ function EmptyPurchases() {
     >
       <PointOfSaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay sesiones
       </Typography>
 

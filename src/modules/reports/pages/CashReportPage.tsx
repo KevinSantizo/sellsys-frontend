@@ -271,7 +271,7 @@ export function CashReportPage() {
               sx={{
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
               }}
             >
@@ -288,7 +288,7 @@ export function CashReportPage() {
                 minWidth: 100,
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
                 whiteSpace: "nowrap",
               }}
@@ -361,7 +361,7 @@ export function CashReportPage() {
                 borderColor: "divider",
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Movimientos de caja
               </Typography>
 
@@ -382,7 +382,7 @@ export function CashReportPage() {
                     borderRight: "none",
                   },
                   "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
                   "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
                     borderBottom: "none",
@@ -416,7 +416,7 @@ export function CashReportPage() {
                           variant="outlined"
                           sx={{
                             borderRadius: "5px",
-                            fontWeight: 700,
+                            fontWeight: 600,
                           }}
                         />
                       </TableCell>
@@ -440,7 +440,7 @@ export function CashReportPage() {
                       <TableCell align="right">
                         <Typography
                           sx={{
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: movement.direction === "IN" ? "success.main" : "error.main",
                           }}
                         >
@@ -455,7 +455,7 @@ export function CashReportPage() {
                     <TableRow>
                       <TableCell colSpan={ 7 }>
                         <Box sx={{ py: 5, textAlign: "center" }}>
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography sx={{ fontWeight: 600 }}>
                             No hay movimientos
                           </Typography>
 
@@ -492,7 +492,7 @@ export function CashReportPage() {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
                   {totalRows > 0
                     ? `Resultado ${startIndex + 1}-${endIndex} de ${totalRows}`
                     : "Resultado 0 de 0"}
@@ -543,7 +543,7 @@ export function CashReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "divider",
                     color: "text.primary",
@@ -606,7 +606,7 @@ export function CashReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "primary.main",
                     color: "primary.main",
@@ -663,7 +663,7 @@ function ReportMetricCard({
             variant="h5"
             sx={{
               mt: 0.5,
-              fontWeight: 700,
+              fontWeight: 600,
               color: valueColor,
             }}
           >

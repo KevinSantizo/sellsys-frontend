@@ -156,7 +156,7 @@ export function SuggestionsPage() {
               xs: "1.65rem",
               sm: "1.85rem",
             },
-            fontWeight: 700,
+            fontWeight: 600,
             mb: 0.4,
           }}
         >
@@ -349,7 +349,7 @@ export function SuggestionsPage() {
                   minHeight: 42,
                   borderRadius: "5px",
                   textTransform: "none",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 {createSuggestionMutation.isPending

@@ -182,7 +182,7 @@ export function ProductsGridCard({
                   sx={{
                     overflow: "hidden",
                     fontSize: "0.88rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
@@ -288,7 +288,7 @@ export function ProductsGridCard({
                   height: 26,
                   borderRadius: "5px",
                   fontSize: "0.76rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   color: hasStock ? "#166534" : "#991B1B",
                   bgcolor: hasStock ? "#DCFCE7" : "#FEE2E2",
                 }}
@@ -307,7 +307,7 @@ export function ProductsGridCard({
               variant="body2"
               sx={{
                 width: "100%",
-                fontWeight: 700,
+                fontWeight: 600,
                 textAlign: "right",
                 whiteSpace: "nowrap",
               }}
@@ -329,7 +329,7 @@ export function ProductsGridCard({
               variant="body2"
               sx={{
                 width: "100%",
-                fontWeight: 700,
+                fontWeight: 600,
                 textAlign: "right",
                 whiteSpace: "nowrap",
               }}
@@ -939,7 +939,7 @@ export function ProductsGridCard({
           "& .MuiDataGrid-columnHeaderTitle":
             {
               fontSize: "0.78rem",
-              fontWeight: 700,
+              fontWeight: 600,
             },
           "& .MuiDataGrid-cell": {
             display: "flex",
@@ -997,7 +997,7 @@ export function ProductsGridCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resultado{" "}
@@ -1165,7 +1165,7 @@ function EmptyProducts() {
       }}
     >
       <Inventory2Rounded sx={{ fontSize: 32, color: "text.disabled" }} />
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay productos
       </Typography>
       <Typography color="text.secondary" sx={{ fontSize: "0.76rem" }}>

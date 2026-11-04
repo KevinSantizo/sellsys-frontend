@@ -1,7 +1,9 @@
 import { httpClient } from "../../../api/httpClient";
 
 import type {
+  AccountsReceivableResponse,
   CheckoutSalePayload,
+  PaymentMethod,
   SaleDetail,
   SalesResponse,
 } from "../types/sales.types";
@@ -15,6 +17,31 @@ export type GetSalesParams = {
 
   ordering?: string;
 
+  page?: number;
+  pageSize?: number;
+};
+
+export type AddSalePaymentPayload = {
+  method: PaymentMethod;
+  amount: string;
+  reference?: string;
+  cash_session_id?: string | null;
+};
+
+export type AccountsReceivableExportParams = {
+  companyId: string;
+  branchId: string;
+  customerId?: string;
+  search?: string;
+};
+
+
+export type GetAccountsReceivableParams = {
+  companyId: string;
+  branchId: string;
+  customerId?: string;
+  search?: string;
+  ordering?: string;
   page?: number;
   pageSize?: number;
 };
@@ -75,6 +102,25 @@ export async function getSales(
         branch_id: params.branchId,
         search: params.search,
         status: params.status,
+        ordering: params.ordering,
+        page: params.page,
+        page_size: params.pageSize,
+      },
+    },
+  );
+
+  return response.data;
+}
+
+export async function getAccountsReceivable(params: GetAccountsReceivableParams):  Promise<AccountsReceivableResponse> {
+  const response = await httpClient.get<AccountsReceivableResponse>(
+    "/sales/accounts-receivable/",
+    {
+      params: {
+        company_id: params.companyId,
+        branch_id: params.branchId,
+        customer_id: params.customerId,
+        search: params.search,
         ordering: params.ordering,
         page: params.page,
         page_size: params.pageSize,
@@ -170,6 +216,88 @@ export async function cancelSale(saleId: string) {
     `sales/${saleId}/cancel/`,
     {},
   );
+
+  return response.data;
+}
+
+async function downloadAccountsReceivableFile(
+  url: string,
+  params: AccountsReceivableExportParams,
+  filename: string,
+): Promise<void> {
+  const response = await httpClient.get(
+    url,
+    {
+      params: {
+        company_id: params.companyId,
+        branch_id: params.branchId,
+        customer_id: params.customerId,
+        search: params.search,
+      },
+      responseType: "blob",
+    },
+  );
+
+  const contentType =
+    response.headers["content-type"];
+
+  const blob = new Blob(
+    [response.data],
+    {
+      type:
+        typeof contentType === "string"
+          ? contentType
+          : "application/octet-stream",
+    },
+  );
+
+  const objectUrl =
+    window.URL.createObjectURL(blob);
+
+  const link =
+    document.createElement("a");
+
+  link.href = objectUrl;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(objectUrl);
+}
+
+
+export async function downloadAccountsReceivableExcel(
+  params: AccountsReceivableExportParams,
+): Promise<void> {
+  return downloadAccountsReceivableFile(
+    "reports/accounts-receivable/export/excel/",
+    params,
+    "cuentas_por_cobrar.xlsx",
+  );
+}
+
+export async function downloadAccountsReceivablePdf(
+  params: AccountsReceivableExportParams,
+): Promise<void> {
+  return downloadAccountsReceivableFile(
+    "reports/accounts-receivable/export/pdf/",
+    params,
+    "cuentas_por_cobrar.pdf",
+  );
+}
+
+
+export async function addSalePayment(
+  saleId: string,
+  payload: AddSalePaymentPayload,
+): Promise<SaleDetail> {
+  const response =
+    await httpClient.post<SaleDetail>(
+      `/sales/${saleId}/payments/`,
+      payload,
+    );
 
   return response.data;
 }

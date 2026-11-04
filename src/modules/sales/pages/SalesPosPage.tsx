@@ -246,7 +246,7 @@ export function SalesPosPage() {
         {
           company_id: selectedCompany.id,
           branch_id: selectedBranch.id,
-
+          customer_id: values.customerId || null,
           cash_session_id:
               values.paymentMethod === "CASH"
                   ? values.cashSessionId
@@ -446,7 +446,7 @@ export function SalesPosPage() {
                 xs: "1.65rem",
                 sm: "1.85rem",
               },
-              fontWeight: 700,
+              fontWeight: 600,
               mb: 0.4,
             }}
           >
@@ -491,7 +491,7 @@ export function SalesPosPage() {
             mb: 2,
             minHeight: 48,
             borderRadius: "5px",
-            fontWeight: 700,
+            fontWeight: 600,
             textTransform: "none",
             bgcolor: "#FFFFFF",
           }}
@@ -554,7 +554,7 @@ export function SalesPosPage() {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     Carrito de venta
@@ -763,7 +763,7 @@ export function SalesPosPage() {
                                 >
                                   <Typography
                                     sx={{
-                                      fontWeight: 700,
+                                      fontWeight: 600,
                                       fontSize: "0.9rem",
                                       overflow: "hidden",
                                       textOverflow: "ellipsis",
@@ -816,7 +816,7 @@ export function SalesPosPage() {
                               >
                                 <Typography
                                   sx={{
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                   }}
                                 >
                                   {formatCurrency(
@@ -875,7 +875,7 @@ export function SalesPosPage() {
 
                   <Typography
                     sx={{
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     El carrito está vacío
@@ -968,7 +968,7 @@ export function SalesPosPage() {
                               >
                                 <Typography
                                   sx={{
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     whiteSpace: {
@@ -1263,7 +1263,7 @@ export function SalesPosPage() {
             <Typography
               variant="h6"
               sx={{
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               Resumen de venta
@@ -1366,7 +1366,7 @@ export function SalesPosPage() {
                 <Typography
                   variant="h6"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   Total
@@ -1377,7 +1377,7 @@ export function SalesPosPage() {
                   sx={{
                     color:
                       "primary.main",
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   {formatCurrency(total)}
@@ -1407,7 +1407,7 @@ export function SalesPosPage() {
                   minHeight: 48,
                   mt: 1,
                   borderRadius: "5px",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 {checkoutMutation.isPending

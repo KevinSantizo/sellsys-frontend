@@ -138,7 +138,7 @@ export function CashSessionDetailDialog({
           size="small"
           sx={{
             borderRadius: "14px",
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         />
       ),
@@ -164,7 +164,7 @@ export function CashSessionDetailDialog({
             variant="outlined"
             sx={{
               borderRadius: "14px",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           />
         );
@@ -214,7 +214,7 @@ export function CashSessionDetailDialog({
             sx={{
               width: "100%",
               textAlign: "right",
-              fontWeight: 700,
+              fontWeight: 600,
               color: isEntry ? "success.main" : "error.main",
             }}
           >
@@ -252,7 +252,7 @@ export function CashSessionDetailDialog({
         <DialogTitle
           sx={{
             flexShrink: 0,
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           Detalle de sesión de caja
@@ -287,7 +287,7 @@ export function CashSessionDetailDialog({
               <Typography
                 sx={{
                   fontSize: "1.1rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 { cashSession.cash_register_name }
@@ -311,7 +311,7 @@ export function CashSessionDetailDialog({
               size="small"
               sx={{
                 borderRadius: "14px",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             />
           </Box>
@@ -320,7 +320,7 @@ export function CashSessionDetailDialog({
             sx={{
               mb: 1.5,
               fontSize: "0.9rem",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Información de la sesión
@@ -354,7 +354,7 @@ export function CashSessionDetailDialog({
             sx={{
               mb: 1.5,
               fontSize: "0.9rem",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resumen
@@ -447,7 +447,7 @@ export function CashSessionDetailDialog({
                     sx={{
                       mt: 0.5,
                       fontSize: "1.05rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color:
                         difference === null || difference === 0
                           ? "text.primary"
@@ -474,7 +474,7 @@ export function CashSessionDetailDialog({
               sx={{
                 mb: 1.5,
                 fontSize: "0.9rem",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               Movimientos de la sesión
@@ -508,7 +508,7 @@ export function CashSessionDetailDialog({
                   },
                   "& .MuiDataGrid-columnHeaderTitle": {
                     fontSize: "0.8rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
                   "& .MuiDataGrid-cell": {
                     display: "flex",
@@ -540,7 +540,7 @@ export function CashSessionDetailDialog({
                 >
                   <Typography
                     variant="body2"
-                    sx={{ fontWeight: 700 }}
+                    sx={{ fontWeight: 600 }}
                   >
                     Resultado { firstVisible }-{ lastVisible } de { totalCashMovements }
                   </Typography>
@@ -713,7 +713,7 @@ function SessionInfoCard({
         sx={{
           mt: 0.5,
           fontSize: "0.9rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       >
         { date ? formatDateTime(date) : "—" }
@@ -769,7 +769,7 @@ function SummaryItem({
         sx={{
           mt: 0.5,
           fontSize: "1.05rem",
-          fontWeight: 700,
+          fontWeight: 600,
           color: highlighted ? "primary.main" : "text.primary",
         }}
       >
@@ -799,7 +799,7 @@ function DateTimeValue({
         justifyContent: "center",
       }}
     >
-      <Typography sx={{ fontSize: "0.82rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.82rem", fontWeight: 600 }}>
         { date.toLocaleDateString("es-GT") }
       </Typography>
 

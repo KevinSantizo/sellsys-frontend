@@ -212,7 +212,7 @@ export function CashRegisterFormDialog({
                 }
                 label={
                   <Box>
-                    <Typography sx={{ fontSize: "0.875rem", fontWeight: 700 }}>
+                    <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>
                       Caja activa
                     </Typography>
 

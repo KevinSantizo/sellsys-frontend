@@ -246,7 +246,7 @@ export function ExpenseFormDialog({
       >
         <DialogTitle
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           {title}

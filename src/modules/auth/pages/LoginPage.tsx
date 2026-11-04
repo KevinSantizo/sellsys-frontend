@@ -475,7 +475,7 @@ export function LoginPage() {
                         minHeight: 54,
                         borderRadius: 2,
                         fontSize: "1rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         backgroundColor: "#064A57"
                     }}
                 >
@@ -534,7 +534,7 @@ export function LoginPage() {
                       minWidth: 0,
                       p: 0,
                       fontSize: "0.875rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       textTransform: "none",
                     }}
                   >

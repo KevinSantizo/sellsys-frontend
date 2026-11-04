@@ -105,7 +105,7 @@ export function PurchaseDetailDialog({
                     <Typography
                         sx={{
                         fontSize: "1.05rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         whiteSpace: "nowrap",
                         }}
                     >
@@ -204,7 +204,7 @@ export function PurchaseDetailDialog({
                           <Typography
                           sx={{
                               fontSize: "0.84rem",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -258,7 +258,7 @@ export function PurchaseDetailDialog({
                       sx={{
                           mb: 1.5,
                           fontSize: "0.9rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                       }}
                       >
                       Totales
@@ -312,7 +312,7 @@ export function PurchaseDetailDialog({
                               color="primary.main"
                               sx={{
                               fontSize: "1rem",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               }}
                           >
                               { formatCurrency(purchase.total) }
@@ -364,7 +364,7 @@ export function PurchaseDetailDialog({
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
               minWidth: 100,
             }}
           >
@@ -390,7 +390,7 @@ function DetailField({ label, value }: DetailFieldProps) {
         { label }
       </Typography>
 
-      <Typography sx={{ fontSize: "0.9rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
         { value }
       </Typography>
     </Box>
@@ -441,7 +441,7 @@ function SummaryRow({ label, value }: SummaryRowProps) {
         { label }
       </Typography>
 
-      <Typography sx={{ fontSize: "0.8rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.8rem", fontWeight: 600 }}>
         { value }
       </Typography>
     </Stack>
@@ -464,7 +464,7 @@ function PurchaseStatusChip({
         sx={{
           bgcolor: "rgba(16, 126, 64, 0.10)",
           color: "#107E40",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       />
     );
@@ -478,7 +478,7 @@ function PurchaseStatusChip({
         sx={{
           bgcolor: "rgba(211, 47, 47, 0.10)",
           color: "error.main",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       />
     );
@@ -491,7 +491,7 @@ function PurchaseStatusChip({
       sx={{
         bgcolor: "rgba(237, 108, 2, 0.10)",
         color: "warning.dark",
-        fontWeight: 700,
+        fontWeight: 600,
       }}
     />
   );

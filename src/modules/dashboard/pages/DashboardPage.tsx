@@ -111,7 +111,7 @@ function WeeklySalesTooltip({
       <Typography
         sx={{
           fontSize: "0.8rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       >
         {data.day} · {formattedDate}
@@ -175,7 +175,7 @@ function YearlySalesTooltip({
       <Typography
         sx={{
           fontSize: "0.8rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       >
         {data.month} {data.year}
@@ -717,7 +717,7 @@ export function DashboardPage() {
               xs: "1.65rem",
               sm: "1.85rem",
             },
-            fontWeight: 700,
+            fontWeight: 600,
             mb: 0.4,
           }}
         >
@@ -791,7 +791,7 @@ export function DashboardPage() {
                   <Typography
                     sx={{
                       fontSize: "0.85rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       overflowWrap: "anywhere",
                       color: statistic.highlighted
                         ? "rgba(255,255,255,0.92)"
@@ -841,7 +841,7 @@ export function DashboardPage() {
                             ? "1rem"
                             : "1.75rem",
                         lineHeight: 1.1,
-                        fontWeight: 700,
+                        fontWeight: 600,
                         color: statistic.highlighted
                           ? "common.white"
                           : "text.primary",
@@ -1129,7 +1129,7 @@ export function DashboardPage() {
                 <Typography
                   sx={{
                     fontSize: "1rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   Ventas del año (
@@ -1284,7 +1284,7 @@ export function DashboardPage() {
             <CardContent sx={{ p: 2.5 }}>
               <Box>
                 <Box>
-                  <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
+                  <Typography sx={{ fontSize: "1rem", fontWeight: 600 }}>
                     Inventario
                   </Typography>
 
@@ -1314,7 +1314,7 @@ export function DashboardPage() {
                   { inventoryQuery.isFetching ? (
                     <Skeleton width={ 60 } height={ 34 } />
                   ) : (
-                    <Typography sx={{fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 700, whiteSpace: "nowrap" }}>
+                    <Typography sx={{fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 600, whiteSpace: "nowrap" }}>
                       { inventory?.summary.products ?? 0 }
                     </Typography>
                   ) }
@@ -1328,7 +1328,7 @@ export function DashboardPage() {
                   { inventoryQuery.isFetching ? (
                     <Skeleton width={ 70 } height={ 34 } />
                   ) : (
-                    <Typography sx={{ fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 700, whiteSpace: "nowrap" }}>
+                    <Typography sx={{ fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 600, whiteSpace: "nowrap" }}>
                       { Number(inventory?.summary.total_units ?? 0).toLocaleString("es-GT") }
                     </Typography>
                   ) }
@@ -1342,7 +1342,7 @@ export function DashboardPage() {
                   { inventoryQuery.isFetching ? (
                     <Skeleton width={ 120 } height={ 34 } />
                   ) : (
-                    <Typography sx={{fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 700, whiteSpace: "nowrap" }}>
+                    <Typography sx={{fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 600, whiteSpace: "nowrap" }}>
                       { formatCurrency(inventory?.summary.total_cost_value) }
                     </Typography>
                   ) }
@@ -1356,7 +1356,7 @@ export function DashboardPage() {
                   { inventoryQuery.isFetching ? (
                     <Skeleton width={ 120 } height={ 34 } />
                   ) : (
-                    <Typography sx={{fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 700, whiteSpace: "nowrap" }}>
+                    <Typography sx={{fontSize: { xs: "1rem", sm: "1.2rem", }, fontWeight: 600, whiteSpace: "nowrap" }}>
                       { formatCurrency(inventory?.summary.total_sale_value) }
                     </Typography>
                   ) }
@@ -1485,7 +1485,7 @@ export function DashboardPage() {
             <CardContent sx={{ p: 2.5 }}>
               <Box>
                 <Box>
-                  <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
+                  <Typography sx={{ fontSize: "1rem", fontWeight: 600 }}>
                     Movimientos recientes
                   </Typography>
 
@@ -1515,7 +1515,7 @@ export function DashboardPage() {
                           xs: "1rem",
                           sm: "1.2rem",
                         },
-                        fontWeight: 700,
+                        fontWeight: 600,
                         color: "success.main",
                         whiteSpace: "nowrap",
                       }}
@@ -1539,7 +1539,7 @@ export function DashboardPage() {
                           xs: "1rem",
                           sm: "1.2rem",
                         },
-                        fontWeight: 700,
+                        fontWeight: 600,
                         color: "error.main",
                         whiteSpace: "nowrap",
                       }}
@@ -1562,7 +1562,7 @@ export function DashboardPage() {
                         xs: "1rem",
                         sm: "1.2rem",
                       },
-                      fontWeight: 700,
+                      fontWeight: 600,
                       whiteSpace: "nowrap",
                     }}>
                       { formatCurrency(cashReport?.summary.net) }

@@ -107,7 +107,7 @@ export function CloseCashSessionDialog({
           overflow: "hidden",
         }}
       >
-        <DialogTitle sx={{ fontWeight: 700, flexShrink: 0 }}>
+        <DialogTitle sx={{ fontWeight: 600, flexShrink: 0 }}>
           Cerrar caja
         </DialogTitle>
 
@@ -123,7 +123,7 @@ export function CloseCashSessionDialog({
           <Typography
             sx={{
               fontSize: "1rem",
-              fontWeight: 700,
+              fontWeight: 600,
               mb: 0.25,
             }}
           >
@@ -219,14 +219,14 @@ export function CloseCashSessionDialog({
                     bgcolor: "#FAFAFA",
                   }}
                 >
-                  <Typography sx={{ fontWeight: 700 }}>
+                  <Typography sx={{ fontWeight: 600 }}>
                     Diferencia
                   </Typography>
 
                   <Typography
                     sx={{
                       fontSize: "1.1rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       color:
                         difference === 0
                           ? "text.primary"
@@ -330,7 +330,7 @@ function SummaryItem({
         sx={{
           mt: 0.5,
           fontSize: "1.05rem",
-          fontWeight: 700,
+          fontWeight: 600,
           color: highlighted ? "primary.main" : "text.primary",
         }}
       >

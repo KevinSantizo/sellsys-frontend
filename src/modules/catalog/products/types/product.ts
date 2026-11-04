@@ -122,6 +122,7 @@ export type UnitOption = {
   name: string;
   symbol: string;
   is_active: boolean;
+  unit_type: string;
 };
 
 export type CatalogReference = {

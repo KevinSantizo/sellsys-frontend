@@ -109,7 +109,7 @@ export function BarcodeScannerDialog({
 
           <Typography
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Escanear producto

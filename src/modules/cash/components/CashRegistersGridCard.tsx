@@ -140,7 +140,7 @@ export function CashRegistersGridCard({
             <Typography
               sx={{
                 fontSize: "0.875rem",
-                fontWeight: 700,
+                fontWeight: 600,
                 lineHeight: 1.2,
               }}
             >
@@ -177,7 +177,7 @@ export function CashRegistersGridCard({
           label={ params.row.is_active ? "Activa" : "Inactiva" }
           size="small"
           color={ params.row.is_active ? "success" : "default" }
-          sx={{ borderRadius: "14px", fontWeight: 700 }}
+          sx={{ borderRadius: "14px", fontWeight: 600 }}
         />
       ),
     },
@@ -196,7 +196,7 @@ export function CashRegistersGridCard({
             label={ isOpen ? "Abierta" : "Cerrada" }
             size="small"
             color={ isOpen ? "success" : "default" }
-            sx={{ borderRadius: "14px", fontWeight: 700 }}
+            sx={{ borderRadius: "14px", fontWeight: 600 }}
           />
         );
       },
@@ -393,7 +393,7 @@ export function CashRegistersGridCard({
                     fontSize:
                         "0.78rem",
 
-                    fontWeight: 700,
+                    fontWeight: 600,
                     },
 
                 "& .MuiDataGrid-cell":
@@ -468,7 +468,7 @@ export function CashRegistersGridCard({
                     <Typography
                         variant="body2"
                         sx={{
-                        fontWeight: 700,
+                        fontWeight: 600,
                         }}
                     >
                         Resultado{" "}
@@ -722,7 +722,7 @@ function EmptyPurchases() {
     >
       <PointOfSaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay cajas
       </Typography>
 

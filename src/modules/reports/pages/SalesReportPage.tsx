@@ -256,7 +256,7 @@ export function SalesReportPage() {
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Reporte de ventas
@@ -307,7 +307,7 @@ export function SalesReportPage() {
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
               whiteSpace: "nowrap",
             }}
           >
@@ -342,7 +342,7 @@ export function SalesReportPage() {
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
               whiteSpace: "nowrap",
             }}
           >
@@ -460,7 +460,7 @@ export function SalesReportPage() {
                 height: 56,
                 borderRadius: "5px",
                 textTransform: "none",
-                fontWeight: 700,
+                fontWeight: 600,
                 }}
             >
                 { salesReportQuery.isFetching ? "Generando..." : "Generar" }
@@ -476,7 +476,7 @@ export function SalesReportPage() {
                 height: 56,
                 borderRadius: "5px",
                 textTransform: "none",
-                fontWeight: 700,
+                fontWeight: 600,
                 whiteSpace: "nowrap",
                 }}
             >
@@ -556,7 +556,7 @@ export function SalesReportPage() {
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 Detalle de ventas
@@ -593,7 +593,7 @@ export function SalesReportPage() {
                   },
 
                   "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
 
                   "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
@@ -635,7 +635,7 @@ export function SalesReportPage() {
                         <Typography
                           sx={{
                             fontSize: "0.875rem",
-                            fontWeight: 700,
+                            fontWeight: 600,
                           }}
                         >
                           { sale.sale_number }
@@ -661,7 +661,7 @@ export function SalesReportPage() {
                       <TableCell align="right">
                         <Typography
                           sx={{
-                            fontWeight: 700,
+                            fontWeight: 600,
                           }}
                         >
                           { formatCurrency(sale.total) }
@@ -689,7 +689,7 @@ export function SalesReportPage() {
                           >
                             <AttachMoney sx={{ fontSize: 32, color: "text.disabled" }} />
 
-                            <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+                            <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
                               Ventas
                             </Typography>
 
@@ -737,7 +737,7 @@ export function SalesReportPage() {
                 <Typography
                   variant="body2"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -791,7 +791,7 @@ export function SalesReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "divider",
                     color: "text.primary",
@@ -854,7 +854,7 @@ export function SalesReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "primary.main",
                     color: "primary.main",
@@ -920,7 +920,7 @@ function ReportMetricCard({
             variant="h5"
             sx={{
               mt: 0.5,
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             { value }

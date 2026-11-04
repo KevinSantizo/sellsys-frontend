@@ -1,4 +1,5 @@
 import {
+  AccountBalanceWalletRounded,
   AttachMoney,
   BusinessRounded,
   CategoryRounded,
@@ -14,7 +15,8 @@ import {
   PointOfSaleRounded,
   LocalShippingRounded, 
   ReceiptLongRounded, 
-  PictureAsPdfRounded 
+  PictureAsPdfRounded ,
+  
   } from "@mui/icons-material";
 
 import {
@@ -71,6 +73,12 @@ import { getCompanies, } from "../modules/companies/services/companyService";
       label: "Ventas",
       path: "/sales",
       icon: <AttachMoney />,
+    },
+
+    {
+      label: "Cuentas por cobrar",
+      path: "/sales/accounts-receivable",
+      icon: <AccountBalanceWalletRounded />,
     },
     {
       label: "Reportes",
@@ -337,7 +345,7 @@ import { getCompanies, } from "../modules/companies/services/companyService";
               <Typography
                 sx={{
                   fontSize: "0.92rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   lineHeight: 1.2,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -694,7 +702,7 @@ import { getCompanies, } from "../modules/companies/services/companyService";
                   component="div"
                   sx={{
                     fontSize: "0.95rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   Hola, {user?.first_name || user?.email}
@@ -764,7 +772,7 @@ import { getCompanies, } from "../modules/companies/services/companyService";
                     component="div"
                     sx={{
                       fontSize: "0.9rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     {selectedBranch.name}

@@ -174,7 +174,7 @@ export function SalesGridCard({
                       "hidden",
                     fontSize:
                       "0.88rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textOverflow:
                       "ellipsis",
                     whiteSpace:
@@ -356,7 +356,7 @@ export function SalesGridCard({
               variant="body2"
               sx={{
                 width: "100%",
-                fontWeight: 700,
+                fontWeight: 600,
                 textAlign:
                   "right",
                 whiteSpace:
@@ -842,7 +842,7 @@ export function SalesGridCard({
               fontSize:
                 "0.78rem",
 
-              fontWeight: 700,
+              fontWeight: 600,
             },
 
           "& .MuiDataGrid-cell":
@@ -929,7 +929,7 @@ export function SalesGridCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resultado{" "}
@@ -1151,7 +1151,7 @@ function EmptySales() {
         sx={{
           fontSize:
             "0.86rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       >
         No hay ventas

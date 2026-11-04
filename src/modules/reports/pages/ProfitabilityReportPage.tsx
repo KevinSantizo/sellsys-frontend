@@ -346,7 +346,7 @@ export function ProfitabilityReportPage() {
               sx={{
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
               }}
             >
@@ -363,7 +363,7 @@ export function ProfitabilityReportPage() {
                 minWidth: 100,
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
                 whiteSpace: "nowrap",
               }}
@@ -385,7 +385,7 @@ export function ProfitabilityReportPage() {
               sx={{
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
               }}
             >
@@ -406,7 +406,7 @@ export function ProfitabilityReportPage() {
               sx={{
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
               }}
             >
@@ -508,7 +508,7 @@ export function ProfitabilityReportPage() {
                 borderColor: "divider",
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Rentabilidad por producto
               </Typography>
 
@@ -529,7 +529,7 @@ export function ProfitabilityReportPage() {
                     borderRight: "none",
                   },
                   "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
                   "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
                     borderBottom: "none",
@@ -552,7 +552,7 @@ export function ProfitabilityReportPage() {
                   {rows.map((product) => (
                     <TableRow key={ product.product_id } hover>
                       <TableCell>
-                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 700 }}>
+                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>
                           { product.product_name }
                         </Typography>
                       </TableCell>
@@ -576,7 +576,7 @@ export function ProfitabilityReportPage() {
                       <TableCell align="right">
                         <Typography
                           sx={{
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: getResultColor(product.gross_profit),
                           }}
                         >
@@ -587,7 +587,7 @@ export function ProfitabilityReportPage() {
                       <TableCell align="right">
                         <Typography
                           sx={{
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color: getResultColor(product.gross_margin),
                           }}
                         >
@@ -601,7 +601,7 @@ export function ProfitabilityReportPage() {
                     <TableRow>
                       <TableCell colSpan={ 7 }>
                         <Box sx={{ py: 5, textAlign: "center" }}>
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography sx={{ fontWeight: 600 }}>
                             No hay información
                           </Typography>
 
@@ -638,7 +638,7 @@ export function ProfitabilityReportPage() {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
                   {totalRows > 0
                     ? `Resultado ${startIndex + 1}-${endIndex} de ${totalRows}`
                     : "Resultado 0 de 0"}
@@ -689,7 +689,7 @@ export function ProfitabilityReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "divider",
                     color: "text.primary",
@@ -752,7 +752,7 @@ export function ProfitabilityReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "primary.main",
                     color: "primary.main",
@@ -828,7 +828,7 @@ function ReportMetricCard({
             variant="h5"
             sx={{
               mt: 0.5,
-              fontWeight: 700,
+              fontWeight: 600,
               color: valueColor,
             }}
           >

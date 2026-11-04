@@ -55,7 +55,7 @@ export function BrandsGridCard({
       minWidth: 240,
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontSize: "0.84rem", fontWeight: 700 }}>
+        <Typography sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
           { params.row.name }
         </Typography>
       ),
@@ -71,7 +71,7 @@ export function BrandsGridCard({
           label={ params.row.is_active ? "Activa" : "Inactiva" }
           sx={{ 
             fontSize: "0.72rem",
-            fontWeight: 700,
+            fontWeight: 600,
             bgcolor: params.row.is_active ? "success.main" : "action.disabledBackground",
             color: params.row.is_active ? "#FFFFFF" : "text.secondary",
           }}
@@ -176,7 +176,7 @@ export function BrandsGridCard({
 
           "& .MuiDataGrid-columnHeaderTitle": {
             fontSize: "0.78rem",
-            fontWeight: 700,
+            fontWeight: 600,
           },
 
           "& .MuiDataGrid-cell": {
@@ -231,7 +231,7 @@ export function BrandsGridCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resultado{" "}
@@ -364,7 +364,7 @@ function EmptyBrands() {
     >
       <ShoppingBagRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay Marcas
       </Typography>
 

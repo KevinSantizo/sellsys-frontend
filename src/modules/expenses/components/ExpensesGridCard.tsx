@@ -143,7 +143,7 @@ export function ExpensesGridCard({
                   sx={{
                     overflow: "hidden",
                     fontSize: "0.88rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textOverflow:
                       "ellipsis",
                     whiteSpace: "nowrap",
@@ -235,7 +235,7 @@ export function ExpensesGridCard({
               variant="body2"
               sx={{
                 width: "100%",
-                fontWeight: 700,
+                fontWeight: 600,
                 textAlign: "right",
                 whiteSpace: "nowrap",
               }}
@@ -651,7 +651,7 @@ export function ExpensesGridCard({
               fontSize:
                 "0.78rem",
 
-              fontWeight: 700,
+              fontWeight: 600,
             },
 
           "& .MuiDataGrid-cell":
@@ -734,7 +734,7 @@ export function ExpensesGridCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resultado{" "}
@@ -975,7 +975,7 @@ function EmptyPurchases() {
     >
       <ShoppingCartRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay gastos
       </Typography>
 

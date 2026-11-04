@@ -31,6 +31,7 @@ export type CheckoutSalePayload = {
   notes: string; 
   items: SaleItemInput[];
   payments: PaymentInput[];
+  customer_id?: string | null;
 };
 
 export type SaleItem = {
@@ -94,6 +95,12 @@ export type SaleDetail = {
 
   items: SaleItem[];
   payments: SalePayment[];
+
+  customer_id: string | null;
+  paid_total: number;
+  balance_due: number;
+  payment_count: number;
+
 };
 
 export type SaleListItem = {
@@ -129,4 +136,30 @@ export type SalesResponse = {
   next: string | null;
   previous: string | null;
   results: SaleListItem[];
+};
+
+export type AccountsReceivableItem = {
+  id: string;
+  sale_number: string;
+
+  company_name: string;
+  branch_name: string;
+
+  customer_id: string;
+  customer_name: string;
+
+  total: string;
+  paid_total: number | string;
+  balance_due: number | string;
+  payment_count: number;
+
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type AccountsReceivableResponse = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: AccountsReceivableItem[];
 };

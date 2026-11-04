@@ -536,7 +536,7 @@ export function SalesHistoryPage() {
                 sm: "1.85rem",
               },
 
-              fontWeight: 700,
+              fontWeight: 600,
               mb: 0.4,
             }}
           >
@@ -785,7 +785,7 @@ export function SalesHistoryPage() {
               sx={{
                 borderRadius: "5px",
                 textTransform: "none",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               {cancelSaleMutation.isPending

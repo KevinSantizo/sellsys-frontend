@@ -262,7 +262,7 @@ export function ExpensesReportPage() {
               sx={{
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
               }}
             >
@@ -279,7 +279,7 @@ export function ExpensesReportPage() {
                 minWidth: 100,
                 minHeight: 56,
                 borderRadius: "5px",
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
                 whiteSpace: "nowrap",
               }}
@@ -345,7 +345,7 @@ export function ExpensesReportPage() {
                 borderColor: "divider",
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Detalle de gastos
               </Typography>
 
@@ -366,7 +366,7 @@ export function ExpensesReportPage() {
                     borderRight: "none",
                   },
                   "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
                   "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
                     borderBottom: "none",
@@ -410,7 +410,7 @@ export function ExpensesReportPage() {
                       </TableCell>
 
                       <TableCell align="right">
-                        <Typography sx={{ fontWeight: 700 }}>
+                        <Typography sx={{ fontWeight: 600 }}>
                           { formatCurrency(expense.amount) }
                         </Typography>
                       </TableCell>
@@ -421,7 +421,7 @@ export function ExpensesReportPage() {
                     <TableRow>
                       <TableCell colSpan={ 6 }>
                         <Box sx={{ py: 5, textAlign: "center" }}>
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography sx={{ fontWeight: 600 }}>
                             No hay gastos
                           </Typography>
 
@@ -458,7 +458,7 @@ export function ExpensesReportPage() {
               }}
             >
               <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
                   {totalRows > 0
                     ? `Resultado ${startIndex + 1}-${endIndex} de ${totalRows}`
                     : "Resultado 0 de 0"}
@@ -509,7 +509,7 @@ export function ExpensesReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "divider",
                     color: "text.primary",
@@ -572,7 +572,7 @@ export function ExpensesReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "primary.main",
                     color: "primary.main",

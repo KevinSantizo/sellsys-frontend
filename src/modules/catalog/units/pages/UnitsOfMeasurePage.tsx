@@ -51,11 +51,9 @@ import type {
 } from "../types/units";
 
 export function UnitsOfMeasurePage() {
-    const queryClient = useQueryClient();
-
-    const selectedCompany = useCompanyStore(
-        (state) => state.selectedCompany,
-    );
+ 
+    const queryClient = useQueryClient(); 
+    const selectedCompany = useCompanyStore( (state) => state.selectedCompany, );
 
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -293,7 +291,7 @@ export function UnitsOfMeasurePage() {
                                 xs: "1.65rem",
                                 sm: "1.85rem",
                             },
-                            fontWeight: 700,
+                            fontWeight: 600,
                             mb: 0.4,
                         }}
                     >
@@ -408,6 +406,7 @@ export function UnitsOfMeasurePage() {
                 error={ formError }
                 onClose={ handleCloseDialog }
                 onSubmit={ handleSubmitUnit }
+                
             />
         </Box>
     );

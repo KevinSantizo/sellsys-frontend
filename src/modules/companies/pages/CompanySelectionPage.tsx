@@ -140,7 +140,7 @@ export function CompanySelectionPage() {
               <Typography
                 variant="h4"
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 600,
                   mb: 1,
                 }}
               >
@@ -261,7 +261,7 @@ export function CompanySelectionPage() {
                           <Typography
                             variant="h6"
                             sx={{
-                              fontWeight: 700,
+                              fontWeight: 600,
                               mb: 0.75,
                             }}
                           >
@@ -302,7 +302,7 @@ export function CompanySelectionPage() {
                           <Typography
                             variant="body2"
                             sx={{
-                              fontWeight: 700,
+                              fontWeight: 600,
                             }}
                           >
                             Ingresar

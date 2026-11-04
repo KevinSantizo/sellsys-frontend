@@ -29,6 +29,7 @@ import { CategoriesPage } from "../modules/catalog/categories/pages/CategoriesPa
 import { BrandsPage } from "../modules/catalog/brands/pages/BrandsPage"; 
 import { UnitsOfMeasurePage } from "../modules/catalog/units/pages/UnitsOfMeasurePage";
 import { SuggestionsPage } from "../modules/suggestions/pages/SuggestionsPage.tsx";
+import { AccountsReceivablePage } from "../modules/sales/pages/AccountsReceivablePage.tsx";
 
 function PendingPage({
   title,
@@ -78,6 +79,7 @@ export function AppRoutes() {
           <Route path="/dashboard" element={<DashboardPage />}/>
           <Route path="/sales/pos"  element={<SalesPosPage />}/>
           <Route path="/sales"  element={<SalesHistoryPage/>}/>
+          <Route path="/sales/accounts-receivable"  element={<AccountsReceivablePage />}/> 
           <Route path="/catalog/products" element={<ProductsPage/>}/>
           <Route path="/purchases/suppliers" element={<SuppliersPage/>}/>
           <Route path="/catalog/categories" element={ <CategoriesPage/> }/>

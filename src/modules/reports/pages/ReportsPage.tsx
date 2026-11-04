@@ -209,7 +209,7 @@ export function ReportsPage() {
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           Resumen general
@@ -333,7 +333,7 @@ export function ReportsPage() {
                     sx={{
                     minHeight: 56,
                     borderRadius: "5px",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textTransform: "none",
                     }}
                 >
@@ -350,7 +350,7 @@ export function ReportsPage() {
                     minWidth: 100,
                     minHeight: 56,
                     borderRadius: "5px",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textTransform: "none",
                     whiteSpace: "nowrap",
                     }}
@@ -432,7 +432,7 @@ export function ReportsPage() {
                 variant="h6"
                 sx={{
                 mb: 1.5,
-                fontWeight: 700,
+                fontWeight: 600,
                 }}
             >
                 Otros reportes
@@ -481,7 +481,7 @@ export function ReportsPage() {
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 Desglose diario
@@ -516,7 +516,7 @@ export function ReportsPage() {
                         borderRight: "none",
                     },
                     "& .MuiTableHead-root .MuiTableCell-root": { 
-                        fontWeight: 700,
+                        fontWeight: 600,
                     },
 
                     "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
@@ -619,7 +619,7 @@ export function ReportsPage() {
                       <TableCell align="right">
                         <Typography
                           sx={{
-                            fontWeight: 700,
+                            fontWeight: 600,
                             color:
                               Number(row.cash.net) > 0
                                 ? "success.main"
@@ -643,7 +643,7 @@ export function ReportsPage() {
                             textAlign: "center",
                           }}
                         >
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography sx={{ fontWeight: 600 }}>
                             No hay información
                           </Typography>
 
@@ -695,7 +695,7 @@ export function ReportsPage() {
                     <Typography
                     variant="body2"
                     sx={{
-                        fontWeight: 700,
+                        fontWeight: 600,
                         whiteSpace: "nowrap",
                     }}
                     >
@@ -749,7 +749,7 @@ export function ReportsPage() {
                         height: 44,
                         borderRadius: "5px",
                         textTransform: "none",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         fontSize: "0.875rem",
                         borderColor: "divider",
                         color: "text.primary",
@@ -812,7 +812,7 @@ export function ReportsPage() {
                         height: 44,
                         borderRadius: "5px",
                         textTransform: "none",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         fontSize: "0.875rem",
                         borderColor: "primary.main",
                         color: "primary.main",
@@ -888,7 +888,7 @@ function ReportMetricCard({
             variant="h5"
             sx={{
               mt: 0.5,
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             { value }
@@ -980,7 +980,7 @@ function ReportAccessCard({
         <Box sx={{ minWidth: 0 }}>
           <Typography
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             { title }

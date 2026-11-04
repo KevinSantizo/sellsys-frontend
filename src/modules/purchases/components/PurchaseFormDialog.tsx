@@ -699,7 +699,7 @@ export function PurchaseFormDialog({
                     sx={{
                       borderRadius: "5px",
                       textTransform: "none",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       flexShrink: 0,
                     }}
                   >
@@ -1062,7 +1062,7 @@ export function PurchaseFormDialog({
                     sx={{
                       mb: 1.5,
                       fontSize: "0.9rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     Totales
@@ -1121,7 +1121,7 @@ export function PurchaseFormDialog({
                           color="primary.main"
                           sx={{
                             fontSize: "1rem",
-                            fontWeight: 700,
+                            fontWeight: 600,
                           }}
                         >
                           {formatCurrency(total)}
@@ -1168,7 +1168,7 @@ export function PurchaseFormDialog({
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Cancelar
@@ -1181,7 +1181,7 @@ export function PurchaseFormDialog({
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
               minWidth: 130,
             }}
           >
@@ -1267,7 +1267,7 @@ function SummaryRow({
       <Typography
         sx={{
           fontSize: "0.8rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       >
         {value}

@@ -58,7 +58,7 @@ export function UnitsOfMeasureGridCard({
                 <Typography
                     sx={{
                         fontSize: "0.84rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                     }}
                 >
                     { params.row.name }
@@ -109,7 +109,7 @@ export function UnitsOfMeasureGridCard({
                     sx={{
                         minWidth: 58,
                         fontSize: "0.72rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         bgcolor: params.row.allows_decimal
                             ? "primary.light"
                             : "action.disabledBackground",
@@ -131,7 +131,7 @@ export function UnitsOfMeasureGridCard({
                     label={ params.row.is_active ? "Activa" : "Inactiva" }
                     sx={{ 
                         fontSize: "0.72rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         bgcolor: params.row.is_active
                             ? "success.main"
                             : "action.disabledBackground",
@@ -240,7 +240,7 @@ export function UnitsOfMeasureGridCard({
 
                     "& .MuiDataGrid-columnHeaderTitle": {
                         fontSize: "0.78rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                     },
 
                     "& .MuiDataGrid-cell": {
@@ -300,7 +300,7 @@ export function UnitsOfMeasureGridCard({
                     <Typography
                         variant="body2"
                         sx={{
-                            fontWeight: 700,
+                            fontWeight: 600,
                         }}
                     >
                         Resultado { firstVisibleUnit }-{ lastVisibleUnit } de { totalUnits }
@@ -440,7 +440,7 @@ function EmptyUnits() {
     >
       <ScaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay unidades de medida
       </Typography>
 

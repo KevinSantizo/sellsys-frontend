@@ -227,7 +227,7 @@ export function InventoryReportPage() {
                 borderColor: "divider",
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Existencias
               </Typography>
 
@@ -251,7 +251,7 @@ export function InventoryReportPage() {
                   },
 
                   "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
 
                   "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
@@ -276,7 +276,7 @@ export function InventoryReportPage() {
                   {rows.map((product) => (
                     <TableRow key={ product.product_id } hover>
                       <TableCell>
-                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 700 }}>
+                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>
                           { product.name }
                         </Typography>
                       </TableCell>
@@ -290,7 +290,7 @@ export function InventoryReportPage() {
                       </TableCell>
 
                       <TableCell align="right">
-                        <Typography sx={{ fontWeight: 700 }}>
+                        <Typography sx={{ fontWeight: 600 }}>
                           { formatQuantity(product.quantity) }
                         </Typography>
                       </TableCell>
@@ -308,7 +308,7 @@ export function InventoryReportPage() {
                       </TableCell>
 
                       <TableCell align="right">
-                        <Typography sx={{ fontWeight: 700 }}>
+                        <Typography sx={{ fontWeight: 600 }}>
                           { formatCurrency(product.sale_value) }
                         </Typography>
                       </TableCell>
@@ -319,7 +319,7 @@ export function InventoryReportPage() {
                     <TableRow>
                       <TableCell colSpan={ 8 }>
                         <Box sx={{ py: 5, textAlign: "center" }}>
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography sx={{ fontWeight: 600 }}>
                             No hay inventario
                           </Typography>
 
@@ -363,7 +363,7 @@ export function InventoryReportPage() {
                   gap: 2,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
                   {totalRows > 0
                     ? `Resultado ${startIndex + 1}-${endIndex} de ${totalRows}`
                     : "Resultado 0 de 0"}
@@ -414,7 +414,7 @@ export function InventoryReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "divider",
                     color: "text.primary",
@@ -481,7 +481,7 @@ export function InventoryReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "primary.main",
                     color: "primary.main",

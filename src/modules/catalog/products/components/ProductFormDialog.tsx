@@ -145,6 +145,16 @@ export function ProductFormDialog({
    const [skuManuallyEdited, setSkuManuallyEdited] = useState(false);
    const [snackbarOpen, setSnackbarOpen] = useState(false); 
    const visibleError = validationError ?? submitError;
+
+   const inventoryUnits = units.filter(
+   (unit) => unit.unit_type === "UNIT",
+   );
+
+   const presentationUnits = units.filter(
+   (unit) =>
+      unit.unit_type === "VOLUME" ||
+      unit.unit_type === "MASS",
+   );
    const showValidationError = ( message: string ) => {
       setValidationError(message);
       if (isMobile) {
@@ -508,7 +518,7 @@ export function ProductFormDialog({
          >
             <DialogTitle
                sx={{
-                  fontWeight: 700,
+                  fontWeight: 600,
                }}
             >
                {title}
@@ -952,7 +962,7 @@ export function ProductFormDialog({
                            >
                               <TextField
                                  select
-                                 label="Unidad de inventario"
+                                 label="Tipo de envase"
                                  value={values.base_unit_id}
                                  onChange={(event) => {
                                     updateValue(
@@ -972,7 +982,7 @@ export function ProductFormDialog({
                                     },
                                  }}
                               >
-                                 {units.map((unit) => (
+                                 {inventoryUnits.map((unit) => (
                                     <MenuItem
                                        key={unit.id}
                                        value={unit.id}
@@ -1056,7 +1066,7 @@ export function ProductFormDialog({
                                  <MenuItem value="">
                                     No aplica
                                  </MenuItem>
-                                 {units.map((unit) => (
+                                 {presentationUnits.map((unit) => (
                                     <MenuItem
                                        key={unit.id}
                                        value={unit.id}
@@ -1179,7 +1189,7 @@ export function ProductFormDialog({
                                             }
                                             fullWidth
                                             disabled={ isSubmitting || isEditing }
-                                             
+                                            required={!isEditing}
                                             slotProps={{
                                               inputLabel: {
                                                 shrink: true,
@@ -1454,7 +1464,7 @@ export function ProductFormDialog({
          />
          <Typography
             sx={{
-               fontWeight: 700,
+               fontWeight: 600,
                fontSize: "1rem",
                mb: 1.5,
             }}

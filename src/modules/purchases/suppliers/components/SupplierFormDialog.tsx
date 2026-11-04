@@ -222,7 +222,7 @@ export function SupplierFormDialog({
       >
         <DialogTitle
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         >
           {title}

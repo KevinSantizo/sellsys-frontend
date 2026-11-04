@@ -193,7 +193,7 @@ export function PurchasesGridCard({
                 sx={{
                   overflow: "hidden",
                   fontSize: "0.88rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                 }}
@@ -278,7 +278,7 @@ export function PurchasesGridCard({
       headerAlign: "right",
       sortable: false,
       renderCell: (params) => (
-        <Typography sx={{ fontSize: "0.84rem", fontWeight: 700 }}>
+        <Typography sx={{ fontSize: "0.84rem", fontWeight: 600 }}>
           { formatCurrency(params.row.total) }
         </Typography>
       ),
@@ -561,7 +561,7 @@ export function PurchasesGridCard({
                 fontSize:
                     "0.78rem",
 
-                fontWeight: 700,
+                fontWeight: 600,
                 },
 
             "& .MuiDataGrid-cell":
@@ -643,7 +643,7 @@ export function PurchasesGridCard({
             <Typography
                 variant="body2"
                 sx={{
-                fontWeight: 700,
+                fontWeight: 600,
                 }}
             >
                 Resultado{" "}
@@ -944,7 +944,7 @@ function PurchaseStatusChip({ status, label }: PurchaseStatusChipProps) {
           bgcolor: "rgba(16, 126, 64, 0.10)",
           color: "#107E40",
           fontSize: "0.72rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       />
     );
@@ -961,7 +961,7 @@ function PurchaseStatusChip({ status, label }: PurchaseStatusChipProps) {
           bgcolor: "rgba(211, 47, 47, 0.10)",
           color: "#991B1B",
           fontSize: "0.72rem",
-          fontWeight: 700,
+          fontWeight: 600,
         }}
       />
     );
@@ -977,7 +977,7 @@ function PurchaseStatusChip({ status, label }: PurchaseStatusChipProps) {
         bgcolor: "rgba(237, 108, 2, 0.10)",
         color: "warning.dark",
         fontSize: "0.72rem",
-        fontWeight: 700,
+        fontWeight: 600,
       }}
     />
   );
@@ -1008,7 +1008,7 @@ function EmptyPurchases() {
     >
       <ShoppingCartRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay compras
       </Typography>
 

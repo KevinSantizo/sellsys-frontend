@@ -118,7 +118,7 @@ export function ManualCashMovementDialog({
             display: "flex",
             alignItems: "center",
             gap: 1,
-            fontWeight: 700,
+            fontWeight: 600,
             flexShrink: 0,
           }}
         >
@@ -154,7 +154,7 @@ export function ManualCashMovementDialog({
               sx={{
                 mt: 0.25,
                 fontSize: "0.95rem",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               { cashSession.cash_register_name }

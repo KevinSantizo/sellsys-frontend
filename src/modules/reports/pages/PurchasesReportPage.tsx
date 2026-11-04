@@ -262,7 +262,7 @@ export function PurchasesReportPage() {
                 height: 56,
                 borderRadius: "5px",
                 textTransform: "none",
-                fontWeight: 700,
+                fontWeight: 600,
                 }}
             >
                 { purchasesReportQuery.isFetching ? "Generando..." : "Generar" }
@@ -278,7 +278,7 @@ export function PurchasesReportPage() {
                 height: 56,
                 borderRadius: "5px",
                 textTransform: "none",
-                fontWeight: 700,
+                fontWeight: 600,
                 whiteSpace: "nowrap",
                 }}
             >
@@ -343,7 +343,7 @@ export function PurchasesReportPage() {
                 borderColor: "divider",
               }}
             >
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Detalle de compras
               </Typography>
 
@@ -367,7 +367,7 @@ export function PurchasesReportPage() {
                   },
 
                   "& .MuiTableHead-root .MuiTableCell-root": {
-                    fontWeight: 700,
+                    fontWeight: 600,
                   },
 
                   "& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root": {
@@ -397,7 +397,7 @@ export function PurchasesReportPage() {
                       </TableCell>
 
                       <TableCell>
-                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 700 }}>
+                        <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>
                           { purchase.purchase_number }
                         </Typography>
                       </TableCell>
@@ -427,7 +427,7 @@ export function PurchasesReportPage() {
                       </TableCell>
 
                       <TableCell align="right">
-                        <Typography sx={{ fontWeight: 700 }}>
+                        <Typography sx={{ fontWeight: 600 }}>
                           { formatCurrency(purchase.total) }
                         </Typography>
                       </TableCell>
@@ -438,7 +438,7 @@ export function PurchasesReportPage() {
                     <TableRow>
                       <TableCell colSpan={ 9 }>
                         <Box sx={{ py: 5, textAlign: "center" }}>
-                          <Typography sx={{ fontWeight: 700 }}>
+                          <Typography sx={{ fontWeight: 600 }}>
                             No hay compras
                           </Typography>
 
@@ -482,7 +482,7 @@ export function PurchasesReportPage() {
                   gap: 2,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: "nowrap" }}>
                   {totalRows > 0
                     ? `Resultado ${startIndex + 1}-${endIndex} de ${totalRows}`
                     : "Resultado 0 de 0"}
@@ -533,7 +533,7 @@ export function PurchasesReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "divider",
                     color: "text.primary",
@@ -596,7 +596,7 @@ export function PurchasesReportPage() {
                     height: 44,
                     borderRadius: "5px",
                     textTransform: "none",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.875rem",
                     borderColor: "primary.main",
                     color: "primary.main",

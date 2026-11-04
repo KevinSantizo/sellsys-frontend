@@ -129,7 +129,7 @@ export function CashMovementsGridCard({
           <Typography
             sx={{
               fontSize: "0.86rem",
-              fontWeight: 700,
+              fontWeight: 600,
               lineHeight: 1.2,
             }}
           >
@@ -160,7 +160,7 @@ export function CashMovementsGridCard({
           size="small"
           sx={{
             borderRadius: "14px",
-            fontWeight: 700,
+            fontWeight: 600,
           }}
         />
       ),
@@ -186,7 +186,7 @@ export function CashMovementsGridCard({
             variant="outlined"
             sx={{
               borderRadius: "14px",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           />
         );
@@ -261,7 +261,7 @@ export function CashMovementsGridCard({
           >
             <Typography
               sx={{
-                fontWeight: 700,
+                fontWeight: 600,
                 color: isEntry ? "success.main" : "error.main",
               }}
             >
@@ -288,7 +288,7 @@ export function CashMovementsGridCard({
         <Typography
           sx={{
             fontSize: "1rem",
-            fontWeight: 700,
+            fontWeight: 600,
             mb: 1.5,
           }}
         >
@@ -430,7 +430,7 @@ export function CashMovementsGridCard({
             bgcolor: "#F8F9FA",
           },
           "& .MuiDataGrid-columnHeaderTitle": {
-            fontWeight: 700,
+            fontWeight: 600,
             fontSize: "0.8rem",
           },
           "& .MuiDataGrid-cell": {
@@ -455,7 +455,7 @@ export function CashMovementsGridCard({
         }}
       >
         <Stack direction="row" spacing={ 1.25 } sx={{ alignItems: "center" }}>
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
             Resultado { firstVisible }-{ lastVisible } de { totalCashMovements }
           </Typography>
 
@@ -608,7 +608,7 @@ function EmptyPurchases() {
     >
       <PointOfSaleRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay cajas
       </Typography>
 

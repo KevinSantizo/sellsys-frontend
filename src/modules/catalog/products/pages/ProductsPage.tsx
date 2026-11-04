@@ -914,7 +914,7 @@ export function ProductsPage() {
                         xs: "1.65rem",
                         sm: "1.85rem",
                      },
-                     fontWeight: 700,
+                     fontWeight: 600,
                      mb: 0.4,
                }}
                >
@@ -1142,6 +1142,7 @@ export function ProductsPage() {
             }}
          />
          <UnitOfMeasureFormDialog
+            target={unitTarget}
             open={isUnitDialogOpen}
             title="Nueva unidad de medida"
             submitLabel="Guardar"

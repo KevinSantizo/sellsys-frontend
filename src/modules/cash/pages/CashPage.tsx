@@ -659,7 +659,7 @@ export function CashPage() {
                             xs: "1.65rem",
                             sm: "1.85rem",
                             },
-                            fontWeight: 700,
+                            fontWeight: 600,
                             mb: 0.4,
                         }}
                     >
@@ -771,7 +771,7 @@ export function CashPage() {
                                 borderRadius: "5px",
                                 bgcolor: "#FFFFFF",
                                 textTransform: "none",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 minHeight: 40,
                                 whiteSpace: "nowrap",
                             }}
@@ -800,7 +800,7 @@ export function CashPage() {
                                 borderRadius: "5px",
                                 bgcolor: "#FFFFFF",
                                 textTransform: "none",
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 minHeight: 40,
                                 whiteSpace: "nowrap",
                             }}
@@ -831,7 +831,7 @@ export function CashPage() {
                     sx={{
                         mb: 1.5,
                         fontSize: "1rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                     }}
                     >
                     Cajas abiertas

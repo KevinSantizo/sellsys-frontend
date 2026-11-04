@@ -109,7 +109,7 @@ export function SuppliersGridCard({
                   sx={{
                     overflow: "hidden",
                     fontSize: "0.88rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
@@ -482,7 +482,7 @@ export function SuppliersGridCard({
               fontSize:
                 "0.78rem",
 
-              fontWeight: 700,
+              fontWeight: 600,
             },
 
           "& .MuiDataGrid-cell":
@@ -565,7 +565,7 @@ export function SuppliersGridCard({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             Resultado{" "}
@@ -786,7 +786,7 @@ function EmptySuppliers() {
     >
       <LocalShippingRounded sx={{ fontSize: 32, color: "text.disabled" }} />
 
-      <Typography sx={{ fontSize: "0.86rem", fontWeight: 700 }}>
+      <Typography sx={{ fontSize: "0.86rem", fontWeight: 600 }}>
         No hay proveedores
       </Typography>
 

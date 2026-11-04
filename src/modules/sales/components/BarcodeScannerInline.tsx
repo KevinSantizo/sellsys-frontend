@@ -212,7 +212,7 @@ export function BarcodeScannerInline({
 
           <Typography
             sx={{
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: "0.95rem",
             }}
           >

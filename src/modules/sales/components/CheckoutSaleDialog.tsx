@@ -1,5 +1,6 @@
 import {
   AccountBalanceRounded,
+  AddRounded,
   CreditCardRounded,
   PaymentsRounded,
   PointOfSaleRounded,
@@ -14,6 +15,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  IconButton,
   InputAdornment,
   MenuItem,
   TextField,
@@ -30,6 +32,10 @@ import { OpenCashSessionDialog } from "../../cash/components/OpenCashSessionDial
 import { CashRegisterFormDialog } from "../../cash/components/CashRegisterFormDialog";
 
 import type { CashRegister, CashRegisterFormValues, } from "../../cash/types/cash";
+import { createCustomer, getCustomers, } from "../services/customerService";
+import type { CustomerFormValues, } from "../types/customer.types";
+import { CustomerFormDialog,} from "./CustomerFormDialog";
+
 
 export type CartDiscountType =
   | "NONE"
@@ -46,6 +52,7 @@ export type CheckoutFormValues = {
   cashSessionId: string | null;
   cartDiscountType: CartDiscountType;
   cartDiscountValue: string;
+  customerId: string | null;
 };
 
 type CheckoutSaleDialogProps = {
@@ -113,7 +120,56 @@ export function CheckoutSaleDialog({
   const [createCashRegisterError, setCreateCashRegisterError] = useState<string | null>(null);
   const [cartDiscountType, setCartDiscountType] = useState<CartDiscountType>("NONE");
   const [cartDiscountValue, setCartDiscountValue] = useState("");
-  
+  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
+  const [customerError, setCustomerError] = useState<string | null>(null);
+  const customersQuery = useQuery({
+    queryKey: [
+      "customers",
+      "checkout",
+      companyId,
+    ],
+    queryFn: () =>
+      getCustomers({
+        companyId,
+        ordering: "last_name",
+        page: 1,
+        pageSize: 100,
+      }),
+    enabled: Boolean(open && companyId),
+  });
+
+  const createCustomerMutation = useMutation({
+    mutationFn: (
+      values: CustomerFormValues,
+    ) =>
+      createCustomer({
+        company: companyId,
+        first_name: values.first_name,
+        last_name: values.last_name,
+        phone: values.phone,
+      }),
+
+    onSuccess: async (customer) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+      });
+
+      setCustomerId(customer.id);
+      setCustomerName(
+        `${customer.first_name} ${customer.last_name}`,
+      );
+      setCustomerError(null);
+      setIsCustomerDialogOpen(false);
+    },
+
+    onError: () => {
+      setCustomerError(
+        "No se pudo registrar el cliente.",
+      );
+    },
+  });
+
+  const customers = customersQuery.data?.results ?? [];
   const openCashSessionsQuery = useQuery({
     queryKey: [
       "cash-sessions",
@@ -133,7 +189,6 @@ export function CheckoutSaleDialog({
   });
 
   const openCashSessions = openCashSessionsQuery.data?.results ?? [];
-
 
   const cashRegistersQuery = useQuery({
     queryKey: [
@@ -180,7 +235,9 @@ export function CheckoutSaleDialog({
     setCreateCashRegisterError(null);
     setCartDiscountType("NONE");
     setCartDiscountValue("");
-
+    setCustomerId(null);
+    setIsCustomerDialogOpen(false);
+    setCustomerError(null);
   }, [open, total]);
 
   
@@ -306,11 +363,31 @@ export function CheckoutSaleDialog({
     cartDiscountValue,
     cartDiscountValueNumber,
   ]);
-  const requiresReference =
-    paymentMethod === "CARD" ||
-    paymentMethod === "TRANSFER";
 
+  const requiresReference = paymentMethod === "CARD" || paymentMethod === "TRANSFER";
   const amountReceivedNumber = Number(amountReceived) || 0;
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const amountReceivedError = useMemo(() => {
+    if (amountReceived.trim() === "") {
+      return "Ingresa el monto recibido.";
+    }
+
+    if (amountReceivedNumber <= 0) {
+      return "El monto debe ser mayor que cero.";
+    }
+
+    if ( !isCash && amountReceivedNumber > finalTotal
+    ) {
+      return "El monto no puede superar el total.";
+    }
+
+    return "";
+  }, [
+    amountReceived,
+    amountReceivedNumber,
+    finalTotal,
+    isCash,
+  ]);
 
   const missingAmount = useMemo(
     () =>
@@ -321,22 +398,24 @@ export function CheckoutSaleDialog({
     [finalTotal, amountReceivedNumber],
   );
 
+  const requiresCustomer = missingAmount > 0;
+
   const changeAmount = useMemo(
     () =>
-        Math.max(
-          amountReceivedNumber - finalTotal,
-          0,
-        ),
-      [finalTotal, amountReceivedNumber],
-    );
+      Math.max(
+        amountReceivedNumber - finalTotal,
+        0,
+      ),
+    [finalTotal, amountReceivedNumber],
+  );
 
-  const canSubmit =
-    finalTotal > 0 &&
-    amountReceivedNumber >= finalTotal &&
+  const canSubmit = finalTotal > 0 &&
+    amountReceivedError === "" &&
     discountError === "" &&
-    (!requiresReference || reference.trim() !== "") &&
-    (!isCash || cashSessionId !== "");
-
+    (!requiresReference ||
+      reference.trim() !== "") &&
+    (!isCash || cashSessionId !== "") &&
+    (!requiresCustomer || Boolean(customerId));
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
@@ -353,8 +432,9 @@ export function CheckoutSaleDialog({
     if ( !canSubmit || loading ) {
       return;
     }
-
+ 
     await onConfirm({
+      customerId,
       customerName,
       customerTaxId,
       notes,
@@ -511,7 +591,7 @@ export function CheckoutSaleDialog({
             <Typography
               variant="h6"
               sx={{
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             >
               Cobrar venta
@@ -537,22 +617,97 @@ export function CheckoutSaleDialog({
                 gap: 1.5,
               }}
             >
-              <TextField
-                label="Cliente"
-                value={customerName}
-                disabled={loading}
-                onChange={(event) => {
-                  setCustomerName(
-                    event.target.value,
-                  );
-                }}
+              <Box
                 sx={{
-                  "& .MuiOutlinedInput-root":
-                    {
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr) 48px",
+                  gap: 1,
+                  alignItems: "start",
+                }}
+              >
+                <TextField
+                  select
+                  label="Cliente"
+                  value={customerId ?? ""}
+                  disabled={
+                    loading ||
+                    customersQuery.isLoading
+                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+
+                    if (!value) {
+                      setCustomerId(null);
+                      setCustomerName("Consumidor final");
+                      return;
+                    }
+
+                    const customer = customers.find(
+                      (item) => item.id === value,
+                    );
+
+                    setCustomerId(value);
+
+                    if (customer) {
+                      setCustomerName(
+                        `${customer.first_name} ${customer.last_name}`,
+                      );
+                    }
+                  }}
+                  error={
+                    requiresCustomer && !customerId
+                  }
+                  helperText={
+                    requiresCustomer && !customerId
+                      ? "Selecciona un cliente para registrar el saldo pendiente."
+                      : customers.length === 0
+                        ? "No hay clientes. Usa + para registrarlo."
+                        : " "
+                  }
+                  fullWidth
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: "5px",
                     },
-                }}
-              />
+                  }}
+                >
+                  <MenuItem value="">
+                    Consumidor final
+                  </MenuItem>
+
+                  {customers.map((customer) => (
+                    <MenuItem
+                      key={customer.id}
+                      value={customer.id}
+                    >
+                      {customer.first_name}{" "}
+                      {customer.last_name}{" "}
+                      {customer.phone
+                        ? `— ${customer.phone}`
+                        : ""}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <IconButton
+                  type="button"
+                  onClick={() => {
+                    setCustomerError(null);
+                    setIsCustomerDialogOpen(true);
+                  }}
+                  disabled={loading}
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    border: "1px solid",
+                    borderColor: "primary.main",
+                    borderRadius: "5px",
+                    color: "primary.main",
+                  }}
+                >
+                  <AddRounded />
+                </IconButton>
+              </Box>
 
               <TextField
                 label="NIT"
@@ -798,7 +953,7 @@ export function CheckoutSaleDialog({
                     }}
                   >
                     <Box>
-                      <Typography sx={{ fontSize: "0.9rem", fontWeight: 700 }}>
+                      <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
                         No hay cajas creadas
                       </Typography>
 
@@ -836,7 +991,7 @@ export function CheckoutSaleDialog({
                     }}
                   >
                     <Box>
-                      <Typography sx={{ fontSize: "0.9rem", fontWeight: 700 }}>
+                      <Typography sx={{ fontSize: "0.9rem", fontWeight: 600 }}>
                         No hay una caja abierta
                       </Typography>
 
@@ -905,9 +1060,7 @@ export function CheckoutSaleDialog({
                   : "Monto pagado"
               }
               value={amountReceived}
-              disabled={
-                loading || !isCash
-              }
+              disabled={loading}
               onChange={(event) => {
                 setAmountReceived(
                   event.target.value,
@@ -927,16 +1080,14 @@ export function CheckoutSaleDialog({
                   ),
                 },
               }}
-              error={
-                amountReceivedNumber > 0 &&
-                amountReceivedNumber < finalTotal
-              }
+              error={amountReceivedError !== ""}
               helperText={
-                missingAmount > 0
-                  ? `Faltan ${formatCurrency(
+                amountReceivedError ||
+                (missingAmount > 0
+                  ? `Saldo pendiente: ${formatCurrency(
                       missingAmount,
                     )}`
-                  : " "
+                  : " ")
               }
               sx={{
                 "& .MuiOutlinedInput-root":
@@ -945,6 +1096,37 @@ export function CheckoutSaleDialog({
                   },
               }}
             />
+
+            {missingAmount > 0 && (
+              <>
+                <Divider />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 2,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: 600,
+                    }}
+                  >
+                    Saldo pendiente
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      color: "warning.dark",
+                      fontWeight: 900,
+                    }}
+                  >
+                    {formatCurrency(missingAmount)}
+                  </Typography>
+                </Box>
+              </>
+            )}
 
             {requiresReference && (
               <TextField
@@ -1018,7 +1200,7 @@ export function CheckoutSaleDialog({
 
                 <Typography
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   { formatCurrency(total) }
@@ -1043,7 +1225,7 @@ export function CheckoutSaleDialog({
                   <Typography
                     sx={{
                       color: "error.main",
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     -{ formatCurrency(cartDiscountAmount) }
@@ -1060,7 +1242,7 @@ export function CheckoutSaleDialog({
               >
                 <Typography
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   Total a pagar
@@ -1094,7 +1276,7 @@ export function CheckoutSaleDialog({
 
                 <Typography
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   {formatCurrency(
@@ -1118,7 +1300,7 @@ export function CheckoutSaleDialog({
                   >
                     <Typography
                       sx={{
-                        fontWeight: 700,
+                        fontWeight: 600,
                       }}
                     >
                       Cambio
@@ -1186,7 +1368,7 @@ export function CheckoutSaleDialog({
             sx={{
               minWidth: 165,
               borderRadius: "5px",
-              fontWeight: 700,
+              fontWeight: 600,
             }}
           >
             {loading
@@ -1221,6 +1403,27 @@ export function CheckoutSaleDialog({
           setOpenCashSessionError(null);
         }}
         onSubmit={ handleSubmitOpenCashSession }
+      />
+
+      <CustomerFormDialog
+        open={isCustomerDialogOpen}
+        title="Nuevo cliente"
+        submitLabel="Guardar"
+        isSubmitting={
+          createCustomerMutation.isPending
+        }
+        error={customerError}
+        onClose={() => {
+          if (
+            !createCustomerMutation.isPending
+          ) {
+            setIsCustomerDialogOpen(false);
+            setCustomerError(null);
+          }
+        }}
+        onSubmit={(values) => {
+          createCustomerMutation.mutate(values);
+        }}
       />
     </>
   );

@@ -24,6 +24,11 @@ import {
   type UnitOfMeasureFormValues,
 } from "../types/units";
 
+
+type UnitTarget =
+  | "base_unit_id"
+  | "content_unit_id";
+  
 type UnitOfMeasureFormDialogProps = {
   open: boolean;
   title: string;
@@ -33,6 +38,7 @@ type UnitOfMeasureFormDialogProps = {
   error?: string | null;
   onClose: () => void;
   onSubmit: (values: UnitOfMeasureFormValues) => void;
+  target?: UnitTarget | null;
 };
 
 const emptyValues: UnitOfMeasureFormValues = {
@@ -50,20 +56,31 @@ export function UnitOfMeasureFormDialog({
   initialValues,
   isSubmitting,
   error,
+  target,
   onClose,
   onSubmit,
 }: UnitOfMeasureFormDialogProps) {
   const [values, setValues] = useState<UnitOfMeasureFormValues>(emptyValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isInventoryUnit = target === "base_unit_id";
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setValues(initialValues ?? emptyValues);
+    setValues(
+      initialValues ?? {
+        ...emptyValues,
+        unit_type:
+          target === "content_unit_id"
+            ? "VOLUME"
+            : "UNIT",
+        allows_decimal: false,
+      },
+    );
     setErrors({});
-  }, [open, initialValues]);
+  }, [open, initialValues, target]);
 
   const updateValue = <K extends keyof UnitOfMeasureFormValues>(
     field: K,
@@ -87,11 +104,7 @@ export function UnitOfMeasureFormDialog({
       nextErrors.name = "El nombre de la unidad es obligatorio.";
     }
 
-    if (!values.symbol.trim()) {
-      nextErrors.symbol = "El símbolo es obligatorio.";
-    }
-
-    if (!values.unit_type) {
+    if (!isInventoryUnit && !values.unit_type) {
       nextErrors.unit_type = "Selecciona un tipo de unidad.";
     }
 
@@ -110,7 +123,13 @@ export function UnitOfMeasureFormDialog({
     onSubmit({
       ...values,
       name: values.name.trim(),
-      symbol: values.symbol.trim(),
+      symbol: values.symbol.trim() || values.name.trim(),
+      unit_type: isInventoryUnit
+        ? "UNIT"
+        : values.unit_type,
+      allows_decimal: isInventoryUnit
+        ? false
+        : values.allows_decimal,
     });
   };
 
@@ -189,83 +208,64 @@ export function UnitOfMeasureFormDialog({
               }}
             />
 
-            <TextField
-              label="Símbolo"
-              value={ values.symbol }
-              onChange={(event) => updateValue("symbol", event.target.value)}
-              error={ Boolean(errors.symbol) }
-              helperText={ errors.symbol }
-              disabled={ isSubmitting }
-              fullWidth
-              required 
-              placeholder="Ej. kg, lb, m, L, un"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "5px",
-                },
-              }}
-            />
-
-            <TextField
-              select
-              label="Tipo de unidad"
-              value={ values.unit_type }
-              onChange={(event) => {
-                updateValue(
-                  "unit_type",
-                  event.target.value as UnitOfMeasureFormValues["unit_type"],
-                );
-              }}
-              error={ Boolean(errors.unit_type) }
-              helperText={ errors.unit_type }
-              disabled={ isSubmitting }
-              fullWidth
-              required
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "5px",
-                },
-              }}
-            >
-              { unitTypeOptions.map((option) => (
-                <MenuItem
-                  key={ option.value }
-                  value={ option.value }
-                >
-                  { option.label }
-                </MenuItem>
-              )) }
-            </TextField>
-
-            <Box>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={ values.allows_decimal }
-                    onChange={(event) => {
-                      updateValue(
-                        "allows_decimal",
-                        event.target.checked,
-                      );
-                    }}
-                    disabled={ isSubmitting }
-                  />
-                }
-                label="Permitir cantidades decimales"
-              />
-
-              <Typography
-                color="text.secondary"
-                sx={{
-                  fontSize: "0.78rem",
-                  ml: 6,
-                  mt: -0.5,
+            {!isInventoryUnit && (
+              <TextField
+                select
+                label="Tipo de unidad"
+                value={values.unit_type}
+                onChange={(event) => {
+                  updateValue(
+                    "unit_type",
+                    event.target.value as UnitOfMeasureFormValues["unit_type"],
+                  );
                 }}
+                error={Boolean(errors.unit_type)}
+                helperText={errors.unit_type}
+                disabled={isSubmitting}
+                fullWidth
+                required
               >
-                Permite cantidades como 0.50, 1.25 o 2.75.
-              </Typography>
-            </Box>
+                {unitTypeOptions.map((option) => (
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                  >
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
+            {!isInventoryUnit && (
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={ values.allows_decimal }
+                      onChange={(event) => {
+                        updateValue(
+                          "allows_decimal",
+                          event.target.checked,
+                        );
+                      }}
+                      disabled={ isSubmitting }
+                    />
+                  }
+                  label="Permitir cantidades decimales"
+                />
+
+                <Typography
+                  color="text.secondary"
+                  sx={{
+                    fontSize: "0.78rem",
+                    ml: 6,
+                    mt: -0.5,
+                  }}
+                >
+                  Permite cantidades como 0.50, 1.25 o 2.75.
+                </Typography>
+              </Box>
+            )}
             <FormControlLabel
               control={
                 <Switch

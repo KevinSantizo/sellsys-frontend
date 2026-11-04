@@ -41,22 +41,22 @@ export const theme = createTheme({
     ].join(","),
 
     h4: {
-      fontWeight: 700,
+      fontWeight: 600,
       letterSpacing: "-0.8px",
     },
 
     h5: {
-      fontWeight: 700,
+      fontWeight: 600,
       letterSpacing: "-0.6px",
     },
 
     h6: {
-      fontWeight: 700,
+      fontWeight: 600,
     },
 
     button: {
       textTransform: "none",
-      fontWeight: 700,
+      fontWeight: 600,
     },
   },
 

@@ -1239,7 +1239,7 @@ export function PurchasesPage() {
               xs: "1.65rem",
               sm: "1.85rem",
               },
-              fontWeight: 700,
+              fontWeight: 600,
               mb: 0.4,
             }}
           >
@@ -1353,7 +1353,7 @@ export function PurchasesPage() {
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
               minHeight: 40,
               whiteSpace: "nowrap",
             }}
@@ -1389,7 +1389,7 @@ export function PurchasesPage() {
             sx={{
               borderRadius: "5px",
               textTransform: "none",
-              fontWeight: 700,
+              fontWeight: 600,
               minHeight: 40,
               whiteSpace: "nowrap",
             }}
@@ -1684,6 +1684,7 @@ export function PurchasesPage() {
       />
 
       <UnitOfMeasureFormDialog
+        target={unitTarget}
         open={isUnitDialogOpen}
         title="Nueva unidad de medida"
         submitLabel="Guardar"
