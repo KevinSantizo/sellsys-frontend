@@ -363,7 +363,7 @@ export function CheckoutSaleDialog({
     cartDiscountValue,
     cartDiscountValueNumber,
   ]);
-
+  const CONSUMER_FINAL_VALUE = "__CONSUMER_FINAL__";
   const requiresReference = paymentMethod === "CARD" || paymentMethod === "TRANSFER";
   const amountReceivedNumber = Number(amountReceived) || 0;
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -628,7 +628,7 @@ export function CheckoutSaleDialog({
                 <TextField
                   select
                   label="Cliente"
-                  value={customerId ?? ""}
+                  value={customerId ?? CONSUMER_FINAL_VALUE}
                   disabled={
                     loading ||
                     customersQuery.isLoading
@@ -636,7 +636,7 @@ export function CheckoutSaleDialog({
                   onChange={(event) => {
                     const value = event.target.value;
 
-                    if (!value) {
+                    if (value === CONSUMER_FINAL_VALUE) {
                       setCustomerId(null);
                       setCustomerName("Consumidor final");
                       return;
@@ -671,7 +671,7 @@ export function CheckoutSaleDialog({
                     },
                   }}
                 >
-                  <MenuItem value="">
+                  <MenuItem value={CONSUMER_FINAL_VALUE}>
                     Consumidor final
                   </MenuItem>
 
