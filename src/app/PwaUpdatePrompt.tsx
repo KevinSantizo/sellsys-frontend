@@ -18,31 +18,55 @@ export function PwaUpdatePrompt() {
     });
 
     useEffect(() => {
-        const checkForUpdate = () => {
-            if (document.visibilityState === "visible") {
-            void registrationRef.current?.update();
-            }
-        };
+    const checkForWaitingWorker = async () => {
+        const registration =
+        await navigator.serviceWorker.getRegistration();
 
-        const intervalId = window.setInterval(
-            checkForUpdate,
-            60_000,
+        if (!registration) {
+        return;
+        }
+
+        registrationRef.current = registration;
+
+        if (registration.waiting) {
+        setNeedRefresh(true);
+        }
+    };
+
+    const checkForUpdate = () => {
+        if (document.visibilityState === "visible") {
+        void registrationRef.current?.update();
+        }
+    };
+
+    void checkForWaitingWorker();
+
+    const intervalId = window.setInterval(
+        checkForUpdate,
+        60_000,
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        checkForUpdate,
+    );
+
+    return () => {
+        window.clearInterval(intervalId);
+
+        document.removeEventListener(
+        "visibilitychange",
+        checkForUpdate,
         );
+    };
+    }, [setNeedRefresh]);
 
-        document.addEventListener(
-            "visibilitychange",
-            checkForUpdate,
-        );
-
-        return () => {
-            window.clearInterval(intervalId);
-
-            document.removeEventListener(
-            "visibilitychange",
-            checkForUpdate,
-            );
-        };
-    }, []);
+    console.log({
+        needRefresh,
+        waiting: Boolean(
+            registrationRef.current?.waiting,
+        ),
+    });
 
 
   return (
