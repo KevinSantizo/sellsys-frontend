@@ -20,6 +20,9 @@ import {
   } from "@mui/icons-material";
 
 import {
+  Alert,
+  CircularProgress,
+  Snackbar,
   Box,
   Button,
   Divider,
@@ -147,13 +150,26 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
 
   export function AppLayout() {
 
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const queryClient = useQueryClient();
 
     const handleRefresh = async () => {
-      await queryClient.refetchQueries({
-        type: "active",
-      });
+      if (isRefreshing) {
+        return;
+      }
+
+      setIsRefreshing(true);
+
+      try {
+        await queryClient.refetchQueries({
+          type: "active",
+        });
+      } finally {
+        setIsRefreshing(false);
+      }
     };
+
+
     const {
       data: availableCompanies = [],
     } = useQuery({
@@ -563,6 +579,26 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
       >
 
         <PwaUpdatePrompt />
+
+        <Snackbar
+          open={isRefreshing}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "center",
+          }}
+        >
+          <Alert
+            severity="info"
+            variant="filled"
+            sx={{
+              borderRadius: "10px",
+              backgroundColor: "#064a57"
+
+            }}
+          >
+            Actualizando información...
+          </Alert>
+        </Snackbar>
         {/* Sidebar */}
         <Box
           component="nav"
@@ -738,9 +774,14 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                 <IconButton
                   type="button"
                   onClick={() => void handleRefresh()}
+                  disabled={isRefreshing}
                   aria-label="Actualizar datos"
                 >
-                  <RefreshRounded />
+                  {isRefreshing ? (
+                    <CircularProgress size={22} />
+                  ) : (
+                    <RefreshRounded />
+                  )}
                 </IconButton>
               </Stack>
 
