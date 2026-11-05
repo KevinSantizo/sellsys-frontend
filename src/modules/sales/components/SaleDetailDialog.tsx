@@ -458,6 +458,36 @@ export function SaleDetailDialog({
                       sale.amount_received,
                     )}
                   />
+                  {Number(sale.balance_due) > 0 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 2,
+                        fontSize: "0.8rem"
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          color: "error.main", 
+                          fontSize: "0.8rem"
+                        }}
+                      >
+                        Saldo pendiente
+                      </Typography>
+
+                      <Typography
+                        sx={{
+                          color: "error.main",
+                          fontWeight: 600,
+                          fontSize: "0.8rem"
+
+                        }}
+                      >
+                        {formatCurrency(Number(sale.balance_due))}
+                      </Typography>
+                    </Box>
+                  )}
 
                   <SummaryRow
                     label="Cambio"

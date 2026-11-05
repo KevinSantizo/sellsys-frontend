@@ -100,7 +100,7 @@ export type SaleDetail = {
   paid_total: number;
   balance_due: number;
   payment_count: number;
-
+  
 };
 
 export type SaleListItem = {

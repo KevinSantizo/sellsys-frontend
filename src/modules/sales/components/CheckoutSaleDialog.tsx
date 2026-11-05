@@ -224,7 +224,7 @@ export function CheckoutSaleDialog({
     setCustomerName("Consumidor final");
     setCustomerTaxId("CF");
     setPaymentMethod("CASH");
-    setAmountReceived(total.toFixed(2));
+    setAmountReceived("");
     setReference("");
     setNotes("");
     setCashSessionId("");
@@ -316,18 +316,7 @@ export function CheckoutSaleDialog({
     cartDiscountAmount,
   ]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    setAmountReceived(
-      finalTotal.toFixed(2),
-    );
-  }, [
-    open,
-    finalTotal,
-  ]);
+ 
 
   const discountError = useMemo(() => {
     if (cartDiscountType === "NONE") {
@@ -419,7 +408,7 @@ export function CheckoutSaleDialog({
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
-    setAmountReceived(finalTotal.toFixed(2));
+    setAmountReceived("");
 
     if (method === "CASH") {
       setReference("");
@@ -659,7 +648,7 @@ export function CheckoutSaleDialog({
                   }
                   helperText={
                     requiresCustomer && !customerId
-                      ? "Selecciona un cliente para registrar el saldo pendiente."
+                      ? "Selecciona un cliente si va a quedar saldo pendiente."
                       : customers.length === 0
                         ? "No hay clientes. Usa + para registrarlo."
                         : " "
@@ -1052,8 +1041,41 @@ export function CheckoutSaleDialog({
               </>
             )}
 
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                px: 2,
+                py: 1.5,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: "5px",
+                bgcolor: "#F7FAFA",
+              }}
+            >
+              <Typography sx={{ fontWeight: 600 }}>
+                Total a pagar
+              </Typography>
+
+              <Typography
+                sx={{
+                  color: "primary.main",
+                  fontWeight: 600,
+                  fontSize: "1.1rem",
+                }}
+              >
+                {formatCurrency(finalTotal)}
+              </Typography>
+            </Box>
+
             <TextField
               type="number"
+              placeholder={
+                isCash
+                  ? "Ingresar monto recibido"
+                  : "Ingresar monto pagado"
+              }
               label={
                 isCash
                   ? "Monto recibido"
@@ -1119,7 +1141,7 @@ export function CheckoutSaleDialog({
                   <Typography
                     sx={{
                       color: "warning.dark",
-                      fontWeight: 900,
+                      fontWeight: 600,
                     }}
                   >
                     {formatCurrency(missingAmount)}
@@ -1251,7 +1273,7 @@ export function CheckoutSaleDialog({
                 <Typography 
                   sx={{
                     color: "primary.main",
-                    fontWeight: 900,
+                    fontWeight: 600,
                   }}
                 >
                   { formatCurrency(finalTotal) }
@@ -1310,7 +1332,7 @@ export function CheckoutSaleDialog({
                       sx={{
                         color:
                           "primary.main",
-                        fontWeight: 900,
+                        fontWeight: 600,
                       }}
                     >
                       {formatCurrency(

@@ -491,7 +491,7 @@ export function AddSalePaymentDialog({
               <Typography
               sx={{
                 color: "primary.main",
-                fontWeight: 900
+                fontWeight: 600,
               }}
                 
               >
