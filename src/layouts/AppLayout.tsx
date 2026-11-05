@@ -620,7 +620,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
 
             }}
           >
-            Actualizando información...
+            Actualizando...
           </Alert>
         </Snackbar>
         {/* Sidebar */}
