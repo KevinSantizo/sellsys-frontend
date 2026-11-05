@@ -7,10 +7,12 @@ import {
 } from "@mui/material"; 
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { useEffect, useRef } from "react";
-
 export function PwaUpdatePrompt() {
-  const registrationRef =
-    useRef<ServiceWorkerRegistration | null>(null);
+
+
+    const dismissedRef = useRef(false);
+
+  const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -26,60 +28,100 @@ export function PwaUpdatePrompt() {
     },
   });
 
-  useEffect(() => {
-    const checkForWaitingWorker = async () => {
-      if (!("serviceWorker" in navigator)) {
-        return;
-      }
+    useEffect(() => {
+        const checkForWaitingWorker = async () => {
+            if (!("serviceWorker" in navigator)) {
+            return;
+            }
 
-      const registration =
-        await navigator.serviceWorker.getRegistration();
+            const registration =
+            registrationRef.current ??
+            await navigator.serviceWorker.getRegistration();
 
-      if (!registration) {
-        return;
-      }
+            if (!registration) {
+            return;
+            }
 
-      registrationRef.current = registration;
+            registrationRef.current = registration;
 
-      if (registration.waiting) {
-        setNeedRefresh(true);
-      }
+            if (
+            registration.waiting &&
+            !dismissedRef.current
+            ) {
+            setNeedRefresh(true);
+            }
+        };
+
+        const checkForUpdate = async () => {
+            if (
+            document.visibilityState !== "visible"
+            ) {
+            return;
+            }
+
+            const registration =
+            registrationRef.current ??
+            await navigator.serviceWorker.getRegistration();
+
+            if (!registration) {
+            return;
+            }
+
+            registrationRef.current = registration;
+
+            try {
+            await registration.update();
+            } catch {
+            // Se ignora si la actualización falla temporalmente.
+            }
+
+            await checkForWaitingWorker();
+        };
+
+        const handleVisibilityChange = () => {
+            if (
+            document.visibilityState === "visible"
+            ) {
+            // Al volver a abrir la app se vuelve a mostrar
+            // la alerta si todavía hay una actualización pendiente.
+            dismissedRef.current = false;
+            void checkForUpdate();
+            }
+        };
+
+        void checkForUpdate();
+
+        const intervalId = window.setInterval(
+            () => {
+            void checkForUpdate();
+            },
+            60_000,
+        );
+
+        document.addEventListener(
+            "visibilitychange",
+            handleVisibilityChange,
+        );
+
+        return () => {
+            window.clearInterval(intervalId);
+
+            document.removeEventListener(
+            "visibilitychange",
+            handleVisibilityChange,
+            );
+        };
+    }, [setNeedRefresh]);
+
+    const handleRemindLater = () => {
+        dismissedRef.current = true;
+        setNeedRefresh(false);
     };
-
-    const checkForUpdate = () => {
-      if (
-        document.visibilityState === "visible"
-      ) {
-        void registrationRef.current?.update();
-      }
-    };
-
-    void checkForWaitingWorker();
-
-    const intervalId = window.setInterval(
-      checkForUpdate,
-      60_000,
-    );
-
-    document.addEventListener(
-      "visibilitychange",
-      checkForUpdate,
-    );
-
-    return () => {
-      window.clearInterval(intervalId);
-
-      document.removeEventListener(
-        "visibilitychange",
-        checkForUpdate,
-      );
-    };
-  }, [setNeedRefresh]);
 
   return (
     <Dialog
       open={needRefresh}
-      onClose={() => setNeedRefresh(false)}
+      onClose={handleRemindLater}
       fullWidth
       maxWidth="xs"
       slotProps={{
@@ -309,7 +351,7 @@ export function PwaUpdatePrompt() {
         <Button
           fullWidth
           variant="outlined"
-          onClick={() => setNeedRefresh(false)}
+          onClick={handleRemindLater}
           sx={{
             minHeight: 52,
             borderRadius: "18px",
