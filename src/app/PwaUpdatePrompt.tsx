@@ -78,7 +78,7 @@ export function PwaUpdatePrompt() {
 
   return (
     <Dialog
-      open={!needRefresh}
+      open={needRefresh}
       onClose={() => setNeedRefresh(false)}
       fullWidth
       maxWidth="xs"
