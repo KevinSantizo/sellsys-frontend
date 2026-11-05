@@ -705,11 +705,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
         >
           {/* Header */} 
           <Box
-            sx={{
-              minHeight: {
-                xs: 112,
-                md: 72,
-              },
+            sx={{ 
               flexShrink: 0,
               px: {
                 xs: 1.25,
@@ -791,6 +787,16 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   >
                     Hola, {user?.first_name || user?.email}
                   </Typography>
+                  <Typography
+                    component="div"
+                    sx={{
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "text.secondary",
+                    }}
+                  >
+                    {selectedBranch.name}
+                  </Typography>
                 </Box>
 
                 <IconButton
@@ -812,28 +818,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   )}
                 </IconButton>
               </Stack>
-
-              <Box
-                sx={{
-                  gridColumn: {
-                    xs: "2 / -1",
-                    md: "auto",
-                  },
-                  minWidth: 0,
-                }}
-              > 
-                <Box>
-                  <Typography
-                    component="div"
-                    sx={{
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {selectedBranch.name}
-                  </Typography>
-                </Box>
-              </Box>
+ 
             </Box>
           </Box>
 
