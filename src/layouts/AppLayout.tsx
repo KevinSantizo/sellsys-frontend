@@ -823,55 +823,18 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   },
                   minWidth: 0,
                 }}
-              >
-                {canChangeBranch ? (
-                  <TextField
-                    select
-                    size="small"
-                    label="Sucursal"
-                    value={selectedBranch.id}
-                    onChange={(event) => {
-                      const branch = availableBranches.find(
-                        (item) => item.id === event.target.value,
-                      );
-
-                      if (branch) {
-                        setSelectedBranch(branch);
-                      }
-                    }}
+              > 
+                <Box>
+                  <Typography
+                    component="div"
                     sx={{
-                      width: {
-                        xs: "100%",
-                        md: 230,
-                      },
-                      "& .MuiOutlinedInput-root": {
-                        bgcolor: "#FFFFFF",
-                        borderRadius: "15px",
-                      },
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
                     }}
                   >
-                    {availableBranches.map((branch) => (
-                      <MenuItem
-                        key={branch.id}
-                        value={branch.id}
-                      >
-                        {branch.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                ) : (
-                  <Box>
-                    <Typography
-                      component="div"
-                      sx={{
-                        fontSize: "0.9rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {selectedBranch.name}
-                    </Typography>
-                  </Box>
-                )}
+                    {selectedBranch.name}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </Box>
