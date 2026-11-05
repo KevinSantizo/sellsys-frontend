@@ -686,8 +686,8 @@ export function CheckoutSaleDialog({
                   }}
                   disabled={loading}
                   sx={{
-                    width: 48,
-                    height: 48,
+                    width: 54,
+                    height: 54,
                     border: "1px solid",
                     borderColor: "primary.main",
                     borderRadius: "5px",

@@ -76,6 +76,9 @@ export function PwaUpdatePrompt() {
         vertical: "bottom",
         horizontal: "center",
       }}
+      sx={{
+        mb:5
+      }}
     >
       <Alert 
         variant="filled"
