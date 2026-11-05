@@ -77,10 +77,12 @@ export function PwaUpdatePrompt() {
         horizontal: "center",
       }}
     >
-      <Alert
-        severity="info"
+      <Alert 
         variant="filled"
         onClose={() => setNeedRefresh(false)}
+        sx={{
+            backgroundColor: '#064a57'
+        }}
         action={
           <Button
             color="inherit"
