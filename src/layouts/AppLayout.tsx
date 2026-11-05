@@ -576,7 +576,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                 minHeight: 40,
                 borderRadius: "15px",
                 justifyContent: "flex-start",
-                color: "text.secondary",
+                color: "#ff9100",
                 fontSize: "0.86rem",
 
                 "&:hover": {

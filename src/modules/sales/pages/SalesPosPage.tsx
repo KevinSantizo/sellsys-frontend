@@ -436,7 +436,7 @@ export function SalesPosPage() {
           justifyContent:
             "space-between",
           gap: 2,
-          mb: 3,
+          mb: 2,
         }}
       >
         <Box>
@@ -447,7 +447,6 @@ export function SalesPosPage() {
                 sm: "1.85rem",
               },
               fontWeight: 600,
-              mb: 0.4,
             }}
           >
             Punto de venta
@@ -456,8 +455,7 @@ export function SalesPosPage() {
           <Typography
             variant="body2"
             sx={{
-              color: "text.secondary",
-              mt: 0.5,
+              color: "text.secondary", 
             }}
           >
             Sucursal:{" "}
@@ -517,7 +515,7 @@ export function SalesPosPage() {
           display: "grid",
           gridTemplateColumns: {
             xs: "minmax(0, 1fr)",
-            xl: "minmax(0, 1fr) 370px",
+            xl: "minmax(0, 1fr) 300px",
           },
           gap: 2,
           alignItems: "start",
