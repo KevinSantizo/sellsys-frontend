@@ -31,9 +31,9 @@ import {
   List,
   ListItemButton,
   ListItemIcon,
-  MenuItem,
+  //MenuItem,
   Stack,
-  TextField,
+  //TextField,
   Typography,
 } from "@mui/material";
 
@@ -226,29 +226,27 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
       (state) => state.clearSelectedCompany,
     );
 
-    const availableBranches = useBranchStore(
-      (state) => state.availableBranches,
-    );
+    //const availableBranches = useBranchStore(
+      //(state) => state.availableBranches,
+    //);
 
     const selectedBranch = useBranchStore(
       (state) => state.selectedBranch,
     );
 
-    const setSelectedBranch = useBranchStore(
-      (state) => state.setSelectedBranch,
-    );
+    //const setSelectedBranch = useBranchStore(
+      //(state) => state.setSelectedBranch,
+    //);
 
     const clearBranchContext = useBranchStore(
       (state) => state.clearBranchContext,
     );
 
-    const membershipRole = useBranchStore(
-      (state) => state.membershipRole,
-    );
+    //const membershipRole = useBranchStore(
+      //(state) => state.membershipRole,
+    //);
 
-    const canChangeBranch =
-    membershipRole === "OWNER" &&
-    availableBranches.length > 1;
+    //const canChangeBranch =  membershipRole === "OWNER" &&  availableBranches.length > 1;
 
 
     if (!selectedCompany || !selectedBranch) {
