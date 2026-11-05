@@ -1186,6 +1186,25 @@ export function PurchasesPage() {
         return;
       }
     }
+ 
+      const result = await Swal.fire({
+        title: "¿Completar compra?",
+        text: `La compra ${purchase.purchase_number} se marcará como completada.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí, completar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#064A57",
+        reverseButtons: true,
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+
+      completePurchaseMutation.mutate({
+        purchase,
+      }); 
   };
 
 

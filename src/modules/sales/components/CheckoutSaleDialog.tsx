@@ -143,7 +143,7 @@ export function CheckoutSaleDialog({
       values: CustomerFormValues,
     ) =>
       createCustomer({
-        company: companyId,
+        company_id: companyId,
         first_name: values.first_name,
         last_name: values.last_name,
         phone: values.phone,
