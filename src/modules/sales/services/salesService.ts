@@ -144,71 +144,97 @@ export async function getSaleDetail(
 export async function printSaleReceipt(
   saleId: string,
 ): Promise<void> {
-  const response = await httpClient.get(
-    `/sales/${saleId}/receipt/`,
-    {
-      responseType: "blob",
-    },
-  );
+  const isStandalone =
+    window.matchMedia(
+      "(display-mode: standalone)",
+    ).matches ||
+    Boolean(
+      (
+        navigator as Navigator & {
+          standalone?: boolean;
+        }
+      ).standalone,
+    );
 
-  const pdfBlob = new Blob(
-    [response.data],
-    {
-      type: "application/pdf",
-    },
-  );
+  const previewWindow = isStandalone
+    ? window.open("", "_blank")
+    : null;
 
-  const pdfUrl =
-    URL.createObjectURL(
+  try {
+    const response = await httpClient.get(
+      `/sales/${saleId}/receipt/`,
+      {
+        responseType: "blob",
+      },
+    );
+
+    const pdfBlob = new Blob(
+      [response.data],
+      {
+        type: "application/pdf",
+      },
+    );
+
+    const pdfUrl = URL.createObjectURL(
       pdfBlob,
     );
 
-  const iframe =
-    document.createElement(
-      "iframe",
-    );
+    if (isStandalone) {
+      if (previewWindow) {
+        previewWindow.location.href = pdfUrl;
+      } else {
+        const link = document.createElement("a");
 
-  iframe.style.position =
-    "fixed";
+        link.href = pdfUrl;
+        link.target = "_blank";
+        link.rel = "noopener";
 
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
 
-  iframe.style.width = "0";
-  iframe.style.height = "0";
+      window.setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+      }, 60_000);
 
-  iframe.style.border = "0";
-
-  iframe.src = pdfUrl;
-
-  document.body.appendChild(
-    iframe,
-  );
-
-  iframe.onload = () => {
-    const iframeWindow =
-      iframe.contentWindow;
-
-    if (!iframeWindow) {
-      URL.revokeObjectURL(
-        pdfUrl,
-      );
-
-      iframe.remove();
       return;
     }
 
-    iframeWindow.focus();
-    iframeWindow.print();
+    const iframe = document.createElement("iframe");
 
-    window.setTimeout(() => {
-      URL.revokeObjectURL(
-        pdfUrl,
-      );
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.allow = "modals";
+    iframe.src = pdfUrl;
 
-      iframe.remove();
-    }, 1000);
-  };
+    document.body.appendChild(iframe);
+
+    iframe.onload = () => {
+      const iframeWindow = iframe.contentWindow;
+
+      if (!iframeWindow) {
+        URL.revokeObjectURL(pdfUrl);
+        iframe.remove();
+        return;
+      }
+
+      iframeWindow.focus();
+      iframeWindow.print();
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(pdfUrl);
+        iframe.remove();
+      }, 1_000);
+    };
+  } catch (error) {
+    previewWindow?.close();
+    throw error;
+  }
 }
 
 export async function cancelSale(saleId: string) {
