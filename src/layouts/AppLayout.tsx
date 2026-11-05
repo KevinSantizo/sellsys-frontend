@@ -863,16 +863,6 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   <Box>
                     <Typography
                       component="div"
-                      variant="caption"
-                      sx={{
-                        color: "text.secondary",
-                      }}
-                    >
-                      Sucursal
-                    </Typography>
-
-                    <Typography
-                      component="div"
                       sx={{
                         fontSize: "0.9rem",
                         fontWeight: 600,
