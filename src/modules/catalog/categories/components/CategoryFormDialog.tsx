@@ -85,8 +85,7 @@ export function CategoryFormDialog({
       nextErrors.name = "El nombre de la categoría es obligatorio.";
     }
 
-    setErrors(nextErrors);
-
+    setErrors(nextErrors); 
     return Object.keys(nextErrors).length === 0;
   };
 

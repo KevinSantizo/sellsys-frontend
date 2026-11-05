@@ -51,8 +51,7 @@ export function CustomerFormDialog({
       emptyValues,
     );
 
-  const [validationError, setValidationError] =
-    useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -61,11 +60,13 @@ export function CustomerFormDialog({
 
     setValues(initialValues ?? emptyValues);
     setValidationError(null);
+    setErrors({});
+
   }, [open, initialValues]);
 
-  const updateValue = <
-    Key extends keyof CustomerFormValues
-  >(
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const updateValue = < Key extends keyof CustomerFormValues >(
     key: Key,
     value: CustomerFormValues[Key],
   ) => {
@@ -77,33 +78,26 @@ export function CustomerFormDialog({
     setValidationError(null);
   };
 
+    const validate = () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!values.first_name.trim()) {
+      nextErrors.name = "El nombre del cliente es obligatorio.";
+    }
+
+    setErrors(nextErrors); 
+    return Object.keys(nextErrors).length === 0;
+  };
+
+
   const handleSubmit = (
     event: FormEvent<HTMLFormElement>,
   ) => {
     event.preventDefault();
-
-    if (!values.first_name.trim()) {
-      setValidationError(
-        "Debes ingresar el nombre del cliente.",
-      );
+ 
+    if (!validate()) {
       return;
     }
-
-    if (!values.last_name.trim()) {
-      setValidationError(
-        "Debes ingresar el apellido del cliente.",
-      );
-      return;
-    }
-
-    if (!values.phone.trim()) {
-      setValidationError(
-        "Debes ingresar el número de teléfono.",
-      );
-      return;
-    }
-
-    setValidationError(null);
 
     onSubmit({
       first_name: values.first_name.trim(),
@@ -167,6 +161,8 @@ export function CustomerFormDialog({
                   event.target.value,
                 );
               }}
+              error={ Boolean(errors.name) }
+              helperText={ errors.name }
               disabled={isSubmitting}
               required
               fullWidth

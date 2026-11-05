@@ -210,9 +210,9 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
 
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    const user = useAuthStore(
-      (state) => state.user,
-    );
+   // const user = useAuthStore(
+     // (state) => state.user,
+    //);
 
     const logout = useAuthStore(
       (state) => state.logout,
@@ -791,7 +791,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Hola, {user?.first_name || user?.email}
+                    Hola, CHOLITO
                   </Typography>
                 </Box>
 
