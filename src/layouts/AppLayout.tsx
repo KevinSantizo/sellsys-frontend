@@ -796,7 +796,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   <TextField
                     select
                     size="small"
-                    label="Sucursal activa"
+                    label="Sucursal"
                     value={selectedBranch.id}
                     onChange={(event) => {
                       const branch = availableBranches.find(
@@ -836,7 +836,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                         color: "text.secondary",
                       }}
                     >
-                      Sucursal activa
+                      Sucursal
                     </Typography>
 
                     <Typography
