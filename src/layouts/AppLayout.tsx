@@ -361,9 +361,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
             </Box>
 
             <Box
-              sx={{
-                minWidth: 0,
-              }}
+              sx={{ minWidth: 0, }}
             >
               <Typography
                 sx={{
