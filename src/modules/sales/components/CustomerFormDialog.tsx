@@ -207,7 +207,6 @@ export function CustomerFormDialog({
                 );
               }}
               disabled={isSubmitting}
-              required
               fullWidth
               slotProps=
                 {{

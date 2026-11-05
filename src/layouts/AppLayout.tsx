@@ -16,7 +16,7 @@ import {
   LocalShippingRounded, 
   ReceiptLongRounded, 
   PictureAsPdfRounded ,
-  
+  RefreshRounded,
   } from "@mui/icons-material";
 
 import {
@@ -46,8 +46,9 @@ import {
 import { useAuthStore } from "../modules/auth/store/authStore";
 import { useCompanyStore } from "../modules/companies/store/companyStore";
 import { useBranchStore } from "../modules/branches/store/branchStore";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, } from "@tanstack/react-query";
 import { getCompanies, } from "../modules/companies/services/companyService";
+import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
 
   const SIDEBAR_WIDTH = 280;
 
@@ -146,7 +147,13 @@ import { getCompanies, } from "../modules/companies/services/companyService";
 
   export function AppLayout() {
 
-    
+    const queryClient = useQueryClient();
+
+    const handleRefresh = async () => {
+      await queryClient.refetchQueries({
+        type: "active",
+      });
+    };
     const {
       data: availableCompanies = [],
     } = useQuery({
@@ -554,6 +561,8 @@ import { getCompanies, } from "../modules/companies/services/companyService";
           display: "flex",
         }}
       >
+
+        <PwaUpdatePrompt />
         {/* Sidebar */}
         <Box
           component="nav"
@@ -639,147 +648,171 @@ import { getCompanies, } from "../modules/companies/services/companyService";
           {/* Header */} 
           <Box
             sx={{
-              minHeight: 72,
+              minHeight: {
+                xs: 112,
+                md: 72,
+              },
               flexShrink: 0,
-              px: 2.5,
-              py: 1.5,
+              px: {
+                xs: 1.25,
+                md: 2.5,
+              },
+              py: {
+                xs: 1.25,
+                md: 1.5,
+              },
               borderRadius: "15px",
               bgcolor: "#F5F6F3",
-              display: "flex",
-              alignItems: "center",
             }}
           >
-            <IconButton
-              type="button"
-              onClick={() => {
-                setMobileOpen(true);
-              }}
+            <Box
               sx={{
-                display: {
-                  xs: "inline-flex",
-                  md: "none",
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "auto minmax(0, 1fr) auto",
+                  md: "minmax(0, 1fr) auto",
                 },
-                mr: 1.5,
-              }}
-            >
-              <MenuRounded />
-            </IconButton>
-
-            <Stack
-              direction={{
-                xs: "column",
-                sm: "row",
-              }}
-              spacing={2}
-              sx={{
+                alignItems: "center",
+                columnGap: 1,
+                rowGap: 1,
                 width: "100%",
-                minWidth: 0,
-                alignItems: {
-                  xs: "stretch",
-                  sm: "center",
-                },
-                justifyContent: "space-between",
               }}
             >
-              {/* Información del usuario */}
-              <Box
+              <IconButton
+                type="button"
+                onClick={() => {
+                  setMobileOpen(true);
+                }}
                 sx={{
-                  minWidth: 0,
-                  flex: 1,
+                  display: {
+                    xs: "inline-flex",
+                    md: "none",
+                  },
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: "text.secondary",
-                    fontSize: "0.82rem",
-                  }}
-                >
-                  {selectedCompany.name}
-                </Typography>
+                <MenuRounded />
+              </IconButton>
 
-                <Typography
-                  component="div"
-                  sx={{
-                    fontSize: "0.95rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  Hola, {user?.first_name || user?.email}
-                </Typography>
-              </Box>
-
-              {/* Sucursal activa */}
-              {canChangeBranch ? (
-                <TextField
-                  select
-                  size="small"
-                  label="Sucursal activa"
-                  value={selectedBranch.id}
-                  onChange={(event) => {
-                    const branch = availableBranches.find(
-                      (item) => item.id === event.target.value,
-                    );
-
-                    if (branch) {
-                      setSelectedBranch(branch);
-                    }
-                  }}
-                  sx={{
-                    width: {
-                      xs: "100%",
-                      sm: 230,
-                    },
-
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "#FFFFFF",
-                      borderRadius: "15px",
-                    },
-                  }}
-                >
-                  {availableBranches.map((branch) => (
-                    <MenuItem
-                      key={branch.id}
-                      value={branch.id}
-                    >
-                      {branch.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              ) : (
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  gridColumn: {
+                    xs: "2 / -1",
+                    md: "auto",
+                  },
+                  minWidth: 0,
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <Box
                   sx={{
-                    minWidth: {
-                      sm: 180,
-                    },
-                    textAlign: {
-                      xs: "left",
-                      sm: "right",
-                    },
+                    minWidth: 0,
                   }}
                 >
                   <Typography
-                    component="div"
-                    variant="caption"
+                    variant="body2"
                     sx={{
                       color: "text.secondary",
+                      fontSize: "0.82rem",
                     }}
                   >
-                    Sucursal activa
+                    {selectedCompany.name}
                   </Typography>
 
                   <Typography
                     component="div"
                     sx={{
-                      fontSize: "0.9rem",
+                      fontSize: "0.95rem",
                       fontWeight: 600,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {selectedBranch.name}
+                    Hola, {user?.first_name || user?.email}
                   </Typography>
                 </Box>
-              )}
-            </Stack>
+
+                <IconButton
+                  type="button"
+                  onClick={() => void handleRefresh()}
+                  aria-label="Actualizar datos"
+                >
+                  <RefreshRounded />
+                </IconButton>
+              </Stack>
+
+              <Box
+                sx={{
+                  gridColumn: {
+                    xs: "2 / -1",
+                    md: "auto",
+                  },
+                  minWidth: 0,
+                }}
+              >
+                {canChangeBranch ? (
+                  <TextField
+                    select
+                    size="small"
+                    label="Sucursal activa"
+                    value={selectedBranch.id}
+                    onChange={(event) => {
+                      const branch = availableBranches.find(
+                        (item) => item.id === event.target.value,
+                      );
+
+                      if (branch) {
+                        setSelectedBranch(branch);
+                      }
+                    }}
+                    sx={{
+                      width: {
+                        xs: "100%",
+                        md: 230,
+                      },
+                      "& .MuiOutlinedInput-root": {
+                        bgcolor: "#FFFFFF",
+                        borderRadius: "15px",
+                      },
+                    }}
+                  >
+                    {availableBranches.map((branch) => (
+                      <MenuItem
+                        key={branch.id}
+                        value={branch.id}
+                      >
+                        {branch.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : (
+                  <Box>
+                    <Typography
+                      component="div"
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
+                      Sucursal activa
+                    </Typography>
+
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {selectedBranch.name}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           </Box>
 
           {/* Contenido */}

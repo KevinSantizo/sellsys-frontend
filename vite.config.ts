@@ -9,10 +9,12 @@ export default defineConfig({
   plugins: [
     react(),
 
-    VitePWA({
-      registerType: "autoUpdate",
+    VitePWA({ 
+      registerType: "prompt",
+      injectRegister: false,
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
       },
       includeAssets: [
         "favicon.ico",
