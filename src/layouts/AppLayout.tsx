@@ -153,6 +153,32 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
     const [isRefreshing, setIsRefreshing] = useState(false);
     const queryClient = useQueryClient();
 
+
+    const handleReloadApplication = async () => {
+      const registration =
+        await navigator.serviceWorker.getRegistration();
+
+      if (registration?.waiting) {
+        const reloadPage = () => {
+          window.location.reload();
+        };
+
+        navigator.serviceWorker.addEventListener(
+          "controllerchange",
+          reloadPage,
+          { once: true },
+        );
+
+        registration.waiting.postMessage({
+          type: "SKIP_WAITING",
+        });
+
+        return;
+      }
+
+      window.location.reload();
+    };
+
     const handleRefresh = async () => {
       if (isRefreshing) {
         return;
@@ -771,7 +797,13 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
 
                 <IconButton
                   type="button"
-                  onClick={() => void handleRefresh()}
+                  onClick={() => {
+                    void handleRefresh();
+                    setTimeout(() => {
+                      void handleReloadApplication();
+                    },2000)
+                    
+                  }}
                   disabled={isRefreshing}
                   aria-label="Actualizar datos"
                 >
