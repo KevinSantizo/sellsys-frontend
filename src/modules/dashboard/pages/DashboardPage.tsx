@@ -10,10 +10,7 @@ import {
   YAxis, 
 } from "recharts";
 
-import { 
-  AttachMoney,
-  ShoppingBagRounded, 
-} from "@mui/icons-material";
+import { AttachMoney, ShoppingBagRounded, } from "@mui/icons-material";
 
 import {
   Box,
