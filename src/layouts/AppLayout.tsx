@@ -396,7 +396,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   whiteSpace: "nowrap",
                 }}
               >
-               EMPRESA->> {selectedCompany.name}
+               EMPRESA::: {selectedCompany.name}
               </Typography>
 
               <Typography
