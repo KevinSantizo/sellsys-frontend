@@ -33,7 +33,6 @@ import {
   ListItemIcon,
   //MenuItem,
   Stack,
-  //TextField,
   Typography,
 } from "@mui/material";
 
@@ -397,7 +396,7 @@ import { PwaUpdatePrompt } from "../app/PwaUpdatePrompt";
                   whiteSpace: "nowrap",
                 }}
               >
-                {selectedCompany.name}
+                EMPRESA: {selectedCompany.name}
               </Typography>
 
               <Typography
