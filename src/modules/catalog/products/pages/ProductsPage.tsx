@@ -344,6 +344,8 @@ export function ProductsPage() {
       queryFn: () =>
          getProductDetail(
             editingProductId!,
+            selectedCompany!.id,
+            selectedBranch!.id,
          ),
       enabled:
          isProductDialogOpen &&
@@ -405,7 +407,7 @@ export function ProductsPage() {
                   product.track_inventory,
                is_active:
                   product.is_active,
-               initial_stock: "0",
+               initial_stock: product.current_stock ?? "0",
                initial_lot_number:
                   product.initial_lot_number ?? "",
                initial_expiration_date:
@@ -431,13 +433,26 @@ export function ProductsPage() {
                "No existe una empresa seleccionada.",
             );
          }
+
+         if (!selectedCompany) {
+            throw new Error(
+               "No existe una empresa seleccionada.",
+            );
+            }
+
+            if (!selectedBranch) {
+            throw new Error(
+               "No existe una sucursal seleccionada.",
+            );
+         }
+
+         const branch = selectedBranch;
+
          const payload = {
             name: values.name.trim(),
-            description:
-               values.description.trim(),
+            description: values.description.trim(),
             sku: values.sku.trim(),
-            barcode:
-               values.barcode.trim() || null,
+            barcode: values.barcode.trim() || null,
             product_type: values.product_type,
             category_id: values.category_id || null,
             brand_id: values.brand_id || null,
@@ -451,14 +466,21 @@ export function ProductsPage() {
             is_active: values.is_active,
             image_url: values.image_url ?? null,
             image_public_id: values.image_public_id ?? null,
-         };
+
+            branch_id: selectedBranch.id,
+            initial_stock:
+               values.product_type === "PRODUCT" &&
+               values.track_inventory
+                  ? values.initial_stock
+                  : "0",
+            };
          if (productId) {
             return updateProduct(
                productId,
                payload,
             );
          }
-            const branch = selectedBranch;
+           
             if (!branch) {
                throw new Error(
                   "No existe una sucursal seleccionada.",

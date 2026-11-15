@@ -24,6 +24,7 @@ import {
 import {
    useEffect,
    useState,
+   useRef,
    type ChangeEvent,
    type FormEvent,
 } from "react";
@@ -145,7 +146,7 @@ export function ProductFormDialog({
    const [skuManuallyEdited, setSkuManuallyEdited] = useState(false);
    const [snackbarOpen, setSnackbarOpen] = useState(false); 
    const visibleError = validationError ?? submitError;
-
+   const initializedValuesRef = useRef(false);
    const inventoryUnits = units.filter(
    (unit) => unit.unit_type === "UNIT",
    );
@@ -219,23 +220,43 @@ export function ProductFormDialog({
          category_id: createdCategory.id,
       }));
    }, [createdCategory]);
+ 
+
    useEffect(() => {
       if (!open) {
+         initializedValuesRef.current = false;
          setBarcodeScannerOpen(false);
          setSnackbarOpen(false);
          return;
       }
+
+      if (isEditing && isLoadingProduct) {
+         return;
+      }
+
+      if (initializedValuesRef.current) {
+         return;
+      }
+
+      initializedValuesRef.current = true;
+
       setValues({
          ...(initialValues ?? emptyProductValues),
       });
+
       setSelectedImage(null);
-      setImagePreview(
-         initialValues?.image_url ?? null,
-      );
+      setImagePreview(initialValues?.image_url ?? null);
       setValidationError(null);
       setSnackbarOpen(false);
       setBarcodeScannerOpen(false);
-   }, [open, initialValues]);
+      }, [
+      open,
+      initialValues,
+      isEditing,
+      isLoadingProduct,
+      ]);
+
+
    const updateValue = <Key extends keyof ProductFormValues>(
       key: Key,
       value: ProductFormValues[Key],
@@ -369,28 +390,49 @@ export function ProductFormDialog({
          );
          return;
       }
-      if (!hideInitialStock && !isEditing && values.product_type === "PRODUCT" && values.track_inventory) {
-         const initialStock = Number(values.initial_stock);
       if (
-         values.initial_stock === "" ||
-         !Number.isFinite(initialStock) ||
-         initialStock < 0
-      ) {
-         showValidationError("Debes ingresar un stock inicial válido.");
-         return;
-      }
+         !hideInitialStock &&
+         values.product_type === "PRODUCT" &&
+         values.track_inventory
+         ) {
+         const stock = Number(values.initial_stock);
 
-      if (
-         (values.initial_lot_number.trim() ||
-            values.initial_expiration_date) &&
-         initialStock <= 0
-      ) {
-         showValidationError(
-            "Para registrar un lote o vencimiento debes indicar un stock inicial mayor que cero.",
-         );
-         return;
-      }
-      }
+         if (
+            values.initial_stock === "" ||
+            !Number.isFinite(stock) ||
+            stock < 0
+         ) {
+            showValidationError(
+               "Debes ingresar un stock válido.",
+            );
+            return;
+         }
+
+         if (!isEditing) {
+            if (
+               stock > 0 &&
+               !values.initial_expiration_date
+            ) {
+               showValidationError(
+               "Debes indicar la fecha de vencimiento del stock inicial.",
+               );
+               return;
+            }
+
+            if (
+               (
+               values.initial_lot_number.trim() ||
+               values.initial_expiration_date
+               ) &&
+               stock <= 0
+            ) {
+               showValidationError(
+               "Para registrar un lote o vencimiento debes indicar un stock inicial mayor que cero.",
+               );
+               return;
+            }
+         }
+         }
       let imageUrl = values.image_url ?? null;
       let imagePublicId = values.image_public_id ?? null;
       if (selectedImage) {
@@ -960,36 +1002,31 @@ export function ProductFormDialog({
                                  alignItems:"center" 
                               }}
                            >
-                              <TextField
-                                 select
-                                 label="Tipo de envase"
-                                 value={values.base_unit_id}
-                                 onChange={(event) => {
-                                    updateValue(
-                                       "base_unit_id",
-                                       event.target.value,
-                                    );
-                                 }}
-                                 required
-                                 fullWidth
-                                 disabled={
-                                    isSubmitting ||
-                                    isLoadingOptions
-                                 }
-                                 sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                       borderRadius: "5px",
-                                    },
-                                 }}
+                           <TextField
+                              select
+                              label="Tipo de envase"
+                              value={values.base_unit_id}
+                              onChange={(event) => {
+                                 updateValue(
+                                    "base_unit_id",
+                                    event.target.value,
+                                 );
+                              }}
+                              required
+                              fullWidth
+                              disabled={
+                                 isSubmitting ||
+                                 isLoadingOptions
+                              }
                               >
-                                 {inventoryUnits.map((unit) => (
-                                    <MenuItem
-                                       key={unit.id}
-                                       value={unit.id}
-                                    >
-                                       {unit.name} ({unit.symbol})
-                                    </MenuItem>
-                                 ))}
+                              {inventoryUnits.map((unit) => (
+                                 <MenuItem
+                                    key={unit.id}
+                                    value={unit.id}
+                                 >
+                                    {unit.name} ({unit.symbol})
+                                 </MenuItem>
+                              ))}
                               </TextField>
                               <Button
                                  type="button"
@@ -1116,10 +1153,9 @@ export function ProductFormDialog({
                               {!hideInitialStock &&
                                  values.product_type === "PRODUCT" &&
                                  values.track_inventory && (
-                                          <>
-                                          {!isEditing && (
+                                          <> 
                                           <TextField
-                                                label="Stock inicial"
+                                                label={isEditing ? "Stock actual" : "Stock inicial"}
                                                 type="number"
                                                 placeholder="0.00"
                                                 value={ values.initial_stock }
@@ -1140,7 +1176,7 @@ export function ProductFormDialog({
                                                       },
                                                       htmlInput: {
                                                             min: 0,
-                                                            step: "0.001",
+                                                            step: "1",
                                                       },
                                                 }}
                                                 sx={{
@@ -1148,8 +1184,7 @@ export function ProductFormDialog({
                                                             borderRadius: "5px",
                                                       },
                                                 }}
-                                          />
-                                          )}
+                                          /> 
                                           <TextField
                                             label="Lote inicial"
                                             value={ values.initial_lot_number }

@@ -52,15 +52,7 @@ export async function createProduct(
   return response.data;
 }
 
-export async function getProductDetail(
-  productId: string,
-): Promise<ProductDetail> {
-  const response = await httpClient.get<ProductDetail>(
-    `catalog/products/${productId}/`,
-  );
-
-  return response.data;
-}
+ 
 
 export async function updateProduct(
   productId: string,
@@ -96,6 +88,24 @@ export async function uploadProductImage(
     {
       headers: {
         "Content-Type": undefined,
+      },
+    },
+  );
+
+  return response.data;
+}
+
+export async function getProductDetail(
+  productId: string,
+  companyId?: string,
+  branchId?: string,
+): Promise<ProductDetail> {
+  const response = await httpClient.get<ProductDetail>(
+    `catalog/products/${productId}/`,
+    {
+      params: {
+        company_id: companyId || undefined,
+        branch_id: branchId || undefined,
       },
     },
   );
