@@ -35,9 +35,7 @@ import { showSuccessAlert, showDeleteProductConfirmation, showErrorAlert,} from 
 import { useCompanyStore } from "../../../companies/store/companyStore";
 import { ProductFormDialog } from "../components/ProductFormDialog";
 import { getApiErrorMessage } from "../../../../shared/utils/getApiErrorMessage";
-import {
-   getBrandOptions,
-   getCategoryOptions,
+import { 
    getUnitOptions,
 } from "../services/catalogReferenceService";
 import {
@@ -70,7 +68,7 @@ import { CategoryFormDialog } from "../../categories/components/CategoryFormDial
 import type { CategoryFormValues } from "../../categories/types/category";
 import { createCategory } from "../../categories/services/categoryService";
 import type { BrandFormValues } from "../../brands/types/brand";
-import { createBrand } from "../../brands/services/brandService";
+import { createBrand, getBrands } from "../../brands/services/brandService";
 import { BrandFormDialog } from "../../brands/components/BrandFormDialog";
 import { UnitOfMeasureFormDialog } from "../../units/components/UnitOfMeasureFormDialog";
 import { createUnitOfMeasure } from "../../units/services/unitService";
@@ -301,25 +299,54 @@ export function ProductsPage() {
    /*
      * Opciones del formulario.
      */
+
+
    const categoriesQuery = useQuery({
       queryKey: [
          "catalog-categories",
          selectedCompany?.id,
       ],
-      queryFn: () =>
-         getCategoryOptions(
-            selectedCompany!.id,
-         ),
-      enabled: Boolean( selectedCompany?.id, ),
-   });
-   const brandsQuery = useQuery({
+      queryFn: async () => {
+         if (!selectedCompany) {
+            return [];
+         }
+
+         const response = await getCategories({
+            companyId: selectedCompany.id,
+            isActive: true,
+            ordering: "name",
+            page: 1,
+            pageSize: 100,
+         });
+
+         return response.results;
+      },
+      enabled: Boolean(selectedCompany?.id),
+      });
+
+
+  const brandsQuery = useQuery({
       queryKey: [
          "catalog-brands",
          selectedCompany?.id,
       ],
-      queryFn: () => getBrandOptions( selectedCompany!.id, ),
+      queryFn: async () => {
+         if (!selectedCompany) {
+            return [];
+         }
+
+         const response = await getBrands({
+            companyId: selectedCompany.id,
+            isActive: true,
+            ordering: "name",
+            page: 1,
+            pageSize: 100,
+         });
+
+         return response.results;
+      },
       enabled: Boolean(selectedCompany?.id),
-   });
+      });
    const unitsQuery = useQuery({
       queryKey: [
          "catalog-units",
