@@ -159,6 +159,7 @@ export type ProductDetail = Product & {
   content_unit_id?: string | null;
   image_url: string | null;
   image_public_id: string | null;
+  
 };
 
 export type UpdateProductPayload = {

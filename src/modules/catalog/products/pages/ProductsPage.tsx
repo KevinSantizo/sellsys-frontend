@@ -439,6 +439,11 @@ export function ProductsPage() {
                   product.initial_lot_number ?? "",
                initial_expiration_date:
                   product.initial_expiration_date ?? "",
+                  image_url:
+                  product.image_url ?? null,
+
+                  image_public_id:
+                  product.image_public_id ?? null,
             };
          },
          [productDetailQuery.data],

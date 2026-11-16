@@ -6,6 +6,7 @@ import {
   RemoveRounded,
   SearchRounded,
   ShoppingCartCheckoutRounded,
+  ImageOutlined,
 } from "@mui/icons-material";
 
 import {
@@ -25,18 +26,21 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Popper
 } from "@mui/material";
 
 import {
   useMutation,
   useQuery,
   useQueryClient,
+  
 } from "@tanstack/react-query";
 
 import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 
 import { useBranchStore } from "../../branches/store/branchStore";
@@ -116,7 +120,7 @@ export function SalesPosPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isBarcodeSearching, setIsBarcodeSearching] = useState(false); 
   const [ barcodeScannerOpen, setBarcodeScannerOpen ] = useState(false);
-
+  const searchAnchorRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
       setCheckoutIdempotencyKey(null);
@@ -154,38 +158,65 @@ export function SalesPosPage() {
   const canSearch =  Boolean(selectedCompany?.id) && debouncedSearch.length >= 2;
 
   const productsQuery = useQuery({
-    queryKey: [
-      "sales-product-search",
-      selectedCompany?.id,
-      selectedBranch?.id,
-      debouncedSearch,
-    ],
+  queryKey: [
+    "sales-product-search",
+    selectedCompany?.id,
+    selectedBranch?.id,
+    debouncedSearch,
+  ],
 
-  queryFn: () => {
-    if (
-      !selectedCompany ||
-      !selectedBranch
-    ) {
+  queryFn: async () => {
+    if (!selectedCompany || !selectedBranch) {
       throw new Error(
         "Empresa o sucursal no seleccionada.",
       );
     }
 
-    return getProducts({
-      companyId: selectedCompany.id,
-      branchId: selectedBranch.id,
-      search: debouncedSearch,
-      page: 1,
-      pageSize: 12,
-      isActive: true,
-    });
+    const getSearchPage = (page: number) =>
+      getProducts({
+        companyId: selectedCompany.id,
+        branchId: selectedBranch.id,
+        search: debouncedSearch,
+        page,
+        pageSize: 100,
+        isActive: true,
+      });
+
+    const firstPage = await getSearchPage(1);
+
+    const allProducts = [
+      ...firstPage.results,
+    ];
+
+    let currentPage = 1;
+    let nextPage = firstPage.next;
+
+    while (nextPage && currentPage < 100) {
+      currentPage += 1;
+
+      const response =
+        await getSearchPage(currentPage);
+
+      allProducts.push(
+        ...response.results,
+      );
+
+      nextPage = response.next;
+    }
+
+    return {
+      ...firstPage,
+      results: allProducts,
+      next: null,
+      previous: null,
+    };
   },
 
   enabled:
     Boolean(selectedCompany?.id) &&
     Boolean(selectedBranch?.id) &&
     canSearch,
-  });
+});
 
   const suggestedProducts = productsQuery.data?.results ?? [];
   const isSearchingProducts = productsQuery.isFetching; 
@@ -589,18 +620,15 @@ export function SalesPosPage() {
  
 
               <Box
+                ref={searchAnchorRef}
                 sx={{
-                  position: "relative",
                   mb: 2,
                 }}
               >
                 <TextField
                   value={search}
                   onChange={(event) => {
-                    setSearch(
-                      event.target.value,
-                    );
-
+                    setSearch(event.target.value);
                     setSearchError(null);
                   }}
                   onKeyDown={async (event) => {
@@ -610,22 +638,18 @@ export function SalesPosPage() {
 
                     event.preventDefault();
 
-                    const value =
-                      search.trim();
+                    const value = search.trim();
 
                     if (!value) {
                       return;
                     }
 
-                    await addProductByBarcode(
-                      value,
-                    );
+                    await addProductByBarcode(value);
                   }}
                   onPaste={(event) => {
-                    const pastedValue =
-                      event.clipboardData
-                        .getData("text")
-                        .trim();
+                    const pastedValue = event.clipboardData
+                      .getData("text")
+                      .trim();
 
                     if (!pastedValue) {
                       return;
@@ -635,19 +659,15 @@ export function SalesPosPage() {
 
                     setSearch(pastedValue);
 
-                    void addProductByBarcode(
-                      pastedValue,
-                    ).then((added) => {
-                      if (!added) {
-                        setSearch(
-                          pastedValue,
-                        );
-                      }
-                    });
+                    void addProductByBarcode(pastedValue).then(
+                      (added) => {
+                        if (!added) {
+                          setSearch(pastedValue);
+                        }
+                      },
+                    );
                   }}
-                  placeholder={
-                    "Escanea un código o busca por nombre, SKU o código de barras"
-                  }
+                  placeholder="Escanea un código o busca por nombre, SKU o código de barras"
                   fullWidth
                   slotProps={{
                     input: {
@@ -656,14 +676,11 @@ export function SalesPosPage() {
                           <SearchRounded />
                         </InputAdornment>
                       ),
-
                       endAdornment:
                         isSearchingProducts ||
                         isBarcodeSearching ? (
                           <InputAdornment position="end">
-                            <CircularProgress
-                              size={18}
-                            />
+                            <CircularProgress size={18} />
                           </InputAdornment>
                         ) : null,
                     },
@@ -674,187 +691,260 @@ export function SalesPosPage() {
                     },
                   }}
                 />
+              </Box>
 
-                {search.trim().length >= 2 &&
-                  suggestedProducts.length > 0 && (
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        position: "absolute",
-                        top: "calc(100% + 4px)",
-                        left: 0,
-                        right: 0,
-                        zIndex: 20,
+              <Popper
+                open={
+                  search.trim().length >= 2 &&
+                  suggestedProducts.length > 0
+                }
+                anchorEl={searchAnchorRef.current}
+                placement="bottom-start"
+                disablePortal={false}
+                modifiers={[
+                  {
+                    name: "offset",
+                    options: {
+                      offset: [0, 4],
+                    },
+                  },
+                  {
+                    name: "preventOverflow",
+                    options: {
+                      boundary: "viewport",
+                      padding: 8,
+                    },
+                  },
+                ]}
+                style={{
+                  zIndex: theme.zIndex.modal + 1,
+                  width:
+                    searchAnchorRef.current?.getBoundingClientRect()
+                      .width,
+                }}
+              >
+                <Paper
+                  variant="outlined"
+                  onWheel={(event) => {
+                    event.stopPropagation();
+                  }}
+                  onTouchMove={(event) => {
+                    event.stopPropagation();
+                  }}
+                  sx={{
+                    width: "100%",
+                    height: "min(360px, calc(100dvh - 180px))",
+                    maxHeight: "calc(100dvh - 180px)",
+                    overflowY: "auto",
+                    overflowX: "hidden",
+                    overscrollBehavior: "contain",
+                    WebkitOverflowScrolling: "touch",
+                    touchAction: "pan-y",
+                    borderRadius: "5px",
+                    backgroundColor: "background.paper",
+                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
 
-                        maxHeight: 320,
-                        overflowY: "auto",
+                    "&::-webkit-scrollbar": {
+                      width: 8,
+                    },
 
-                        borderRadius: "5px",
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "rgba(0, 0, 0, 0.35)",
+                      borderRadius: 4,
+                    },
+                  }}
+                >
+                  {suggestedProducts.map((product) => {
+                    const stock = Number(
+                      product.current_stock ?? 0,
+                    );
 
-                        boxShadow:
-                          "0 8px 24px rgba(0,0,0,0.10)",
-                      }}
-                    >
-                      {suggestedProducts.map(
-                        (product) => {
-                          const stock =
-                            Number(
-                              product.current_stock ??
-                                0,
-                            );
+                    const noStock =
+                      product.track_inventory &&
+                      stock <= 0;
 
-                          const noStock =
-                            product.track_inventory &&
-                            stock <= 0;
+                    return (
+                      <Button
+                        key={product.id}
+                        type="button"
+                        disabled={noStock}
+                        onClick={() => {
+                          handleAddProduct(product);
+                        }}
+                        sx={{
+                          width: "100%",
+                          px: 1.5,
+                          py: 1.25,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 1.25,
+                          borderRadius: 0,
+                          textAlign: "left",
+                          color: "text.primary",
+                          textTransform: "none",
+                          borderBottom: "1px solid",
+                          borderColor: "divider",
 
-                          return (
-                            <Button
-                              key={product.id}
-                              type="button"
-                              disabled={noStock}
-                              onClick={() => {
-                                handleAddProduct(
-                                  product,
-                                );
-                              }}
+                          "&:last-child": {
+                            borderBottom: 0,
+                          },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.25,
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 46,
+                              height: 46,
+                              flexShrink: 0,
+                              borderRadius: "5px",
+                              overflow: "hidden",
+                              bgcolor: "grey.100",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {product.image_url ? (
+                              <Box
+                                component="img"
+                                src={product.image_url}
+                                alt={product.name}
+                                loading="lazy"
+                                sx={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "contain",
+                                  display: "block",
+                                }}
+                              />
+                            ) : (
+                              <ImageOutlined
+                                sx={{
+                                  color: "text.disabled",
+                                  fontSize: 26,
+                                }}
+                              />
+                            )}
+                          </Box>
+
+                          <Box
+                            sx={{
+                              minWidth: 0,
+                              flex: 1,
+                            }}
+                          >
+                            <Stack
+                              direction="row"
+                              spacing={0.75}
                               sx={{
-                                width: "100%",
-
-                                px: 2,
-                                py: 1.25,
-
-                                borderRadius: 0,
-
-                                justifyContent:
-                                  "space-between",
-
-                                textAlign: "left",
-
-                                color: "text.primary",
-
-                                textTransform: "none",
-
-                                borderBottom:
-                                  "1px solid",
-
-                                borderColor:
-                                  "divider",
-
-                                "&:last-child": {
-                                  borderBottom: 0,
-                                },
+                                alignItems: "center",
+                                minWidth: 0,
+                                flexWrap: "wrap",
                               }}
                             >
-                              <Box
+                              <Typography
                                 sx={{
-                                  minWidth: 0,
+                                  fontWeight: 600,
+                                  fontSize: "0.9rem",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
-                                <Stack
-                                  direction="row"
-                                  spacing={0.75}
-                                  sx={{
-                                    alignItems: "center",
-                                    minWidth: 0,
-                                    flexWrap: "wrap",
-                                  }}
-                                >
+                                {product.name}
+                              </Typography>
+
+                              {product.content_quantity &&
+                                product.content_unit_symbol && (
                                   <Typography
+                                    variant="caption"
                                     sx={{
+                                      color: "text.secondary",
                                       fontWeight: 600,
-                                      fontSize: "0.9rem",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
                                       whiteSpace: "nowrap",
                                     }}
                                   >
-                                    {product.name}
+                                    {formatQuantity(
+                                      product.content_quantity,
+                                    )}{" "}
+                                    {product.content_unit_symbol}
                                   </Typography>
+                                )}
+                            </Stack>
 
-                                  {product.content_quantity && product.content_unit_symbol && (
-                                    <Typography
-                                      variant="caption"
-                                      sx={{
-                                        color: "text.secondary",
-                                        fontWeight: 600,
-                                        whiteSpace: "nowrap",
-                                      }}
-                                    >
-                                      {formatQuantity(product.content_quantity)} {product.content_unit_symbol}
-                                    </Typography>
-                                  )}
-                                </Stack>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "text.secondary",
+                                fontSize: "0.76rem",
+                              }}
+                            >
+                              SKU: {product.sku}
+                              {product.barcode
+                                ? ` · ${product.barcode}`
+                                : ""}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    color:
-                                      "text.secondary",
+                        <Stack
+                          spacing={0.25}
+                          sx={{
+                            flexShrink: 0,
+                            ml: 1,
+                            alignItems: "flex-end",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontWeight: 600,
+                            }}
+                          >
+                            {formatCurrency(
+                              Number(product.sale_price),
+                            )}
+                          </Typography>
 
-                                    fontSize:
-                                      "0.76rem",
-                                  }}
-                                >
-                                  SKU:{" "}
-                                  {product.sku}
-                                  {product.barcode
-                                    ? ` · ${product.barcode}`
-                                    : ""}
-                                </Typography>
-                              </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: noStock
+                                ? "error.main"
+                                : "text.secondary",
+                            }}
+                          >
+                            {product.track_inventory
+                              ? `Stock: ${stock}`
+                              : "Servicio"}
+                          </Typography>
+                        </Stack>
+                      </Button>
+                    );
+                  })}
+                </Paper>
+              </Popper>
 
-                              <Stack
-                                spacing={0.25}
-                                sx={{
-                                  flexShrink: 0,
-                                  ml: 2,
-                                  alignItems:
-                                    "flex-end",
-                                }}
-                              >
-                                <Typography
-                                  sx={{
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {formatCurrency(
-                                    Number(product.sale_price),
-                                  )}
-                                </Typography>
-
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: noStock
-                                      ? "error.main"
-                                      : "text.secondary",
-                                  }}
-                                >
-                                  {product.track_inventory
-                                    ? `Stock: ${stock}`
-                                    : "Servicio"}
-                                </Typography>
-                              </Stack>
-                            </Button>
-                          );
-                        },
-                      )}
-                    </Paper>
-                  )}
-
-                {searchError && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: "block",
-                      mt: 0.75,
-                      color: "error.main",
-                    }}
-                  >
-                    {searchError}
-                  </Typography>
-                )}
-              </Box>
+              {searchError && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    mt: 0.75,
+                    color: "error.main",
+                  }}
+                >
+                  {searchError}
+                </Typography>
+              )}
               {items.length === 0 ? (
                 <Box
                   sx={{
