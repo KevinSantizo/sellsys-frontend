@@ -717,7 +717,8 @@ export function SalesPosPage() {
                   },
                 ]}
                 style={{
-                  zIndex: theme.zIndex.modal + 1,
+                  // El Drawer usa z-index 1200
+                  zIndex: theme.zIndex.drawer - 1,
                   width:
                     searchAnchorRef.current?.getBoundingClientRect()
                       .width,
