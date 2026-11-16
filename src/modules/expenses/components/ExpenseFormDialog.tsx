@@ -61,7 +61,7 @@ type ExpenseFormDialogProps = {
 
 const emptyExpenseValues:
   ExpenseFormValues = {
-    category_id: "",
+    category_id: "30a8713b-c039-4b11-a43b-e079e75b04f1",
     supplier_id: "",
     description: "",
     amount: "",
@@ -77,8 +77,7 @@ export function ExpenseFormDialog({
   open,
   title,
   submitLabel,
-  initialValues,
-  categories,
+  initialValues, 
   //suppliers,
   isSubmitting,
   isLoadingOptions,
@@ -153,14 +152,7 @@ export function ExpenseFormDialog({
       return;
     }
 
-
-    if (!values.category_id) {
-      setValidationError(
-        "Debes seleccionar una categoría.",
-      );
-
-      return;
-    }
+ 
 
 
     if (
@@ -511,8 +503,7 @@ export function ExpenseFormDialog({
             disabled={
               isSubmitting ||
               isLoadingOptions ||
-              isLoadingExpense ||
-              categories.length === 0
+              isLoadingExpense   
             }
             sx={{
               borderRadius: "5px",
